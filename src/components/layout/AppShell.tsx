@@ -1,0 +1,63 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Sidebar from "./Sidebar";
+import { getSession, getActiveClinicId } from "@/lib/auth";
+import { getClinic, getMyRoleInClinic } from "@/lib/clinic";
+import type { Clinic, ClinicRole } from "@/types";
+
+export default function AppShell({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const [clinic, setClinic] = useState<Clinic | null>(null);
+  const [role, setRole] = useState<ClinicRole | null>(null);
+  const [email, setEmail] = useState("");
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    async function init() {
+      const session = await getSession();
+      if (!session) { router.push("/login"); return; }
+
+      const clinicId = getActiveClinicId();
+      if (!clinicId) { router.push("/login"); return; }
+
+      const [c, r] = await Promise.all([
+        getClinic(clinicId),
+        getMyRoleInClinic(clinicId),
+      ]);
+      if (!c || !r) { router.push("/login"); return; }
+
+      setClinic(c);
+      setRole(r as ClinicRole);
+      setEmail(session.user.email ?? "");
+      setReady(true);
+    }
+    init();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (!ready) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="flex items-center gap-3 text-slate-400">
+          <div className="w-5 h-5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
+          <span className="text-sm">Loading…</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-screen">
+      <Sidebar
+        clinicName={clinic?.brand_name ?? clinic?.name ?? "Clinic"}
+        userEmail={email}
+        role={role ?? undefined}
+      />
+      <main className="flex-1 min-h-screen overflow-y-auto" style={{ marginLeft: "var(--sidebar-w, 240px)" }}>
+        {children}
+      </main>
+    </div>
+  );
+}
