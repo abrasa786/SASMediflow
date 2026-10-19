@@ -64,6 +64,12 @@ sequenceDiagram
 - **Flow:** scope guard → intent parse (book / cancel / reschedule / add doctor / question) → booking engine, or `answerLocally` → optional gateway → log to `ai_questionnaire` → reply. A half-finished request (a booking missing the time) is carried as a `draft`.
 - **Bot name** comes from `clinics.ai_name`; the page shows what is remembered and lets the user delete it.
 
+### App Manager and home screens (migration 014)
+Apps group tabs. Six built-in apps (Booking, Clinical, Payments, Inventory, Administration, Builder) are created per clinic on first use and point at the existing screens; custom apps come from the AI Builder. `apps_for_user` returns the apps and tabs one person may see: each app and tab can be limited to roles and/or permission sets (admins see everything), and a custom table's tab also needs read access to the table. The left menu has an app launcher; "All screens" keeps the classic menu. `/apps/<app>` is the app's home (headline numbers, plus its home dashboard for custom apps), `/apps/manage` lets an admin choose who sees what (through the builder, so it is audited and undoable). The Builder asks who should see a new app and understands "only nurses can see Inpatient". Visibility is a navigation layer: records are still protected by permission sets, and built-in screens by their own role checks.
+
+### WhatsApp chat and recall (migration 015)
+`POST /api/whatsapp/webhook` receives patient messages (signature-checked, de-duplicated, rate-limited). The sender's phone decides which patient records are in play, so a patient can only see or change their own: book (asks the day, offers free slots), my appointments, reschedule, cancel (asks yes), balance, stop/start. Several clinics on one number → it asks which. `recall_candidates` lists patients with an open treatment plan and nothing booked, or no visit for N days, excluding opted-out, no-phone and anyone nudged in the last 30 days. `/recall` sends one or many (WhatsApp, or a prefilled link if not connected); admins can switch on a daily automatic send (the daily cron, up to a daily limit).
+
 ### Division of work: assistant vs Builder
 | | Assistant (`/chatbot`, everyone, within their role) | AI Builder (`/builder`, admin) |
 |---|---|---|

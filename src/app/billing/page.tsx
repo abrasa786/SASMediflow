@@ -34,7 +34,7 @@ export default function BillingPage() {
   const [status, setStatus] = useState<InvoiceStatus>("paid");
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState(() => { try { const f = new URLSearchParams(window.location.search).get("filter"); return f && ["pending", "paid", "draft", "sent", "partially_paid", "cancelled"].includes(f) ? f : "all"; } catch { return "all"; } });
 
   useEffect(() => {
     const id = getActiveClinicId();
@@ -107,7 +107,7 @@ export default function BillingPage() {
   /** Tell the server a payment happened so any flow waiting for it (a thank-you, a task) runs now. */
   function runFlows() { authFetch("/api/flows/process", { body: { clinicId } }).catch(() => null); }
 
-  const filtered = filter === "all" ? invoices : invoices.filter(i => i.status === filter);
+  const filtered = filter === "all" ? invoices : filter === "pending" ? invoices.filter(i => ["sent", "partially_paid", "draft"].includes(i.status ?? "")) : invoices.filter(i => i.status === filter);
   const totalRevenue = invoices.filter(i => ["paid", "partially_paid"].includes(i.status ?? "")).reduce((s, i) => s + (i.total ?? 0), 0);
 
   return (
@@ -125,7 +125,7 @@ export default function BillingPage() {
 
         {/* Filter tabs */}
         <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
-          {["all","draft","sent","paid","partially_paid","cancelled"].map(f => (
+          {["all","pending","draft","sent","paid","partially_paid","cancelled"].map(f => (
             <button
               key={f}
               onClick={() => setFilter(f)}

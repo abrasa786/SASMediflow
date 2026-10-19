@@ -1,4 +1,4 @@
-import { describeAgentStep, normalizeAgentStep } from "./agent-tools";
+import { describeAgentStep, normalizeAgentStep, SYSTEM_APPS, VIS_ROLES } from "./agent-tools";
 import { FIELD_TYPES, type FieldSpec, type FieldType, type Plan, type Schema, type Step } from "./types";
 
 const MAX_STEPS = 40, MAX_FIELDS = 60, MAX_OBJECTS = 25, MAX_APPS = 15, MAX_TABS = 20;
@@ -128,6 +128,21 @@ export function validatePlan(raw: any, schema: Schema): { ok: true; plan: Plan }
         if ((apps.get(app) ?? 0) >= MAX_TABS) { errors.push(`${where}: app "${app}" already has ${MAX_TABS} tabs`); return; }
         apps.set(app, (apps.get(app) ?? 0) + 1);
         steps.push({ tool: "add_tab", args: { app, kind, object: obj, label: a.label ? String(a.label).slice(0, 80) : undefined } });
+        return;
+      }
+      case "configure_app": {
+        const app = String(a.app ?? "");
+        const key = toApiName(app);
+        if (!(apps.has(key) || SYSTEM_APPS.some((x) => x.api === key))) { errors.push(`${where}: app "${app}" does not exist`); return; }
+        const roles: string[] = Array.isArray(a.roles) ? a.roles.map(String) : [];
+        if (roles.some((r: string) => !VIS_ROLES.includes(r))) { errors.push(`${where}: roles can be ${VIS_ROLES.join(", ")}`); return; }
+        const psets = Array.isArray(a.permission_sets) ? a.permission_sets.map((n: unknown) => String(n).slice(0, 60)).slice(0, 10) : [];
+        const args: { app: string; tab?: string; roles?: string[]; permission_sets?: string[]; everyone?: boolean; home_dashboard?: string } = { app: key };
+        if (a.tab) args.tab = String(a.tab).slice(0, 80);
+        if (a.everyone === true) args.everyone = true; else { if (roles.length) args.roles = roles; if (psets.length) args.permission_sets = psets; }
+        if (a.home_dashboard && !args.tab) args.home_dashboard = String(a.home_dashboard).slice(0, 80);
+        if (!args.everyone && !args.roles && !args.permission_sets && !args.home_dashboard) { errors.push(`${where}: say who can see it`); return; }
+        steps.push({ tool: "configure_app", args });
         return;
       }
       default: {

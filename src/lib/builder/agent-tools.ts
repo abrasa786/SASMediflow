@@ -20,7 +20,8 @@ export type AgentStep =
   | { tool: "set_booking_rule"; args: { doctor_rule?: "usual_then_free" | "least_loaded" | "ask"; slot_minutes?: number } }
   | { tool: "create_permission_set"; args: { name: string; description?: string; objects: PermObject[]; assign_to?: string[]; assign_roles?: string[] } }
   | { tool: "create_flow"; args: { name: string; description?: string; trigger: FlowTrigger; conditions?: FlowCondition[]; actions: FlowAction[] } }
-  | { tool: "set_flow_active"; args: { name: string; active: boolean } };
+  | { tool: "set_flow_active"; args: { name: string; active: boolean } }
+  | { tool: "configure_app"; args: { app: string; tab?: string; roles?: string[]; permission_sets?: string[]; everyone?: boolean; home_dashboard?: string } };
 
 export const FLOW_EVENTS = ["appointment_booked", "appointment_cancelled", "appointment_completed", "appointment_no_show", "invoice_paid", "record_created", "record_updated", "stock_low", "day_before_appointment", "daily"] as const;
 export type FlowEvent = (typeof FLOW_EVENTS)[number];
@@ -47,6 +48,15 @@ export const BUILTIN: Record<string, { label: string; dateField: string; fields:
 };
 export const DOCTOR_RULES = ["usual_then_free", "least_loaded", "ask"] as const;
 const ROLES = ["doctor", "intern", "nurse", "receptionist"];
+export const VIS_ROLES = ["admin", "doctor", "nurse", "receptionist", "intern"];
+export const SYSTEM_APPS: { api: string; label: string; tabs: string[] }[] = [
+  { api: "sys_booking", label: "Booking", tabs: ["Patients", "Appointments", "Calendar", "Availability"] },
+  { api: "sys_clinical", label: "Clinical", tabs: ["Treatments", "Tasks"] },
+  { api: "sys_payments", label: "Payments", tabs: ["Invoices", "Pending payments", "Payment history"] },
+  { api: "sys_inventory", label: "Inventory", tabs: ["Stock", "Purchase orders", "Distributors", "Supplier bills"] },
+  { api: "sys_admin", label: "Administration", tabs: ["Users", "Staff", "Permissions", "Attendance", "Leave", "Settings"] },
+  { api: "sys_builder", label: "Builder", tabs: ["Build with AI", "Data", "Reports & dashboards", "Automation flows"] },
+];
 const SOURCE_WORDS: [RegExp, string][] = [[/\bappointments?\b|\bvisits?\b|\bbookings?\b/, "appointments"], [/\binvoices?\b|\brevenue\b|\bbilling\b|\bcollections?\b|\bpayments?\b|\bsales\b|\bdues?\b/, "invoices"], [/\bpatients?\b/, "patients"], [/\bstock\b|\binventory\b|\bmedicines?\b/, "stock"]];
 
 const titleCase = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase());
@@ -184,6 +194,11 @@ export function describeAgentStep(s: AgentStep): string {
       return `Change booking rules: ${p.join("; ")}`;
     }
     case "create_flow": return `Create flow “${s.args.name}”: when ${FLOW_EVENT_LABEL[s.args.trigger.event]}${s.args.trigger.object ? ` (${s.args.trigger.object})` : ""}${s.args.conditions?.length ? `, and ${s.args.conditions.map((c) => `${c.field} ${c.op === "eq" ? "is" : c.op} ${c.value}`).join(" and ")}` : ""} → ${s.args.actions.map(describeFlowAction).join(", then ")}`;
+    case "configure_app": {
+      const who = s.args.everyone ? "everyone" : [...(s.args.roles ?? []).map((r) => r + "s"), ...(s.args.permission_sets ?? []).map((n) => `“${n}” permission set`)].join(", ");
+      const target = s.args.tab ? `the “${s.args.tab}” tab of ${s.args.app}` : s.args.app;
+      return s.args.home_dashboard && !who ? `Make “${s.args.home_dashboard}” the home dashboard of ${s.args.app}` : `Show ${target} to: ${who || "unchanged"}${s.args.home_dashboard ? `; home dashboard “${s.args.home_dashboard}”` : ""} (admins always see everything)`;
+    }
     case "set_flow_active": return `${s.args.active ? "Turn on" : "Pause"} flow “${s.args.name}”`;
     case "create_permission_set": {
       const rights = (o: PermObject) => [o.read && "see", o.create && "add", o.edit && "change", o.delete && "delete"].filter(Boolean).join("/") + (o.read_scope === "own" ? " (own records only)" : "");
@@ -239,8 +254,43 @@ export function parseReportPhrase(text: string, schema: Schema): { name: string;
 }
 
 /** Admin requests for the Builder: booking rules, permission sets, flows. Null when the sentence is not about these. */
+/** "for nurses only", "only doctors and nurses can see it", "visible to everyone". Returns roles (admin included only if named), or "everyone", or null when nothing is said. */
+export function parseAudience(p: string): { roles: string[] } | "everyone" | null {
+  const t = p.toLowerCase();
+  if (/\b(?:for|to|visible to|shown to)\s+everyone\b|\bevery(?:one|body)\s+can\s+(?:see|use|access)\b/.test(t)) return "everyone";
+  if (!/\b(?:only|for|to|visible|hide|hidden|from|except|can (?:see|use|access|view))\b/.test(t)) return null;
+  const named = VIS_ROLES.filter((r) => new RegExp(`\\b${r}s?\\b`).test(t));
+  if (!named.length) return null;
+  if (/\b(?:hide|hidden|except|not (?:be )?visible|without)\b/.test(t)) { const rest = VIS_ROLES.filter((r) => r !== "admin" && !named.includes(r)); return rest.length ? { roles: rest } : null; }
+  return /\bonly\b|\bfor\b|\bto\b|\bvisible\b|\bcan\b/.test(t) ? { roles: named } : null;
+}
+
+/** Change who can see an existing app or one of its tabs: "only doctors and nurses can see Inpatient", "hide the Staff tab in Administration from receptionists". */
+export function parseVisibility(p: string, schema: Schema): { steps: AgentStep[]; message: string } | { error: string } | null {
+  const t = p.toLowerCase();
+  if (!/\b(?:see|view|access|visible|hide|hidden|show|restrict|only)\b/.test(t) || /\b(?:create|build|make|set up|setup)\s+(?:an?\s+|the\s+)?.+\s+app\b/.test(t)) return null;
+  const apps = [...schema.apps.map((a) => ({ api: a.api_name, label: a.label, tabs: a.tabs.map((x) => x.label) })), ...SYSTEM_APPS];
+  const app = apps.find((a) => t.includes(a.label.toLowerCase()) || t.includes(a.api.replace(/_/g, " ")));
+  if (!app) return null;
+  let tab: string | undefined;
+  const known = app.tabs.find((x) => new RegExp(`\\b${x.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s+tab\\b`).test(t));
+  if (known) tab = known;
+  else { const tm = t.match(/\bthe\s+([a-z][a-z &-]{1,30}?)\s+tab\b/); if (tm) return { error: `${app.label} has no tab called “${tm[1].trim()}”. Its tabs: ${app.tabs.join(", ") || "none"}.` }; }
+  const aud = parseAudience(p);
+  if (!aud) return { error: "Who should see it: everyone, or certain roles (admin, doctor, nurse, receptionist, intern)?" };
+  const args: { app: string; tab?: string; roles?: string[]; everyone?: boolean } = { app: app.api };
+  if (tab) args.tab = tab;
+  if (aud === "everyone") args.everyone = true; else args.roles = aud.roles;
+  const st: AgentStep = { tool: "configure_app", args };
+  return { steps: [st], message: describeAgentStep(st) + "." };
+}
+
 export function parseBuilderRequest(prompt: string, schema: Schema): { steps: AgentStep[]; message: string } | { error: string } | null {
   const p = prompt.trim().replace(/\s+/g, " ");
+
+  // who can see an app or tab
+  const vis = parseVisibility(p, schema);
+  if (vis) return vis;
 
   // booking rules
   const slot = p.match(/\b(?:slot|appointment)s?\s*(?:length|duration|size|time)?\D{0,20}?(\d{1,3})\s*(?:min|minutes)\b/i) ?? p.match(/\b(\d{1,3})\s*(?:min|minute)\s*(?:slots?|appointments?)\b/i);
@@ -381,7 +431,8 @@ export function parseFlow(p: string, schema: Schema): { steps: AgentStep[]; mess
   return { steps: [step], message: describeAgentStep(step) + "." };
 }
 
-export const BUILDER_TOOLS_PROMPT = `- set_booking_rule {doctor_rule?: "usual_then_free"|"least_loaded"|"ask", slot_minutes?: 5..120}  -> how doctors are chosen and how long a slot is
+export const BUILDER_TOOLS_PROMPT = `- configure_app {app, tab?, roles?: ["admin"|"doctor"|"nurse"|"receptionist"|"intern"], permission_sets?: string[], everyone?: boolean, home_dashboard?: string}  -> who can see an app or one tab (admins always can); use after create_app, and ask the admin who should see a new app
+- set_booking_rule {doctor_rule?: "usual_then_free"|"least_loaded"|"ask", slot_minutes?: 5..120}  -> how doctors are chosen and how long a slot is
 - create_permission_set {name, description?, objects: [{object, read?, create?, edit?, delete?, read_scope?: "all"|"own", edit_scope?: "all"|"own"}], assign_roles?: ("doctor"|"intern"|"nurse"|"receptionist")[], assign_to?: string[] (team member names)}
     object is a built-in source (appointments, invoices, patients, stock) or one of the admin's own objects.
 - create_flow {name, description?, trigger: {event, object?}, conditions?: [{field, op: eq|neq|gt|lt|contains, value}], actions: [1 to 5 of {type:"send_whatsapp", to?: "patient"|"doctor"|"admin", template?: "confirmation"|"reminder"|"cancellation"|"thanks", text?} | {type:"create_task", title, priority?: "low"|"medium"|"high"}]}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import AssistantWidget from "@/components/AssistantWidget";
 import Sidebar from "./Sidebar";
 import { getSession, getActiveClinicId } from "@/lib/auth";
 import { getClinic, getMyRoleInClinic } from "@/lib/clinic";
@@ -69,6 +70,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <main className="flex-1 min-h-screen overflow-y-auto" style={{ marginLeft: "var(--sidebar-w, 240px)" }}>
         {children}
       </main>
+      <AssistantWidget botName={clinic?.ai_name || "Assistant"} color={clinic?.primary_color} />
     </div>
   );
 }

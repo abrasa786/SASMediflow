@@ -1,5 +1,8 @@
 # Security layers and the AI trust layer
 
+## WhatsApp chat
+The webhook is public, so every request must carry Meta's HMAC signature (`WHATSAPP_APP_SECRET`); without the secret it refuses everything. Messages are de-duplicated by id and limited to 15 a minute per phone. A patient is identified only by the phone that wrote in and can reach only records for that number; unknown numbers get a polite refusal and nothing is created. STOP is honoured immediately and recall never messages opted-out patients.
+
 ## 1. Layers that protect clinic data
 
 | # | Layer | What it does | Where |

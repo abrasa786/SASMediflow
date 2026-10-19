@@ -1,4 +1,4 @@
-import { BUILDER_TOOLS_PROMPT, parseAssistantRequest, parseBuilderRequest } from "./agent-tools";
+import { BUILDER_TOOLS_PROMPT, parseAssistantRequest, parseAudience, parseBuilderRequest } from "./agent-tools";
 import { recommendFields } from "./recommend";
 import { toApiName, validatePlan } from "./validate";
 import type { FieldSpec, FieldType, Plan, Schema, Step } from "./types";
@@ -175,7 +175,13 @@ function rulesPlan(inp: Input): PlannerResult {
       tabObjs.push(toApiName(singular(n)));
     }
     steps.push({ tool: "create_app", args: { api_name: toApiName(appLabel), label: appLabel.replace(/\b\w/g, (c) => c.toUpperCase()), objects: tabObjs } });
-    return finish(steps, `Create the ${appLabel} app with ${tabObjs.length} tab${tabObjs.length > 1 ? "s" : ""}. ${tabObjs.length > 1 ? "Each has" : "It has"} its own table and recommended fields.`);
+    // Who should see it? Use what was said; otherwise everyone can, and we ask.
+    const aud = parseAudience(p);
+    let who = "";
+    if (aud && aud !== "everyone") { steps.push({ tool: "configure_app", args: { app: toApiName(appLabel), roles: aud.roles } }); who = ` Only ${aud.roles.join(", ")} (and admins) will see it.`; }
+    else if (aud === "everyone") who = " Everyone on the team will see it.";
+    else who = " Who should see it? Right now everyone on the team will. To limit it, say for example “only doctors and nurses can see " + appLabel + "”.";
+    return finish(steps, `Create the ${appLabel} app with ${tabObjs.length} tab${tabObjs.length > 1 ? "s" : ""}. ${tabObjs.length > 1 ? "Each has" : "It has"} its own table and recommended fields.${who}`);
   }
 
   // add field(s)

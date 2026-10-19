@@ -15,7 +15,7 @@ One deployment serves every clinic. Clinics are separated by `clinic_id` in the 
 ## 1. First-time setup (about 30 minutes)
 
 1. **Supabase project.** Create one in the region closest to your patients (for India choose Mumbai, `ap-south-1`; patient data then stays in India).
-2. **Run the migrations** in the SQL editor, in order: `001_schema.sql` (a brand-new project only), then `003` to `013` in order (`003` … `013`; `012` adds the dashboard maths, `013` adds the assistant/builder tools and automation flows). They are safe to run again. (There is no `002`, it is demo data only; skip it in production.)
+2. **Run the migrations** in the SQL editor, in order: `001_schema.sql` (a brand-new project only), then `003` to `015` in order (`003` … `015`; `012` dashboard maths, `013` assistant/builder tools and flows, `014` App Manager, `015` WhatsApp chat and recall). The file `supabase/ALL_MIGRATIONS_003_015.sql` has them all in one. They are safe to run again. (There is no `002`, it is demo data only; skip it in production.)
 3. **Authentication → URL configuration.** Site URL = your production address (e.g. `https://app.yourdomain.com`). Add the same address, plus `http://localhost:3001`, to Redirect URLs.
 4. **Authentication → Emails → SMTP Settings.** Add your SMTP sender. Without it Supabase's built-in mailer sends only a few emails an hour and only to your own team, so real clinics cannot sign up. Keep "Confirm email" switched on.
 5. **Vercel.** Import the GitHub repo. Add the environment variables below, then deploy.
@@ -34,6 +34,7 @@ One deployment serves every clinic. Clinics are separated by `clinic_id` in the 
 | `AUTO_CONFIRM_EMAILS` | no | Leave unset/`false` in production. |
 | `GEMINI_API_KEY`, `GEMINI_MODEL` | no | AI works with built-in rules if absent. |
 | `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_ACCESS_TOKEN` | no | Without them staff get a click-to-send WhatsApp link. |
+| `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_APP_SECRET` | for two-way chat | In Meta for Developers → your WhatsApp app → Configuration: Callback URL `https://<your-address>/api/whatsapp/webhook`, Verify token = the value you chose, subscribe to **messages**. `WHATSAPP_APP_SECRET` is the app secret; every incoming request is checked against it. |
 | `ROOT_DOMAIN` | no | Your platform domain (e.g. `mediflow.in`). Every clinic then also opens at `www.<clinic>.mediflow.in` and `<clinic>.mediflow.in`. Needs a wildcard DNS record `*.mediflow.in` pointing at Vercel, and the wildcard added in Vercel → Domains. |
 | `CANONICAL_HOST` | recommended | Your main address, e.g. `app.mediflow.in`. Anyone who opens the `*.vercel.app` address is redirected here, so `vercel` never shows. Also set `NEXT_PUBLIC_APP_URL` and the Supabase Site URL to `https://app.mediflow.in`. (Vercel preview links are redirected too; leave this empty on a preview-only project.) |
 | `PLATFORM_HOSTS` | no | Extra hostnames that are "the platform" (not a clinic's own domain). |

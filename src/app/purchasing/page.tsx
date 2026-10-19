@@ -26,7 +26,7 @@ export default function PurchasingPage() {
   const router = useRouter();
   const [clinicId, setClinicId] = useState<string | null>(null);
   const [role, setRole] = useState<ClinicRole | null>(null);
-  const [tab, setTab] = useState<"orders" | "suppliers" | "bills">("orders");
+  const [tab, setTab] = useState<"orders" | "suppliers" | "bills">(() => { try { const t = new URLSearchParams(window.location.search).get("tab"); return t === "suppliers" || t === "bills" ? t : "orders"; } catch { return "orders"; } });
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [orders, setOrders] = useState<PO[]>([]);
   const [bills, setBills] = useState<Bill[]>([]);

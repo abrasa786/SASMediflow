@@ -24,6 +24,8 @@ Everything below runs in CI on every push (`.github/workflows/ci.yml`) and local
 | `ai_trust_test.sql` | Questionnaire isolation, policy, rate limit, delete scopes, retention purge |
 | `dashboard_test.sql` | Dashboard maths: collected vs billed, dues, utilisation, no-show rate, trend, low stock |
 | `agent_tools_test.sql` | Reports/dashboards via the assistant, booking rule, permission sets, flows and events, rollback |
+| `app_manager_test.sql` | Built-in apps, role and permission-set visibility, tab hiding, home dashboard, undo, other clinics untouched |
+| `recall_test.sql` | Who is due a nudge and who is not (opt-out, booked, recent, other clinics), phone matching across clinics |
 | `users_test.sql` | Only an admin can delete a user; not yourself; never the last admin; other clinics untouched; history kept; removal audited |
 
 ## Results recorded on 19 Oct 2026 (sandbox, Postgres 16, Node 22)
