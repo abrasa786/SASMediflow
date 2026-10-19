@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Mediflow Demo</title>
+<title>Mediflow Trail</title>
 <style>
 :root{
   --bg:#f4f6fb; --surface:#ffffff; --surface2:#eef1f8; --line:#dde2ee; --fg:#0f172a; --muted:#5b6478;
@@ -244,7 +244,7 @@ pre.json{margin:0;background:var(--surface2);border:1px solid var(--line);border
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
 .say .mod{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:4px}
 .lines{display:flex;flex-direction:column;gap:6px;margin-top:6px}
-.ln{font-size:13.5px;color:var(--muted);padding:6px 10px;border-radius:10px;border-left:3px solid transparent;transition:background .2s,color .2s}
+.ln{font-size:13.5px;color:var(--fg);padding:6px 10px;border-radius:10px;border-left:3px solid transparent;transition:background .2s,color .2s}
 .ln.cur{background:var(--accent-soft);color:var(--fg);border-left-color:var(--accent)}
 .ln.said{color:var(--fg)}
 .task{margin:12px 16px 0;border:2px solid var(--accent);background:var(--accent-soft);border-radius:14px;padding:10px 12px;font-size:13px}
@@ -279,7 +279,6 @@ button.cb:hover{background:var(--surface2)}
   <div class="top">
     <div class="brand"><span class="logo">M</span> Mediflow <span class="pill">Interactive trail · no login needed</span></div>
     <div class="top-r">
-      <button class="pill btn" data-act="voice" id="voiceBtn">🔇 Voice off</button>
       <button class="pill btn" data-act="restart">↺ Restart trail</button>
       <button class="pill btn" data-act="theme" id="themeBtn">◐ Theme</button>
     </div>
@@ -289,7 +288,6 @@ button.cb:hover{background:var(--surface2)}
       <div class="trailbar">
         <span class="pts" title="Points">⭐ <b id="pts">0</b></span>
         <span id="badges" class="badges" aria-label="Badges earned"></span>
-        <span class="modes" role="group" aria-label="Mode"><button class="mode on" data-act="mode" data-v="hands" id="mHands">Hands-on</button><button class="mode" data-act="mode" data-v="watch" id="mWatch">Watch</button></span>
       </div>
       <button class="mapbtn" data-act="map" id="mapBtn" aria-expanded="false"><span id="mapLbl">Trail map</span><i>▾</i></button>
       <nav class="chapters" id="chapters" hidden></nav>
@@ -308,8 +306,7 @@ button.cb:hover{background:var(--surface2)}
           <ellipse cx="45" cy="67" rx="4" ry="2.4" fill="#f4978e" opacity=".5"/><ellipse cx="75" cy="67" rx="4" ry="2.4" fill="#f4978e" opacity=".5"/>
           <path class="mouth" d="M52 71q8 5 16 0q-8 2-16 0z" fill="#9b2c3a" stroke="#9b2c3a" stroke-width="1.6" stroke-linejoin="round"/>
         </svg>
-        <div class="who"><b>Aria</b><span>Your Mediflow guide</span><span class="speaking" aria-hidden="true"><i></i><i></i><i></i></span></div>
-        <button class="btn sm" data-act="voice" id="voiceBtn2" title="Voice on/off">🔇</button>
+        <div class="who"><b>Aria</b><span>Your Mediflow guide</span></div>
       </div>
       <div class="say" id="say"></div>
       <div class="task" id="task" hidden></div>
@@ -318,7 +315,6 @@ button.cb:hover{background:var(--surface2)}
         <button class="btn" data-act="back" id="bBack" aria-label="Back">←</button>
         <button class="btn primary" data-act="next" id="bNext">Next →</button>
         <div class="grow" title="Trail progress"><i id="prog" style="width:0"></i></div>
-        <button class="btn" data-act="play" id="bPlay" title="Presenter plays on its own">▶ Auto</button>
       </div>
     </aside>
     <section class="stage">
@@ -331,12 +327,10 @@ button.cb:hover{background:var(--surface2)}
   <div class="box">
     <div class="logo" style="margin:0 auto;width:46px;height:46px;font-size:22px;border-radius:14px">M</div>
     <h1>Mediflow Trail</h1>
-    <p id="introTxt">Join Dr. Priya Sharma as she opens her dental clinic. Aria presents each module like a story, then you try it yourself, answer a quick check and earn a badge. Start with <b>Sign up &amp; Login</b>. Turn your sound on.</p>
+    <p id="introTxt">Join Dr. Priya Sharma as she opens her dental clinic. Aria presents each module like a story, then you try it yourself, answer a quick check and earn a badge. Start with <b>Sign up &amp; Login</b>.</p>
     <div class="row">
-      <button class="btn primary" data-act="startvoice" id="introVoice">🔊 Start with Aria's voice</button>
-      <button class="btn" data-act="startquiet">Read along instead</button>
+      <button class="btn primary" data-act="startquiet">Start the trail →</button>
     </div>
-    <p class="note" style="margin:14px 0 0">Prefer to just watch? Pick <b>Watch</b> mode after starting and Aria does everything herself.</p>
   </div>
 </div>
 <script>
@@ -1015,7 +1009,7 @@ function chapDone(c){return c.id==="end"?!!ST.seen.end:!!(ST.q[c.id]&&ST.q[c.id]
 function renderTop(){
   $("#pts").textContent=ST.pts;
   $("#badges").innerHTML=ST.badges.map(id=>'<span class="bdg" title="'+BADGE[id][1]+'">'+BADGE[id][0]+"</span>").join("");
-  $("#mHands").classList.toggle("on",ST.mode==="hands");$("#mWatch").classList.toggle("on",ST.mode==="watch");
+  
   $("#chapters").innerHTML=CH.map((x,i)=>'<button class="chap'+(i===pos.c?" on":chapDone(x)?" done":"")+'" data-act="chap" data-v="'+i+'"><span class="n">'+(chapDone(x)?"✓":i+1)+"</span>"+x.title+(BADGE[x.id]?'<span class="st">'+BADGE[x.id][0]+"</span>":"")+"</button>").join("");
   $("#mapLbl").textContent="Module "+(pos.c+1)+" of "+CH.length+" · "+CH[pos.c].title;
 }
@@ -1050,37 +1044,15 @@ function renderRail(){
   const last=flat()===total-1;
   const open=(st.task&&!ST.done[key()])||(st.quiz&&!(ST.q[c.id]&&ST.q[c.id].finished));
   $("#bNext").textContent=last?"Done ✓":open?"Skip →":"Next →";$("#bNext").disabled=last;
-  $("#bPlay").textContent=ST.mode==="watch"?"⏸ Pause":"▶ Watch";
-  const vb=$("#voiceBtn2");if(vb)vb.textContent=voiceOn?"🔊":"🔇";
 }
 function render(){renderRail();renderScreen()}
 
 /* ───────────── the presenter: reads the script line by line ───────────── */
-function startScript(){
-  clearTimeout(timer);const my=++runTok;cancelSpeech();setTalk(false);
-  const L=linesOf(stepOf());let i=0;curLine=-1;
-  const step=()=>{
-    if(my!==runTok)return;
-    if(i>=L.length){setTalk(false);scriptEnd(my);return}
-    showLine(i);const txt=plain(L[i]);i++;
-    if(voiceOn){setTalk(true);speak(txt,()=>{if(my!==runTok)return;setTalk(false);timer=setTimeout(step,260)})}
-    else timer=setTimeout(step,Math.min(6500,1200+txt.length*34));
-  };
-  step();
-}
-function scriptEnd(my){if(ST.mode==="watch")watchAdvance(my)}
-function watchAdvance(my){
-  if(my!==runTok||ST.mode!=="watch")return;
-  const st=stepOf(),doNext=()=>{if(my!==runTok||ST.mode!=="watch")return;if(flat()>=total-1){setMode("hands");return}next()};
-  if(st.task&&!ST.done[key()]){
-    timer=setTimeout(()=>{if(my!==runTok||ST.mode!=="watch")return;st.task.auto();if(!st.task.advance)timer=setTimeout(doNext,2200)},900);return;
-  }
-  timer=setTimeout(doNext,st.quiz?500:1300);
-}
+function startScript(){clearTimeout(timer);++runTok;curLine=-1}
 function say(html){
   const l=$("#lines");if(!l)return;const d=document.createElement("div");d.className="ln cur";d.innerHTML=html;
   l.querySelectorAll(".ln").forEach(e=>{e.classList.remove("cur");e.classList.add("said")});l.appendChild(d);
-  if(voiceOn){setTalk(true);const my=runTok;speak(plain(html),()=>{if(my===runTok)setTalk(false)})}
+  
 }
 function awardTask(){const k=key();if(ST.done[k])return false;ST.done[k]=1;ST.pts+=10;toast("+10 points");renderTop();renderTask();return true}
 function completeTask(){
@@ -1103,11 +1075,11 @@ function go(c,s){
 }
 function next(){const c=CH[pos.c];if(pos.s<c.steps.length-1)go(pos.c,pos.s+1);else if(pos.c<CH.length-1)go(pos.c+1,0);else setMode("hands")}
 function back(){if(pos.s>0)go(pos.c,pos.s-1);else if(pos.c>0)go(pos.c-1,CH[pos.c-1].steps.length-1)}
-function setMode(m){
-  ST.mode=m;clearTimeout(timer);renderTop();$("#bPlay").textContent=m==="watch"?"⏸ Pause":"▶ Watch";
+function setMode(m){ST.mode="hands";clearTimeout(timer);return;
+  ST.mode=m;clearTimeout(timer);renderTop();
   if(m==="watch"){const my=runTok;if(!speaking)watchAdvance(my)}
 }
-function setVoice(on){voiceOn=on&&TTS;if(!voiceOn){cancelSpeech();setTalk(false)}const b=$("#voiceBtn");if(b)b.textContent=voiceOn?"🔊 Voice on":"🔇 Voice off";const b2=$("#voiceBtn2");if(b2)b2.textContent=voiceOn?"🔊":"🔇"}
+function setVoice0(on){voiceOn=on&&TTS;if(!voiceOn){cancelSpeech();setTalk(false)}const b=$("#voiceBtn");if(b)b.textContent=voiceOn?"🔊 Voice on":"🔇 Voice off";const b2=$("#voiceBtn2");if(b2)b2.textContent=voiceOn?"🔊":"🔇"}
 function showErr(id,m){const e=$(id);if(e)e.textContent=m;nudge()}
 const KPISTEP={appts:1,newp:1,rev:2,util:3,ns:4,out:5,stock:6};
 
@@ -1115,10 +1087,10 @@ function doAct(a,v,el){
   switch(a){
     case"next":if(ST.mode==="watch")setMode("hands");next();break;
     case"back":if(ST.mode==="watch")setMode("hands");back();break;
-    case"play":setMode(ST.mode==="watch"?"hands":"watch");if(ST.mode==="watch"&&!voiceOn&&TTS){}break;
-    case"mode":setMode(v);break;
-    case"voice":setVoice(!voiceOn);if(voiceOn)startScript();break;
-    case"startvoice":$("#intro").hidden=true;setVoice(true);go(0,0);break;
+    
+    
+    
+    
     case"startquiet":$("#intro").hidden=true;go(0,0);break;
     case"restart":ST.pts=0;ST.done={};ST.badges=[];ST.q={};ST.seen={};UI.su={clinic:"",city:"",phone:"",name:"",email:"",pw:"",pw2:"",lpw:"",spec:"",verified:false};UI.phone="98450 12345";UI.recs={ipr:true,attach:false};setMode("hands");go(0,0);break;
     case"chap":if(ST.mode==="watch")setMode("hands");go(+v,0);$("#chapters").hidden=true;$("#mapBtn").setAttribute("aria-expanded","false");break;
@@ -1182,7 +1154,7 @@ document.addEventListener("keydown",e=>{
 });
 
 seed();BASE=kpis();
-if(!TTS){$("#voiceBtn").hidden=true;$("#voiceBtn2").hidden=true;$("#introVoice").hidden=true;$("#introTxt").textContent="Join Dr. Priya Sharma as she opens her dental clinic. Aria presents each module as a story, then you try it yourself. This browser cannot speak, so her script is shown as text."}
+
 render();
 })();
 
