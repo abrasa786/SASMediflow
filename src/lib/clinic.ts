@@ -70,11 +70,13 @@ export async function getClinicPatients(clinicId: string): Promise<ClinicPatient
 }
 
 export async function searchClinicPatients(clinicId: string, query: string): Promise<ClinicPatient[]> {
+  const q = query.replace(/[^A-Za-z0-9 .+-]/g, "").trim();
+  if (!q) return [];
   const { data } = await supabase
     .from("clinic_patients")
     .select("*")
     .eq("clinic_id", clinicId)
-    .or(`name.ilike.%${query}%,phone.ilike.%${query}%`)
+    .or(`name.ilike.%${q}%,phone.ilike.%${q}%`)
     .limit(20);
   return data ?? [];
 }
@@ -95,6 +97,7 @@ export async function getAppointments(clinicId: string, date: string): Promise<A
     .select("*, clinic_patients(id, name, phone, blood_group, allergies, conditions), doctors(name, speciality)")
     .eq("clinic_id", clinicId)
     .eq("appointment_date", date)
+    .order("start_time", { ascending: true, nullsFirst: false })
     .order("appointment_time");
   return ((data ?? []) as any[]).map((r) => ({
     ...r,
@@ -283,7 +286,8 @@ export async function getDashboardStats(clinicId: string): Promise<DashboardStat
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 export function todayIso() {
-  return new Date().toISOString().split("T")[0];
+  // The clinic's calendar day (India), not UTC, so early-morning bookings land on the right date
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
 }
 
 export function timeSlots(start = 9, end = 20, step = 15): string[] {

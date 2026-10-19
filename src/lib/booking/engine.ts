@@ -19,7 +19,7 @@ const REASON_TEXT: Record<string, string> = {
 };
 
 export function parseEngineError(message: string): { code: string; detail: string } {
-  const m = message.match(/^([A-Z_]+):\s*(.*)$/s);
+  const m = message.match(/^([A-Z_]+):\s*([\s\S]*)$/);
   return m ? { code: m[1], detail: m[2] } : { code: "ERROR", detail: message };
 }
 

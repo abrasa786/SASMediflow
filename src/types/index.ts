@@ -36,6 +36,7 @@ export interface ClinicPatient {
   patient_id?: string;
   name: string;
   phone?: string;
+  age_years?: number | null;
   dob?: string;
   gender?: string;
   blood_group?: string;
@@ -56,6 +57,10 @@ export interface Doctor {
   speciality?: string;
   phone?: string;
   is_active?: boolean;
+  specialty?: string;
+  consultation_fee?: number | null;
+  slot_minutes?: number | null;
+  user_id?: string | null;
   created_at?: string;
 }
 
@@ -73,7 +78,13 @@ export interface Appointment {
   notes?: string;
   mode?: AppointmentMode;
   video_room?: string;
-  source?: "app" | "clinic";
+  source?: "app" | "clinic" | "bot";
+  duration_minutes?: number;
+  start_time?: string | null;
+  end_time?: string | null;
+  assigned_by?: string | null;
+  cancel_reason?: string | null;
+  reschedule_count?: number;
   created_at?: string;
   // joined
   patient?: ClinicPatient;

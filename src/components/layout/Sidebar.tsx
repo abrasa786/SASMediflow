@@ -8,6 +8,7 @@ import type { ClinicRole } from "@/types";
 const NAV = [
   { href: "/dashboard",    icon: "🏠", label: "Dashboard" },
   { href: "/appointments", icon: "📅", label: "Appointments" },
+  { href: "/availability", icon: "🗓", label: "Availability", roles: ["admin", "doctor"] as ClinicRole[] },
   { href: "/patients",     icon: "👥", label: "Patients" },
   { href: "/billing",      icon: "🧾", label: "Billing" },
   { href: "/stock",        icon: "💊", label: "Stock" },

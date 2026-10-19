@@ -4,14 +4,16 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import { getActiveClinicId } from "@/lib/auth";
+import { authFetch } from "@/lib/api";
 
-interface Message { role: "user" | "assistant"; content: string; ts: Date }
+interface Action { label: string; url: string }
+interface Message { role: "user" | "assistant"; content: string; ts: Date; actions?: Action[]; slots?: string[] }
 
 const QUICK_PROMPTS = [
+  "Book Priya Sharma 9876543210 tomorrow 10am",
   "How many appointments today?",
   "Which stock items are running low?",
   "Show today's revenue",
-  "List pending appointments",
 ];
 
 export default function ChatbotPage() {
@@ -21,6 +23,7 @@ export default function ChatbotPage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const draftRef = useRef<any>(null); // the booking/cancel request being filled in across messages
 
   useEffect(() => {
     const id = getActiveClinicId();
@@ -28,7 +31,7 @@ export default function ChatbotPage() {
     setClinicId(id);
     setMessages([{
       role: "assistant",
-      content: "Hi! I'm your clinic AI assistant powered by Gemini. I have live access to your clinic's appointments, patients, billing, and stock data. Ask me anything!",
+      content: "Hi! I can book, cancel and reschedule appointments for you. I check doctor availability, create the patient record if they're new, and prepare WhatsApp confirmations.\nTry: Book Anita Rao 9876543210 tomorrow 4pm\nI can also answer questions about today's appointments, revenue and stock.",
       ts: new Date(),
     }]);
   }, [router]);
@@ -46,14 +49,9 @@ export default function ChatbotPage() {
     setLoading(true);
     try {
       const history = messages.slice(-10).map(m => ({ role: m.role, content: m.content }));
-      const res = await fetch("/api/chatbot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clinicId, message: msg, history }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "AI error");
-      setMessages(prev => [...prev, { role: "assistant", content: data.reply, ts: new Date() }]);
+      const data = await authFetch("/api/chatbot", { body: { clinicId, message: msg, history, draft: draftRef.current } });
+      draftRef.current = data.draft ?? null;
+      setMessages(prev => [...prev, { role: "assistant", content: data.reply, ts: new Date(), actions: data.actions, slots: data.slots }]);
     } catch (e: any) {
       setMessages(prev => [...prev, { role: "assistant", content: `Sorry, I ran into an error: ${e.message}`, ts: new Date() }]);
     } finally {
@@ -90,7 +88,7 @@ export default function ChatbotPage() {
             <div className="w-10 h-10 bg-gradient-to-br from-sky-400 to-indigo-600 rounded-xl flex items-center justify-center text-white text-lg">🤖</div>
             <div>
               <h1 className="font-bold text-slate-900">Clinic AI Assistant</h1>
-              <p className="text-xs text-emerald-600 font-medium">● Live clinic data · Powered by Gemini 1.5 Flash</p>
+              <p className="text-xs text-emerald-600 font-medium">● Books appointments · Live clinic data</p>
             </div>
           </div>
         </div>
@@ -104,6 +102,16 @@ export default function ChatbotPage() {
               </div>
               <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${msg.role === "user" ? "bg-sky-500 text-white rounded-tr-sm" : "bg-white border border-slate-100 shadow-sm text-slate-800 rounded-tl-sm"}`}>
                 <div className="space-y-1">{renderContent(msg.content)}</div>
+                {msg.slots && msg.slots.length > 0 && i === messages.length - 1 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {msg.slots.map(t => <button key={t} onClick={() => send(t)} className="text-xs px-2.5 py-1 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-full border border-sky-200">{t}</button>)}
+                  </div>
+                )}
+                {msg.actions && msg.actions.length > 0 && (
+                  <div className="flex flex-col gap-1.5 mt-2">
+                    {msg.actions.map(a => <a key={a.url} href={a.url} target="_blank" rel="noreferrer" className="text-xs px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg border border-emerald-200 font-medium">{a.label} ↗</a>)}
+                  </div>
+                )}
                 <p className={`text-xs mt-1.5 ${msg.role === "user" ? "text-sky-200" : "text-slate-400"}`}>{formatTime(msg.ts)}</p>
               </div>
             </div>
@@ -143,7 +151,7 @@ export default function ChatbotPage() {
             <input
               value={input}
               onChange={e => setInput(e.target.value)}
-              placeholder="Ask about appointments, patients, billing, stock…"
+              placeholder="Book, cancel, reschedule, or ask about today…"
               disabled={loading}
               className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:opacity-60"
             />

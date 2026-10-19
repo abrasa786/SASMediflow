@@ -119,7 +119,7 @@ export function parseBookingText(text: string, today = todayInTz()): BookingDraf
     let h = +m[1]; const mi = m[2] ? +m[2] : 0; const pm = /^p/i.test(m[3]);
     if (h >= 1 && h <= 12 && mi < 60) { if (pm && h < 12) h += 12; if (!pm && h === 12) h = 0; out.time = fmt12(h, mi); t = t.replace(m[0], " | "); }
   } else if ((m = t.match(/\b(?:at\s+)?([01]?\d|2[0-3]):([0-5]\d)\b/))) {
-    out.time = fmt12(+m[1], +m[2]); t = t.replace(m[0], " | ");
+    { const h = +m[1]; out.time = fmt12(h >= 1 && h <= 7 ? h + 12 : h, +m[2]); } t = t.replace(m[0], " | "); // clinic hours: bare 1-7 means afternoon
   } else if (/\bnoon\b/i.test(t)) { out.time = "12:00 PM"; t = t.replace(/\bnoon\b/i, " | "); }
   else if ((m = t.match(/\bat\s+(\d{1,2})\b(?!\s*(?:years?|yrs?))/i)) && +m[1] >= 1 && +m[1] <= 12) {
     // "at 5" — assume working hours: 1-7 => PM, 8-11 => AM, 12 => PM
