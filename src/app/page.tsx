@@ -77,6 +77,10 @@ export default function LandingPage() {
               className="inline-flex items-center justify-center bg-gray-50 border border-gray-200 text-gray-700 font-semibold px-8 py-4 rounded-2xl text-lg hover:bg-gray-100 transition-colors">
               🦷 Try Dentist Demo
             </Link>
+            <a href="/demo"
+              className="inline-flex items-center justify-center gap-2 bg-white border border-blue-200 text-blue-700 font-semibold px-8 py-4 rounded-2xl text-lg hover:bg-blue-50 transition-colors">
+              ▶ Watch the guided demo
+            </a>
           </div>
           <p className="text-xs text-gray-400 mt-4">No credit card · Free for small clinics · Upgrade anytime</p>
         </div>
@@ -188,6 +192,9 @@ export default function LandingPage() {
             className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-violet-600 text-white font-bold px-10 py-4 rounded-2xl text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all">
             Enter Demo Clinic →
           </Link>
+          <p className="mt-5">
+            <a href="/demo" className="text-blue-700 font-semibold hover:underline">▶ Or take the 3-minute guided tour first</a>
+          </p>
         </div>
       </section>
 
