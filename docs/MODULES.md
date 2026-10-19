@@ -70,6 +70,16 @@ Apps group tabs. Six built-in apps (Booking, Clinical, Payments, Inventory, Admi
 ### WhatsApp chat and recall (migration 015)
 `POST /api/whatsapp/webhook` receives patient messages (signature-checked, de-duplicated, rate-limited). The sender's phone decides which patient records are in play, so a patient can only see or change their own: book (asks the day, offers free slots), my appointments, reschedule, cancel (asks yes), balance, stop/start. Several clinics on one number → it asks which. `recall_candidates` lists patients with an open treatment plan and nothing booked, or no visit for N days, excluding opted-out, no-phone and anyone nudged in the last 30 days. `/recall` sends one or many (WhatsApp, or a prefilled link if not connected); admins can switch on a daily automatic send (the daily cron, up to a daily limit).
 
+### Insurance claims (migration 016)
+- **Screen/API:** `/claims` (also a tab in the Payments app); `GET/POST /api/claims` (actions: `payer`, `policy`, `create`, `advance`, `query`, `reply`, `note`, `doc`, `deduction`).
+- **Who:** admin, nurses and receptionists run the desk; doctors can look. Interns do not see it.
+- **Journey (`claim_advance`):** draft → preauth_sent → approved → discharge_sent → settled; `query` pauses either "sent" stage and `claim_reply` returns to it with a fresh clock; rejected can be resubmitted; draft/approved can be cancelled. Steps cannot be skipped.
+- **Rules:** a stage cannot be sent while a required paper for it is unticked (`DOCS_MISSING` names them); approval needs the approved amount, discharge needs the final bill, settlement cannot exceed the bill; an expired policy cannot open a claim; ABHA is 14 digits or an ABHA address; a claim with a TPA is tracked against the TPA; deductions cannot add up to more than the bill; settled claims are closed to new papers.
+- **Clocks:** IRDAI's 1 hour for a cashless pre-authorisation and 3 hours for final discharge authorisation, counted from when it was sent (`src/lib/claims/sla.ts`); late claims are flagged and sorted first.
+- **Numbers (`claims_summary`):** open, waiting on insurer, queries, overdue, billed vs paid, deducted, won back, still disputable, cuts by reason, and per insurer/TPA the share paid and the average pre-auth time.
+- **Data:** `insurance_payers`, `patient_policies`, `claims` (`CLM-YYYY-NNNN` from `doc_counters`), `claim_documents`, `claim_events`, `claim_deductions`. Test: `supabase/tests/claims_test.sql`.
+- **Next:** NHCX exchange (needs ABDM M1 first), WhatsApp alert to the desk on a query, linking the settlement to the patient's invoice.
+
 ### Division of work: assistant vs Builder
 | | Assistant (`/chatbot`, everyone, within their role) | AI Builder (`/builder`, admin) |
 |---|---|---|

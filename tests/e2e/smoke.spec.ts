@@ -33,7 +33,7 @@ test("a branded clinic page uses the clinic's colour, name and bot", async ({ pa
 });
 
 test("protected pages send visitors to sign in", async ({ page }) => {
-  for (const path of ["/dashboard", "/users", "/builder", "/chatbot", "/settings"]) {
+  for (const path of ["/dashboard", "/users", "/builder", "/chatbot", "/settings", "/claims"]) {
     await page.goto(path);
     await page.waitForURL(/\/login/, { timeout: 15_000 });
   }
