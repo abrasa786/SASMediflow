@@ -212,3 +212,22 @@ create policy "Staff can CRUD invoices"
 -- Stock
 create policy "Staff can CRUD stock"
   on stock_items for all using (is_clinic_staff(clinic_id));
+
+-- ─── Tasks ────────────────────────────────────────────────────
+create table if not exists clinic_tasks (
+  id           uuid primary key default gen_random_uuid(),
+  clinic_id    uuid references clinics(id) on delete cascade,
+  title        text not null,
+  description  text,
+  status       text default 'todo' check (status in ('todo','in_progress','done')),
+  priority     text default 'medium' check (priority in ('low','medium','high')),
+  assigned_to  text,
+  due_date     date,
+  created_by   uuid references auth.users(id),
+  created_at   timestamptz default now()
+);
+
+alter table clinic_tasks enable row level security;
+
+create policy "Staff can CRUD tasks"
+  on clinic_tasks for all using (is_clinic_staff(clinic_id));

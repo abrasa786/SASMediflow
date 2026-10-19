@@ -11,6 +11,8 @@ const NAV = [
   { href: "/patients",     icon: "👥", label: "Patients" },
   { href: "/billing",      icon: "🧾", label: "Billing" },
   { href: "/stock",        icon: "💊", label: "Stock" },
+  { href: "/tasks",        icon: "✅", label: "Tasks" },
+  { href: "/analytics",   icon: "📊", label: "Analytics" },
   { href: "/staff",        icon: "👤", label: "Staff",    roles: ["admin"] as ClinicRole[] },
   { href: "/chatbot",      icon: "🤖", label: "AI Assistant" },
   { href: "/settings",     icon: "⚙️", label: "Settings", roles: ["admin"] as ClinicRole[] },

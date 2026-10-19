@@ -1,0 +1,333 @@
+<title>Mediflow Dental Demo</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap">
+<style>
+:root{--p:#2563eb;--s:#7c3aed;--ac:#06b6d4;--bg:#f6f7fb;--card:#fff;--fg:#0f172a;--mut:#64748b;--bd:#e2e8f0;--soft:#eef2ff;--ok:#059669;--warn:#d97706;--bad:#dc2626;--side:#0f172a;--sidefg:#cbd5e1;--grad:linear-gradient(135deg,#2563eb,#7c3aed)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1020;--card:#141a2e;--fg:#e8ecf8;--mut:#93a0bd;--bd:#252d47;--soft:#1b2347;--side:#080c18;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0b1020;--card:#141a2e;--fg:#e8ecf8;--mut:#93a0bd;--bd:#252d47;--soft:#1b2347;--side:#080c18;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:14px/1.5 Inter,system-ui,sans-serif;margin:0}
+h1,h2,h3,.logo{font-family:Sora,Inter,sans-serif;text-wrap:balance;margin:0}
+button{font:inherit;cursor:pointer}
+a{color:var(--p)}
+.btn{border:0;border-radius:10px;padding:9px 16px;font-weight:600;background:var(--grad);color:#fff}
+.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--bd)}
+.btn.sm{padding:5px 10px;font-size:12px;border-radius:8px}
+.btn.ok{background:var(--ok)}
+input,select,textarea{width:100%;padding:9px 11px;border:1px solid var(--bd);border-radius:9px;background:var(--card);color:var(--fg);font:inherit}
+label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);margin:10px 0 4px}
+.wrap{max-width:1100px;margin:0 auto;padding-inline:16px}
+/* landing */
+.nav{display:flex;align-items:center;justify-content:space-between;padding-block:14px;gap:10px;flex-wrap:wrap}
+.logo{font-size:20px;display:flex;gap:8px;align-items:center}
+.logo i{font-style:normal;width:30px;height:30px;border-radius:9px;background:var(--grad);color:#fff;display:grid;place-items:center;font-size:16px}
+.hero{background:var(--grad);color:#fff;border-radius:0 0 28px 28px;padding-block:56px 64px}
+.hero h1{font-size:clamp(28px,5vw,46px);max-width:16em;line-height:1.1}
+.hero p{max-width:34em;opacity:.9;font-size:16px}
+.hero .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.hero .btn{background:#fff;color:#1e3a8a}.hero .btn.ghost{background:transparent;color:#fff;border-color:#ffffff88}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;min-width:0}
+.sec{padding-block:44px}.sec h2{font-size:26px;margin-bottom:6px}
+.price{font-size:30px;font-family:Sora}
+.chatprev{max-width:420px}
+.bub{padding:8px 12px;border-radius:14px;margin:6px 0;max-width:85%}.bub.u{background:var(--grad);color:#fff;margin-left:auto}.bub.b{background:var(--soft)}
+/* auth */
+.ov{position:fixed;inset:0;background:#0009;display:none;place-items:center;z-index:50;padding:16px;overflow:auto}
+.ov.on{display:grid}
+.modal{background:var(--card);border-radius:20px;padding:22px;width:100%;max-width:440px;max-height:92vh;overflow:auto}
+.tabs{display:flex;gap:4px;background:var(--soft);padding:4px;border-radius:11px;margin:12px 0}
+.tabs button{flex:1;border:0;background:none;padding:7px;border-radius:8px;font-weight:600;color:var(--mut)}
+.tabs button.on{background:var(--card);color:var(--p)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dom{display:flex;align-items:center;gap:6px}.dom span{white-space:nowrap;color:var(--mut)}
+/* app */
+#app{display:none;height:100vh}#app.on{display:flex}
+.side{width:220px;background:var(--side);color:var(--sidefg);display:flex;flex-direction:column;flex-shrink:0;overflow:auto}
+.side .logo{color:#fff;padding:16px}
+.side button{display:flex;gap:10px;width:100%;text-align:left;background:none;border:0;color:inherit;padding:9px 16px;border-left:3px solid transparent}
+.side button:hover{background:#ffffff12}.side button.on{background:#2563eb33;color:#fff;border-left-color:var(--p)}
+.mainw{flex:1;display:flex;flex-direction:column;min-width:0}
+.top{display:flex;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid var(--bd);background:var(--card)}
+.top h2{font-size:18px;flex:1}
+.menu{display:none}
+#main{flex:1;overflow:auto;padding:18px}
+.stats{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:16px}
+.stat b{display:block;font:700 24px Sora;font-variant-numeric:tabular-nums}.stat span{color:var(--mut);font-size:12px}
+table{width:100%;border-collapse:collapse}th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--bd);white-space:nowrap}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+.tw{overflow-x:auto}
+.tag{padding:2px 9px;border-radius:99px;font-size:11px;font-weight:600;background:var(--soft);color:var(--p)}
+.tag.ok{background:#05966922;color:var(--ok)}.tag.warn{background:#d9770622;color:var(--warn)}.tag.bad{background:#dc262622;color:var(--bad)}
+.hl{outline:3px solid var(--ac);outline-offset:2px;border-radius:8px;animation:pulse 1s infinite alternate}
+@keyframes pulse{to{outline-color:transparent}}
+.bar{height:8px;background:var(--soft);border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--grad)}
+.toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}.toolbar h3{flex:1}
+.teeth{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin:4px 0}
+.tooth{aspect-ratio:1;border:1px solid var(--bd);border-radius:8px;font-size:11px;display:grid;place-items:center;background:var(--card);padding:0;color:var(--fg)}
+.tooth.treated{background:#05966933;border-color:var(--ok)}.tooth.issue{background:#dc262633;border-color:var(--bad)}.tooth.crown{background:#d9770633;border-color:var(--warn)}
+.kan{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.kan .card{background:var(--soft)}.task{background:var(--card);border-radius:9px;padding:8px 10px;margin:6px 0;border:1px solid var(--bd)}
+.mod{display:flex;gap:10px;align-items:center;justify-content:space-between}
+.chart{display:flex;align-items:flex-end;gap:8px;height:150px;padding-top:10px}.chart div{flex:1;text-align:center;font-size:11px;color:var(--mut)}.chart i{display:block;background:var(--grad);border-radius:6px 6px 0 0;margin-bottom:4px}
+/* floating */
+.fab{position:fixed;right:16px;bottom:16px;width:52px;height:52px;border-radius:50%;border:0;background:var(--grad);color:#fff;font-size:22px;box-shadow:0 6px 20px #0004;z-index:30}
+.fab.b2{bottom:76px;background:linear-gradient(135deg,#06b6d4,#2563eb)}
+.panel{position:fixed;right:16px;bottom:140px;width:min(360px,calc(100vw - 32px));max-height:60vh;background:var(--card);border:1px solid var(--bd);border-radius:16px;box-shadow:0 10px 40px #0004;z-index:40;display:none;flex-direction:column}
+.panel.on{display:flex}
+.panel header{padding:10px 14px;font-weight:700;background:var(--grad);color:#fff;border-radius:15px 15px 0 0;display:flex;justify-content:space-between}
+.msgs{flex:1;overflow:auto;padding:10px;min-height:160px}
+.inp{display:flex;gap:6px;padding:8px;border-top:1px solid var(--bd)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 10px 6px}.chips button{border:1px solid var(--bd);background:var(--soft);color:var(--fg);border-radius:99px;padding:3px 10px;font-size:12px}
+.agent{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;width:min(560px,calc(100vw - 32px));background:#0f172a;color:#fff;border-radius:16px;padding:12px 16px;z-index:45;display:none;box-shadow:0 10px 40px #0006}
+.agent.on{display:block}.agent b{color:#67e8f9}
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:9px 16px;border-radius:10px;z-index:99;display:none}
+@media(max-width:760px){.side{position:fixed;left:-230px;top:0;bottom:0;z-index:35;transition:left .2s}.side.on{left:0}.menu{display:block}.two{grid-template-columns:1fr}}
+</style>
+
+<div id="landing">
+ <div class="hero"><div class="wrap">
+  <div class="nav"><div class="logo" style="color:#fff"><i>M</i>Mediflow</div>
+   <div><button class="btn ghost sm" onclick="openAuth('login')">Log in</button> <button class="btn sm" onclick="openAuth('signup')">Sign up free</button></div></div>
+  <h1 style="margin-top:30px">The dental clinic app that runs itself</h1>
+  <p>Patients, multi-sitting treatment plans, billing, stock and WhatsApp reminders in one place. An AI agent walks you through every module, live.</p>
+  <div class="row"><button class="btn" onclick="doDemo()">🎯 Start live demo</button><button class="btn ghost" onclick="openAuth('signup')">Create my clinic</button></div>
+ </div></div>
+ <div class="wrap sec"><h2>Everything a dental clinic needs</h2><p style="color:var(--mut)">Built around how clinics actually work: sittings, tooth charts, GST invoices and chair-side stock.</p>
+  <div class="grid" style="margin-top:16px">
+   <div class="card"><h3>🦷 Patients & tooth chart</h3><p>FDI-notation chart, allergy alerts, full history.</p></div>
+   <div class="card"><h3>📅 Multi-sitting plans</h3><p>Root canal in 3 sittings? Each with its own amount, date and payment.</p></div>
+   <div class="card"><h3>🤖 AI booking chatbot</h3><p>Type "Priya, 27, cleaning tomorrow 10am" and it books.</p></div>
+   <div class="card"><h3>💬 WhatsApp reminders</h3><p>One tap opens a pre-written message to the patient.</p></div>
+   <div class="card"><h3>🧾 Invoices & GST</h3><p>Printable invoices with 18% GST, UPI, card or cash.</p></div>
+   <div class="card"><h3>📦 Stock that deducts itself</h3><p>Gloves, scaling tips and composite drop as you treat.</p></div>
+  </div></div>
+ <div class="wrap sec"><div class="grid">
+  <div><h2>See the chatbot</h2><p style="color:var(--mut)">Natural language in, confirmed appointment out.</p></div>
+  <div class="card chatprev"><div class="bub u">Rahul Mehta 34 years root canal friday 5pm 9811122233</div><div class="bub b">✅ Booked: Root Canal Treatment, 3 sittings, ₹25,000 plan. WhatsApp reminder ready.</div></div></div></div>
+ <div class="wrap sec"><h2>Simple pricing</h2><div class="grid" style="margin-top:14px">
+  <div class="card"><h3>Starter</h3><div class="price">₹999<small>/mo</small></div><p>1 doctor · 500 patients · reminders</p></div>
+  <div class="card" style="border-color:var(--p)"><h3>Clinic</h3><div class="price">₹2,499<small>/mo</small></div><p>5 staff · stock · analytics · AI chatbot</p></div>
+  <div class="card"><h3>Chain</h3><div class="price">₹5,999<small>/mo</small></div><p>Multi-branch · AI builder · priority support</p></div></div></div>
+ <div class="wrap" style="padding-block:24px;color:var(--mut);font-size:12px">© 2026 Mediflow · Demo data is fictional. Data stays in your browser.</div>
+</div>
+
+<div class="ov" id="auth"><div class="modal">
+ <div class="logo"><i>M</i>Mediflow</div>
+ <div class="tabs"><button data-t="login" class="on">Log in</button><button data-t="signup">Sign up</button><button data-t="demo">Demo</button></div>
+ <div id="t-login"><label>Email</label><input id="lE" type="email" placeholder="you@clinic.com"><label>Password</label><input id="lP" type="password"><p id="lErr" style="color:var(--bad);margin:6px 0"></p><button class="btn" style="width:100%" onclick="doLogin()">Log in</button></div>
+ <div id="t-signup" hidden>
+  <div class="two"><div><label>Your name</label><input id="sN"></div><div><label>Clinic name</label><input id="sC"></div></div>
+  <div class="two"><div><label>Email</label><input id="sE" type="email"></div><div><label>Phone</label><input id="sPh"></div></div>
+  <label>Domain</label><div class="dom"><input id="sD" placeholder="brightsmile"><span>.mediflow.in</span></div>
+  <label>Specialty</label><select id="sS"><option>Dental / Orthodontics</option><option>General Practice</option><option>Orthopaedics</option><option>Dermatology</option><option>ENT</option><option>Paediatrics</option><option>Gynaecology</option><option>Ophthalmology</option><option>Multi-specialty</option></select>
+  <label>Logo</label><input id="sL" type="file" accept="image/*"><img id="sLp" style="max-height:50px;margin-top:6px;display:none">
+  <label>Password</label><input id="sPw" type="password"><p id="sErr" style="color:var(--bad);margin:6px 0"></p>
+  <button class="btn" style="width:100%" onclick="doSignup()">Create clinic & enter</button></div>
+ <div id="t-demo" hidden><p>Jump straight in with a fully loaded dental clinic. No credentials needed. Aria, our AI agent, will show you each module.</p>
+  <label>Your name (for the walkthrough)</label><input id="dN" placeholder="Dr. Anita">
+  <button class="btn" style="width:100%;margin-top:12px" onclick="doDemo()">🎯 Enter live demo</button></div>
+ <button class="btn ghost sm" style="margin-top:12px" onclick="closeAuth()">Close</button>
+</div></div>
+
+<div id="app">
+ <aside class="side" id="side"><div class="logo"><i>M</i>Mediflow</div><div id="nav"></div></aside>
+ <div class="mainw"><div class="top"><button class="btn ghost sm menu" onclick="side.classList.toggle('on')">☰</button><h2 id="ttl">Dashboard</h2>
+  <button class="btn ghost sm" onclick="startAgent()">▶ Demo agent</button><button class="btn ghost sm" onclick="toggleTheme()">🌓</button><button class="btn ghost sm" onclick="logout()">Log out</button></div>
+  <div id="main"></div></div>
+ <button class="fab b2" onclick="tp('aria')" title="Aria AI">✨</button><button class="fab" onclick="tp('bot')" title="Booking chatbot">💬</button>
+ <div class="panel" id="bot"><header>🤖 Booking assistant <span onclick="tp('bot')" style="cursor:pointer">✕</span></header><div class="msgs" id="botM"></div>
+  <div class="chips"><button onclick="botSend('Sneha Rao 31 years teeth cleaning tomorrow 11am 9822233344')">Example</button></div>
+  <div class="inp"><input id="botI" placeholder="Name, age, treatment, when, phone" onkeydown="if(event.key==='Enter')botSend()"><button class="btn sm" onclick="botSend()">Send</button></div></div>
+ <div class="panel" id="aria"><header>✨ Aria, your guide <span onclick="tp('aria')" style="cursor:pointer">✕</span></header><div class="msgs" id="ariaM"></div>
+  <div class="chips" id="ariaC"></div>
+  <div class="inp"><input id="ariaI" placeholder="Ask about any module" onkeydown="if(event.key==='Enter')ariaSend()"><button class="btn sm" onclick="ariaSend()">Ask</button></div></div>
+ <div class="agent" id="agent"><div><b>Aria</b> · step <span id="agN"></span></div><div id="agT" style="margin:6px 0"></div><button class="btn sm" onclick="agentNext()">Next ▶</button> <button class="btn ghost sm" style="color:#fff" onclick="stopAgent()">Stop</button></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const LS={g(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},s(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const inr=n=>'₹'+Number(n||0).toLocaleString('en-IN');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const uid=p=>p+Math.random().toString(36).slice(2,7);
+const dstr=(off=0)=>{const d=new Date();d.setDate(d.getDate()+off);return d.toISOString().slice(0,10)};
+function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display='none',2600)}
+function toggleTheme(){const r=document.documentElement;r.dataset.theme=(r.dataset.theme==='dark'||(!r.dataset.theme&&matchMedia('(prefers-color-scheme:dark)').matches))?'light':'dark'}
+
+const TP={
+ 'root-canal':{label:'Root Canal Treatment',icon:'🦷',total:25000,steps:['Diagnosis & Pulp Removal','Canal Shaping & Filling','Crown Placement'],splits:[5000,5000,15000],gap:[0,7,21],use:{'Gloves (box)':1,'Local Anaesthetic':1}},
+ cleaning:{label:'Teeth Cleaning',icon:'✨',total:1500,steps:['Scaling & Polishing'],splits:[1500],gap:[0],use:{'Scaling Tips':1,'Polishing Paste':1,'Gloves (box)':1}},
+ ortho:{label:'Orthodontic Treatment',icon:'😁',total:60000,steps:['Consult & Fitting','Monthly Adjustment 1','Monthly Adjustment 2','Retainer'],splits:[20000,10000,10000,20000],gap:[0,30,60,90],use:{'Ortho Wire':1}},
+ extraction:{label:'Tooth Extraction',icon:'🪥',total:2000,steps:['Extraction'],splits:[2000],gap:[0],use:{'Local Anaesthetic':1,'Gloves (box)':1}},
+ filling:{label:'Composite Filling',icon:'🧩',total:2500,steps:['Filling'],splits:[2500],gap:[0],use:{'Composite Resin':1}},
+ crown:{label:'Crown / Cap',icon:'👑',total:12000,steps:['Preparation','Fitting'],splits:[6000,6000],gap:[0,10],use:{}},
+ whitening:{label:'Teeth Whitening',icon:'💎',total:8000,steps:['Whitening'],splits:[8000],gap:[0],use:{}},
+ implant:{label:'Dental Implant',icon:'🔩',total:45000,steps:['Surgery','Abutment','Crown'],splits:[25000,10000,10000],gap:[0,90,120],use:{}},
+ consult:{label:'Consultation',icon:'🩺',total:500,steps:['Consultation'],splits:[500],gap:[0],use:{}}
+};
+const KW={'cleaning':'cleaning','scaling':'cleaning','root canal':'root-canal','rct':'root-canal','brace':'ortho','ortho':'ortho','extract':'extraction','fill':'filling','crown':'crown','cap':'crown','whiten':'whitening','implant':'implant','consult':'consult','checkup':'consult'};
+
+function seed(){
+ const mk=(id,name,age,g,ph,alerts,notes,teeth)=>({id,name,age,gender:g,phone:ph,alerts,notes,teeth,created:dstr(-60)});
+ const P=[mk('p1','Priya Sharma',27,'F','9876543210','','Sensitivity on lower right',{16:'treated',46:'issue'}),
+  mk('p2','Rahul Mehta',34,'M','9811122233','Penicillin allergy','Needs RCT on 36',{36:'issue',26:'crown'}),
+  mk('p3','Anjali Nair',45,'F','9900112233','Diabetic','Gum recession, review quarterly',{11:'crown',21:'crown',17:'treated'}),
+  mk('p4','Karan Singh',16,'M','9733445566','','Braces patient, month 2',{}),
+  mk('p5','Meera Iyer',52,'F','9644556677','Hypertension','Implant planned at 46',{46:'issue',47:'treated'}),
+  mk('p6','Vikram Joshi',29,'M','9555667788','','Wisdom tooth pain',{48:'issue'})];
+ const ap=(id,pid,tr,off,time,tot,paidN,cur)=>{const p=P.find(x=>x.id===pid),t=TP[tr];
+  const sit=t.steps.map((s,i)=>({label:s,amount:t.splits[i]*tot/t.total,paid:i<paidN,date:dstr(off+t.gap[i])}));
+  return{id,patientId:pid,patientName:p.name,phone:p.phone,treatment:tr,treatmentLabel:t.label,date:dstr(off),time,doctor:'Dr. Anita Desai',totalAmount:tot,sittings:sit,currentSitting:cur,totalSittings:sit.length,status:off<0&&cur>=sit.length?'completed':'scheduled',notes:''}};
+ const A=[ap('a1','p1','cleaning',0,'10:00',1500,0,0),ap('a2','p2','root-canal',1,'17:00',25000,1,1),ap('a3','p3','crown',2,'11:30',12000,1,1),
+  ap('a4','p4','ortho',3,'16:00',60000,2,2),ap('a5','p5','implant',5,'12:00',45000,1,1),ap('a6','p6','extraction',-1,'15:00',2000,1,1),ap('a7','p1','filling',-6,'09:30',2500,1,1)];
+ const S=[['Gloves (box)','Consumables',18,10,'box'],['Scaling Tips','Instruments',12,8,'pcs'],['Polishing Paste','Consumables',6,5,'tube'],['Local Anaesthetic','Medicines',24,15,'vial'],['Composite Resin','Materials',4,5,'syringe'],['Ortho Wire','Materials',30,10,'pcs'],['Dental X-ray Film','Consumables',40,20,'pcs'],['Face Masks','Consumables',90,50,'pcs']].map((x,i)=>({id:'s'+i,name:x[0],category:x[1],qty:x[2],minQty:x[3],unit:x[4],lastUsed:dstr(-i)}));
+ const ST=[['Dr. Anita Desai','Doctor','Dentistry','9800000001','AD','Active'],['Dr. Rohan Kapoor','Doctor','Orthodontics','9800000002','RK','Active'],['Sunita Pillai','Receptionist','Front desk','9800000003','SP','Active'],['Farhan Ali','Nurse','Chairside','9800000004','FA','On leave']].map(x=>({name:x[0],role:x[1],dept:x[2],phone:x[3],avatar:x[4],status:x[5]}));
+ const MD=[['Appointments','Multi-sitting scheduling','📅'],['Patients','Records & tooth chart','👥'],['Billing','GST invoices & Razorpay','🧾'],['Stock','Auto-deduct inventory','📦'],['WhatsApp','Reminders & follow-ups','💬'],['AI Chatbot','Natural language booking','🤖'],['Analytics','Revenue & treatment mix','📊'],['Tasks','Kanban for the team','✅']].map((x,i)=>({id:'m'+i,name:x[0],desc:x[1],icon:x[2],active:i<7}));
+ const T=[['Order composite resin','todo','high'],['Sterilise instrument tray','doing','med'],['Call Rahul for RCT sitting 2','todo','high'],['Update GST filing','done','low'],['Review X-ray for Meera','doing','med']].map((x,i)=>({id:'t'+i,title:x[0],col:x[1],priority:x[2]}));
+ const I=[{id:'INV-1001',patientName:'Vikram Joshi',treatment:'Tooth Extraction',amount:2360,date:dstr(-1),status:'paid',mode:'UPI'},{id:'INV-1002',patientName:'Priya Sharma',treatment:'Composite Filling',amount:2950,date:dstr(-6),status:'paid',mode:'Card'},{id:'INV-1003',patientName:'Rahul Mehta',treatment:'Root Canal (sitting 1)',amount:5900,date:dstr(-7),status:'paid',mode:'Cash'},{id:'INV-1004',patientName:'Karan Singh',treatment:'Ortho adjustment',amount:11800,date:dstr(-10),status:'pending',mode:''}];
+ return{patients:P,appointments:A,invoices:I,stock:S,staff:ST,modules:MD,tasks:T,settings:{clinicName:'Bright Smile Dental',doctorName:'Dr. Anita Desai',gst:'27ABCDE1234F1Z5',address:'12 MG Road, Pune',phone:'9800000000'}};
+}
+let D=LS.g('mf_data',null),AUTH=LS.g('mf_auth',null);
+const save=()=>LS.s('mf_data',D);
+
+/* auth */
+function openAuth(t){$('#auth').classList.add('on');authTab(t||'login')}
+function closeAuth(){$('#auth').classList.remove('on')}
+function authTab(t){['login','signup','demo'].forEach(k=>$('#t-'+k).hidden=k!==t);$$('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t))}
+$$('.tabs button').forEach(b=>b.onclick=()=>authTab(b.dataset.t));
+$('#sL').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{window._logo=r.result;const i=$('#sLp');i.src=r.result;i.style.display='block'};r.readAsDataURL(f)};
+function doLogin(){const e=$('#lE').value.trim(),p=$('#lP').value;const acc=LS.g('mf_accounts',[]).find(a=>a.email===e&&a.pw===p);
+ if(!acc){$('#lErr').textContent='No account found. Sign up below or try the live demo.';return}
+ AUTH={email:e,name:acc.name,demo:false};LS.s('mf_auth',AUTH);D=LS.g('mf_data_'+e,null)||D||blank(acc);startApp()}
+function blank(acc){const d=seed();d.patients=[];d.appointments=[];d.invoices=[];d.tasks=[];d.settings.clinicName=acc.clinic;d.settings.doctorName=acc.name;return d}
+function doSignup(){const g=id=>$(id).value.trim(),a={name:g('#sN'),clinic:g('#sC'),email:g('#sE'),phone:g('#sPh'),domain:g('#sD'),specialty:$('#sS').value,pw:$('#sPw').value,logo:window._logo||''};
+ if(!a.name||!a.clinic||!a.email||a.pw.length<6){$('#sErr').textContent='Name, clinic, email and a 6+ character password are required.';return}
+ const acs=LS.g('mf_accounts',[]);if(acs.some(x=>x.email===a.email)){$('#sErr').textContent='Email already registered. Log in instead.';return}
+ acs.push(a);LS.s('mf_accounts',acs);D=blank(a);D.settings.phone=a.phone;D.settings.domain=a.domain;D.settings.logo=a.logo;
+ AUTH={email:a.email,name:a.name,demo:false};LS.s('mf_auth',AUTH);save();startApp();toast('Welcome, '+a.name+'! Your clinic is ready.')}
+function doDemo(){const n=($('#dN')&&$('#dN').value.trim())||'there';AUTH={email:'demo',name:n,demo:true};LS.s('mf_auth',AUTH);D=seed();save();startApp();setTimeout(startAgent,600)}
+function logout(){AUTH=null;try{localStorage.removeItem('mf_auth')}catch(e){}stopAgent();$('#app').classList.remove('on');$('#landing').style.display='block'}
+
+/* shell */
+const SCREENS=[['dashboard','🏠','Dashboard'],['appointments','📅','Appointments'],['patients','👥','Patients'],['treatments','🦷','Treatments'],['billing','🧾','Billing'],['stock','📦','Stock'],['staff','👤','Staff'],['analytics','📊','Analytics'],['modules','🧩','Modules'],['tasks','✅','Tasks'],['aibuilder','🛠','AI Builder'],['howworks','❓','How It Works'],['settings','⚙️','Settings']];
+let cur='dashboard';
+function startApp(){closeAuth();$('#landing').style.display='none';$('#app').classList.add('on');
+ $('#nav').innerHTML=SCREENS.map(s=>`<button data-s="${s[0]}" onclick="showScreen('${s[0]}')">${s[1]} ${s[2]}</button>`).join('');
+ botMsg('Hi! Tell me patient name, age, treatment, when and phone, and I will book it.');
+ ariaMsg('b',`Hi ${esc(AUTH.name)}! I'm Aria. Ask me about any module, or tap a chip below.`);ariaChips();
+ showScreen('dashboard')}
+function showScreen(s){cur=s;side.classList.remove('on');$$('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.s===s));$('#ttl').textContent=SCREENS.find(x=>x[0]===s)[2];R[s]();window._ariaMod=s}
+const side=$('#side');
+function tp(id){$('#'+id).classList.toggle('on')}
+function modal(html){let m=$('#dyn');if(!m){m=document.createElement('div');m.id='dyn';m.className='ov';document.body.appendChild(m)}m.innerHTML=`<div class="modal">${html}<button class="btn ghost sm" style="margin-top:12px" onclick="closeModal()">Close</button></div>`;m.classList.add('on')}
+function closeModal(){const m=$('#dyn');if(m)m.classList.remove('on')}
+const stat=(v,l)=>`<div class="card stat"><b>${v}</b><span>${l}</span></div>`;
+const paidOf=a=>a.sittings.filter(s=>s.paid).reduce((x,s)=>x+s.amount,0);
+
+const R={
+dashboard(){const today=dstr(),A=D.appointments,rev=D.invoices.filter(i=>i.status==='paid').reduce((x,i)=>x+i.amount,0),pend=A.reduce((x,a)=>x+a.totalAmount-paidOf(a),0),low=D.stock.filter(s=>s.qty<=s.minQty);
+ $('#main').innerHTML=`<div class="stats">${stat(A.filter(a=>a.date===today).length,'Today\'s appointments')}${stat(D.patients.length,'Patients')}${stat(inr(rev),'Revenue collected')}${stat(inr(pend),'Treatment balance due')}${stat(low.length,'Low stock items')}</div>
+ <div class="grid"><div class="card"><h3>Upcoming</h3><div class="tw"><table>${A.filter(a=>a.date>=today&&a.status!=='completed').sort((a,b)=>a.date.localeCompare(b.date)).slice(0,6).map(a=>`<tr><td>${a.date} ${a.time}</td><td>${esc(a.patientName)}</td><td>${esc(a.treatmentLabel)}</td></tr>`).join('')||'<tr><td>Nothing scheduled</td></tr>'}</table></div></div>
+ <div class="card"><h3>Low stock</h3>${low.map(s=>`<p>${esc(s.name)} <span class="tag bad">${s.qty} ${s.unit}</span></p>`).join('')||'<p>All stocked up ✅</p>'}</div></div>`},
+appointments(){$('#main').innerHTML=`<div class="toolbar"><h3>All appointments</h3><button class="btn sm" onclick="apptModal()">+ New appointment</button></div><div class="card tw"><table><tr><th>Date</th><th>Patient</th><th>Treatment</th><th>Sitting</th><th>Paid / Total</th><th>Status</th><th></th></tr>
+ ${D.appointments.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(a=>`<tr id="row-${a.id}"><td>${a.date} ${a.time}</td><td>${esc(a.patientName)}</td><td>${esc(a.treatmentLabel)}</td><td>${Math.min(a.currentSitting+1,a.totalSittings)}/${a.totalSittings}</td><td>${inr(paidOf(a))} / ${inr(a.totalAmount)}</td><td><span class="tag ${a.status==='completed'?'ok':''}">${a.status}</span></td><td><button class="btn ghost sm" onclick="apptWA('${a.id}')">💬</button> <button class="btn ghost sm" onclick="calLink('${a.id}')">📆</button></td></tr>`).join('')}</table></div>`},
+patients(){$('#main').innerHTML=`<div class="toolbar"><h3>Patients</h3><input id="pq" placeholder="Search…" style="max-width:220px" oninput="pFilter()"><button class="btn sm" onclick="patModal()">+ Add patient</button></div><div class="card tw"><table id="pt"><tr><th>Name</th><th>Age</th><th>Phone</th><th>Alerts</th><th></th></tr>${D.patients.map(p=>`<tr data-n="${esc(p.name.toLowerCase())}" id="prow-${p.id}"><td>${esc(p.name)}</td><td>${p.age}</td><td>${esc(p.phone)}</td><td>${p.alerts?`<span class="tag bad">${esc(p.alerts)}</span>`:''}</td><td><button class="btn ghost sm" onclick="chartModal('${p.id}')">Tooth chart</button></td></tr>`).join('')}</table></div>`},
+treatments(){const act=D.appointments.filter(a=>a.totalSittings>1);$('#main').innerHTML=`<div class="toolbar"><h3>Multi-sitting treatment plans</h3></div><div class="grid">${act.map(a=>`<div class="card"><h3>${TP[a.treatment].icon} ${esc(a.treatmentLabel)}</h3><p style="color:var(--mut)">${esc(a.patientName)} · ${inr(a.totalAmount)}</p><div class="bar"><i style="width:${paidOf(a)/a.totalAmount*100}%"></i></div>
+ ${a.sittings.map((s,i)=>`<p>${s.paid?'✅':'⬜'} ${i+1}. ${esc(s.label)} <small style="color:var(--mut)">${s.date}</small> <b>${inr(s.amount)}</b> ${s.paid?'':`<button class="btn sm ok" onclick="paySitting('${a.id}',${i})">Collect</button>`}</p>`).join('')}</div>`).join('')}</div>`},
+billing(){const tot=D.invoices.filter(i=>i.status==='paid').reduce((x,i)=>x+i.amount,0);$('#main').innerHTML=`<div class="stats">${stat(inr(tot),'Collected')}${stat(inr(D.invoices.filter(i=>i.status!=='paid').reduce((x,i)=>x+i.amount,0)),'Pending')}</div><div class="toolbar"><h3>Invoices</h3><button class="btn sm" onclick="invModal()">+ New invoice</button></div><div class="card tw"><table id="it"><tr><th>#</th><th>Patient</th><th>Treatment</th><th>Amount</th><th>Date</th><th>Status</th><th></th></tr>${D.invoices.map(i=>`<tr id="inv-${i.id}"><td>${i.id}</td><td>${esc(i.patientName)}</td><td>${esc(i.treatment)}</td><td>${inr(i.amount)}</td><td>${i.date}</td><td><span class="tag ${i.status==='paid'?'ok':'warn'}">${i.status}${i.mode?' · '+i.mode:''}</span></td><td><button class="btn ghost sm" onclick="invView('${i.id}')">View</button></td></tr>`).join('')}</table></div>`},
+stock(){$('#main').innerHTML=`<div class="toolbar"><h3>Inventory</h3><button class="btn sm" onclick="stockAdd()">+ Add item</button></div><div class="card tw"><table><tr><th>Item</th><th>Category</th><th>Qty</th><th>Min</th><th>Last used</th><th></th></tr>${D.stock.map(s=>`<tr id="stk-${s.id}"><td>${esc(s.name)}</td><td>${esc(s.category)}</td><td><span class="tag ${s.qty<=s.minQty?'bad':'ok'}">${s.qty} ${s.unit}</span></td><td>${s.minQty}</td><td>${s.lastUsed}</td><td><button class="btn ghost sm" onclick="stockAdj('${s.id}',-1)">−</button> <button class="btn ghost sm" onclick="stockAdj('${s.id}',5)">+5</button></td></tr>`).join('')}</table></div>`},
+staff(){$('#main').innerHTML=`<div class="grid">${D.staff.map(s=>`<div class="card"><div style="display:flex;gap:10px;align-items:center"><div class="logo"><i>${esc(s.avatar)}</i></div><div><b>${esc(s.name)}</b><br><small style="color:var(--mut)">${esc(s.role)} · ${esc(s.dept)}</small></div></div><p>${esc(s.phone)} <span class="tag ${s.status==='Active'?'ok':'warn'}">${s.status}</span></p></div>`).join('')}</div>`},
+analytics(){const m={};D.appointments.forEach(a=>m[a.treatmentLabel]=(m[a.treatmentLabel]||0)+paidOf(a));const e=Object.entries(m).sort((a,b)=>b[1]-a[1]),mx=Math.max(1,...e.map(x=>x[1]));
+ $('#main').innerHTML=`<div class="grid"><div class="card"><h3>Revenue by treatment</h3><div class="chart">${e.map(x=>`<div><i style="height:${x[1]/mx*110}px"></i>${esc(x[0].split(' ')[0])}<br>${inr(x[1])}</div>`).join('')}</div></div>
+ <div class="card"><h3>Highlights</h3><p>Patients: <b>${D.patients.length}</b></p><p>Avg. plan value: <b>${inr(D.appointments.reduce((x,a)=>x+a.totalAmount,0)/Math.max(1,D.appointments.length))}</b></p><p>Multi-sitting plans: <b>${D.appointments.filter(a=>a.totalSittings>1).length}</b></p></div></div>`},
+modules(){$('#main').innerHTML=`<div class="grid">${D.modules.map(m=>`<div class="card mod"><div><h3>${m.icon} ${m.name}</h3><small style="color:var(--mut)">${m.desc}</small></div><button class="btn sm ${m.active?'ok':'ghost'}" onclick="togMod('${m.id}')">${m.active?'On':'Off'}</button></div>`).join('')}</div>`},
+tasks(){const cols=[['todo','To do'],['doing','In progress'],['done','Done']];$('#main').innerHTML=`<div class="toolbar"><h3>Team tasks</h3><input id="tI" placeholder="New task…" style="max-width:240px"><button class="btn sm" onclick="addTask()">Add</button></div><div class="kan">${cols.map(c=>`<div class="card"><h3>${c[1]}</h3>${D.tasks.filter(t=>t.col===c[0]).map(t=>`<div class="task">${esc(t.title)} <span class="tag ${t.priority==='high'?'bad':''}">${t.priority}</span><br><button class="btn ghost sm" onclick="moveTask('${t.id}')">Move →</button></div>`).join('')}</div>`).join('')}</div>`},
+aibuilder(){$('#main').innerHTML=`<div class="card"><h3>🛠 AI Builder</h3><p style="color:var(--mut)">Describe a new module in plain words. The builder adds it to your clinic.</p><textarea id="bd" rows="3" placeholder="e.g. Track lab orders for crowns and bridges"></textarea><div style="margin-top:10px"><button class="btn" onclick="build()">Build module</button></div></div>`},
+howworks(){const st=[['1','Sign up','Name your clinic, pick a specialty and domain.'],['2','Add patients','Chart teeth, flag allergies.'],['3','Book','Use the form or chat in plain language.'],['4','Treat in sittings','Each sitting has its own amount and payment.'],['5','Bill & remind','GST invoices, WhatsApp reminders.'],['6','Stock follows','Consumables deduct as you treat.']];
+ $('#main').innerHTML=`<div class="grid">${st.map(s=>`<div class="card"><div class="tag">Step ${s[0]}</div><h3 style="margin-top:6px">${s[1]}</h3><p>${s[2]}</p></div>`).join('')}</div>`},
+settings(){const s=D.settings;$('#main').innerHTML=`<div class="card" style="max-width:520px"><h3>Clinic settings</h3>${[['clinicName','Clinic name'],['doctorName','Doctor'],['gst','GSTIN'],['address','Address'],['phone','Phone']].map(f=>`<label>${f[1]}</label><input id="set-${f[0]}" value="${esc(s[f[0]]||'')}">`).join('')}<div style="margin-top:12px"><button class="btn" onclick="saveSet()">Save</button></div></div>`}
+};
+
+/* actions */
+function pFilter(){const q=$('#pq').value.toLowerCase();$$('#pt tr[data-n]').forEach(r=>r.style.display=r.dataset.n.includes(q)?'':'none')}
+function patModal(pre){modal(`<h3>Add patient</h3><label>Name</label><input id="mN"><div class="two"><div><label>Age</label><input id="mA" type="number"></div><div><label>Gender</label><select id="mG"><option>F</option><option>M</option></select></div></div><label>Phone</label><input id="mP"><label>Allergy / alert</label><input id="mAl"><label>Notes</label><textarea id="mNo" rows="2"></textarea><div style="margin-top:12px"><button class="btn" onclick="patSave()">Save patient</button></div>`);
+ if(pre){$('#mN').value=pre.name;$('#mA').value=pre.age;$('#mP').value=pre.phone}}
+function patSave(){const n=$('#mN').value.trim();if(!n){toast('Name required');return}
+ const p={id:uid('p'),name:n,age:+$('#mA').value||0,gender:$('#mG').value,phone:$('#mP').value.trim(),alerts:$('#mAl').value,notes:$('#mNo').value,teeth:{},created:dstr()};D.patients.push(p);save();closeModal();if(cur==='patients')R.patients();toast('Patient added: '+n);return p}
+function chartModal(id){const p=D.patients.find(x=>x.id===id);const row=a=>`<div class="teeth">${a.map(n=>`<button class="tooth ${p.teeth[n]||''}" onclick="cycle('${id}',${n},this)">${n}</button>`).join('')}</div>`;
+ modal(`<h3>${esc(p.name)} · tooth chart</h3><p style="color:var(--mut)">Tap a tooth to cycle: healthy → treated → issue → crown.</p><small>Upper</small>${row([18,17,16,15,14,13,12,11])}${row([21,22,23,24,25,26,27,28])}<small>Lower</small>${row([48,47,46,45,44,43,42,41])}${row([31,32,33,34,35,36,37,38])}<p><span class="tag ok">treated</span> <span class="tag bad">issue</span> <span class="tag warn">crown</span></p>`)}
+function cycle(id,n,el){const p=D.patients.find(x=>x.id===id),st=['','treated','issue','crown'],nx=st[(st.indexOf(p.teeth[n]||'')+1)%4];if(nx)p.teeth[n]=nx;else delete p.teeth[n];el.className='tooth '+nx;save()}
+function apptModal(pre){pre=pre||{};modal(`<h3>New appointment</h3><label>Patient</label><select id="aP">${D.patients.map(p=>`<option value="${p.id}" ${pre.pid===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select><label>Treatment</label><select id="aT" onchange="$('#aTot').value=TP[this.value].total">${Object.entries(TP).map(([k,t])=>`<option value="${k}" ${pre.tr===k?'selected':''}>${t.icon} ${t.label}</option>`).join('')}</select><div class="two"><div><label>Date</label><input id="aD" type="date" value="${pre.date||dstr(1)}"></div><div><label>Time</label><input id="aTm" type="time" value="${pre.time||'10:00'}"></div></div><label>Total plan amount (₹)</label><input id="aTot" type="number" value="${TP[pre.tr||'root-canal'].total}"><div style="margin-top:12px"><button class="btn" onclick="apptSave()">Book</button></div>`)}
+function apptSave(){return mkAppt($('#aP').value,$('#aT').value,$('#aD').value,$('#aTm').value,+$('#aTot').value)}
+function mkAppt(pid,tr,date,time,tot){const p=D.patients.find(x=>x.id===pid),t=TP[tr];tot=tot||t.total;
+ const base=new Date(date),sit=t.steps.map((s,i)=>{const d=new Date(base);d.setDate(d.getDate()+t.gap[i]);return{label:s,amount:Math.round(t.splits[i]*tot/t.total),paid:false,date:d.toISOString().slice(0,10)}});
+ const a={id:uid('a'),patientId:pid,patientName:p.name,phone:p.phone,treatment:tr,treatmentLabel:t.label,date,time,doctor:D.settings.doctorName,totalAmount:tot,sittings:sit,currentSitting:0,totalSittings:sit.length,status:'scheduled',notes:''};
+ D.appointments.push(a);save();closeModal();if(cur==='appointments')R.appointments();toast('Booked: '+t.label+' for '+p.name);return a}
+function apptWA(id){const a=D.appointments.find(x=>x.id===id);const m=`Dear ${a.patientName}, your ${a.treatmentLabel} appointment at ${D.settings.clinicName} is on ${a.date} at ${a.time}. Please reply to confirm. Thank you!`;
+ modal(`<h3>WhatsApp reminder</h3><textarea rows="5" readonly>${esc(m)}</textarea><p style="margin-top:10px"><a class="btn" style="text-decoration:none;display:inline-block" target="_blank" rel="noopener" href="https://wa.me/91${a.phone.replace(/\D/g,'')}?text=${encodeURIComponent(m)}">Open in WhatsApp</a></p>`)}
+function calLink(id){const a=D.appointments.find(x=>x.id===id),s=a.date.replace(/-/g,'')+'T'+a.time.replace(':','')+'00';
+ modal(`<h3>Add to Google Calendar</h3><p><a target="_blank" rel="noopener" href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(a.treatmentLabel+' - '+a.patientName)}&dates=${s}/${s}">Open Google Calendar</a></p>`)}
+function paySitting(id,i){const a=D.appointments.find(x=>x.id===id),s=a.sittings[i];s.paid=true;a.currentSitting=Math.max(a.currentSitting,i+1);if(a.sittings.every(x=>x.paid))a.status='completed';
+ D.invoices.push({id:'INV-'+(1001+D.invoices.length),patientName:a.patientName,treatment:`${a.treatmentLabel} (sitting ${i+1})`,amount:Math.round(s.amount*1.18),date:dstr(),status:'paid',mode:'UPI'});deduct(a.treatment);save();R.treatments();toast('Collected '+inr(s.amount)+' + GST, invoice created')}
+function deduct(tr){Object.entries(TP[tr].use).forEach(([n,q])=>{const it=D.stock.find(s=>s.name===n);if(it){it.qty=Math.max(0,it.qty-q);it.lastUsed=dstr()}})}
+function invModal(pre){pre=pre||{};modal(`<h3>New invoice</h3><label>Patient</label><select id="iP">${D.patients.map(p=>`<option ${pre.name===p.name?'selected':''}>${esc(p.name)}</option>`).join('')}</select><label>Treatment</label><input id="iT" value="${esc(pre.t||'')}"><label>Amount before GST (₹)</label><input id="iA" type="number" value="${pre.a||''}" oninput="$('#iG').textContent=inr(this.value*1.18)"><p>Total with 18% GST: <b id="iG">${inr((pre.a||0)*1.18)}</b></p><label>Payment mode</label><select id="iM"><option>UPI</option><option>Card</option><option>Cash</option><option>Razorpay link</option></select><div style="margin-top:12px"><button class="btn" onclick="invSave()">Generate invoice</button></div>`)}
+function invSave(){const t=$('#iT').value.trim(),a=+$('#iA').value;if(!t||!a){toast('Treatment and amount needed');return}
+ const i={id:'INV-'+(1001+D.invoices.length),patientName:$('#iP').value,treatment:t,amount:Math.round(a*1.18),date:dstr(),status:'paid',mode:$('#iM').value};D.invoices.push(i);save();closeModal();if(cur==='billing')R.billing();toast('Invoice '+i.id+' created');return i}
+function invView(id){const i=D.invoices.find(x=>x.id===id),base=Math.round(i.amount/1.18),s=D.settings;
+ modal(`<div id="invp"><h3>${esc(s.clinicName)}</h3><small>${esc(s.address)} · GSTIN ${esc(s.gst)}</small><hr><p><b>${i.id}</b> · ${i.date}</p><p>Patient: ${esc(i.patientName)}</p><p>${esc(i.treatment)}: ${inr(base)}</p><p>GST 18%: ${inr(i.amount-base)}</p><h3>Total ${inr(i.amount)}</h3><p>Status: ${i.status} ${i.mode}</p></div><p style="color:var(--mut);font-size:12px">Use your browser's print on the exported page to save as PDF.</p>`)}
+function stockAdj(id,d){const s=D.stock.find(x=>x.id===id);s.qty=Math.max(0,s.qty+d);save();R.stock()}
+function stockAdd(){modal(`<h3>Add stock item</h3><label>Name</label><input id="xN"><label>Category</label><input id="xC" value="Consumables"><div class="two"><div><label>Qty</label><input id="xQ" type="number" value="10"></div><div><label>Min qty</label><input id="xM" type="number" value="5"></div></div><div style="margin-top:12px"><button class="btn" onclick="D.stock.push({id:uid('s'),name:$('#xN').value||'Item',category:$('#xC').value,qty:+$('#xQ').value,minQty:+$('#xM').value,unit:'pcs',lastUsed:dstr()});save();closeModal();R.stock()">Add</button></div>`)}
+function togMod(id){const m=D.modules.find(x=>x.id===id);m.active=!m.active;save();R.modules()}
+function addTask(){const v=$('#tI').value.trim();if(!v)return;D.tasks.push({id:uid('t'),title:v,col:'todo',priority:'med'});save();R.tasks()}
+function moveTask(id){const t=D.tasks.find(x=>x.id===id),c=['todo','doing','done'];t.col=c[(c.indexOf(t.col)+1)%3];save();R.tasks()}
+function build(){const v=$('#bd').value.trim();if(!v){toast('Describe the module first');return}const name=v.split(/\s+/).slice(0,3).join(' ');D.modules.push({id:uid('m'),name:name.charAt(0).toUpperCase()+name.slice(1),desc:v,icon:'✨',active:true});save();toast('Module built and switched on');showScreen('modules')}
+function saveSet(){Object.keys(D.settings).forEach(k=>{const e=$('#set-'+k);if(e)D.settings[k]=e.value});save();toast('Settings saved')}
+
+/* booking chatbot */
+function botMsg(t,u){const d=document.createElement('div');d.className='bub '+(u?'u':'b');d.innerHTML=t;$('#botM').appendChild(d);$('#botM').scrollTop=1e9}
+function botSend(txt){const i=$('#botI');const text=(txt||i.value).trim();if(!text)return;i.value='';botMsg(esc(text),1);const r=parseBooking(text);setTimeout(()=>botMsg(r),250);return r}
+function parseBooking(t){const l=t.toLowerCase();const age=(t.match(/(\d{1,3})\s*(?:year|yr|y\/o|yo|yrs)/i)||[])[1],ph=(t.match(/(?:\+91)?([6-9]\d{9})/)||[])[1];
+ let tr=null;for(const k in KW)if(l.includes(k)){tr=KW[k];break}
+ const nm=(t.match(/^([A-Za-z]+(?:\s[A-Za-z]+)?)/)||[])[1];
+ if(!nm||!tr){return 'I need at least a patient name and a treatment (cleaning, root canal, braces, extraction…).'}
+ let off=l.includes('tomorrow')?1:0;['monday','tuesday','wednesday','thursday','friday','saturday','sunday'].forEach((d,i)=>{if(l.includes(d)){const n=new Date().getDay();off=((i+1)-n+7)%7||7}});
+ const tm=l.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/);let time='10:00';if(tm){let h=+tm[1];if(tm[3]==='pm'&&h<12)h+=12;if(tm[3]==='am'&&h===12)h=0;time=String(h).padStart(2,'0')+':'+(tm[2]||'00')}
+ let p=D.patients.find(x=>x.name.toLowerCase()===nm.toLowerCase());if(!p){p={id:uid('p'),name:nm,age:+age||0,gender:'F',phone:ph||'',alerts:'',notes:'Created by chatbot',teeth:{},created:dstr()};D.patients.push(p)}
+ const a=mkAppt(p.id,tr,dstr(off),time,0);
+ if(cur==='appointments')R.appointments();
+ return `✅ Booked <b>${a.treatmentLabel}</b> for <b>${esc(p.name)}</b> on ${a.date} at ${time}. ${a.totalSittings>1?a.totalSittings+' sittings planned, total '+inr(a.totalAmount)+'. ':''}<a href="#" onclick="apptWA('${a.id}');return false">Send WhatsApp reminder</a>`}
+
+/* Aria */
+const KB={patients:'Patients: add records, set allergy alerts, and tap "Tooth chart" to mark teeth in FDI notation.',appointments:'Appointments: book manually or by chat. Each treatment becomes sittings, so a root canal is 3 visits with its own amounts.',billing:'Billing: pick patient, treatment and amount. 18% GST is added, and invoices can be viewed and paid by UPI, card, cash or a Razorpay link.',stock:'Stock: items turn red below their minimum. Collecting a sitting auto-deducts the consumables that treatment uses.',whatsapp:'WhatsApp: the 💬 button on any appointment opens a pre-written reminder to the patient.',builder:'AI Builder: describe a new module in plain words and it appears under Modules, switched on.',treatments:'Treatments: see each plan with progress, and collect payment per sitting.'};
+function ariaMsg(w,t){const d=document.createElement('div');d.className='bub '+(w==='u'?'u':'b');d.innerHTML=t;$('#ariaM').appendChild(d);$('#ariaM').scrollTop=1e9}
+function ariaChips(){$('#ariaC').innerHTML=['patients','appointments','billing','stock','whatsapp','builder'].map(k=>`<button onclick="ariaAsk('${k}')">${k}</button>`).join('')}
+function ariaAsk(k){ariaMsg('u',k);ariaMsg('b',KB[k]+` <a href="#" onclick="showScreen('${({whatsapp:'appointments',builder:'aibuilder'})[k]||k}');return false">▶ Show me</a>`)}
+function ariaSend(){const i=$('#ariaI'),t=i.value.trim();if(!t)return;i.value='';ariaMsg('u',esc(t));const l=t.toLowerCase();const k=Object.keys(KB).find(x=>l.includes(x.slice(0,5)))||(l.includes('invoice')?'billing':l.includes('book')?'appointments':l.includes('sitting')?'treatments':null);
+ ariaMsg('b',k?KB[k]+` <a href="#" onclick="showScreen('${({whatsapp:'appointments',builder:'aibuilder'})[k]||k}');return false">▶ Show me</a>`:'I can walk you through patients, appointments, billing, stock, WhatsApp or the AI builder. Try one of the chips.')}
+
+/* demo agent */
+const SCRIPT=[
+ {say:()=>`Welcome ${AUTH.name}. I'm Aria. I'll take you through the clinic module by module. Press Next any time.`,run(){showScreen('dashboard')}},
+ {say:()=>'Patients first. I\'m adding Ananya Verma, 29, for a root canal.',run(){showScreen('patients');patModal();$('#mN').value='Ananya Verma';$('#mA').value=29;$('#mP').value='9988776655';$('#mAl').value='Latex allergy';hl('#mN')}},
+ {say:()=>'Saved. Every patient gets a tooth chart you can tap to mark treated, issue or crown.',run(){const p=patSave();showScreen('patients');if(p)hl('#prow-'+p.id);window._demoP=p}},
+ {say:()=>'Now booking by chat. Type it like you would on WhatsApp and the assistant does the rest.',run(){showScreen('appointments');$('#bot').classList.add('on');$('#botI').value='Ananya Verma root canal tomorrow 10am 9988776655';hl('#botI')}},
+ {say:()=>'Booked. Notice the root canal became 3 sittings with a split amount.',run(){const r=botSend('Ananya Verma root canal tomorrow 10am 9988776655');$('#bot').classList.remove('on');showScreen('appointments');setTimeout(()=>{const a=D.appointments[D.appointments.length-1];window._demoA=a;if(a)hl('#row-'+a.id)},300)}},
+ {say:()=>'One tap opens a WhatsApp reminder, ready to send.',run(){const a=window._demoA||D.appointments[0];apptWA(a.id)}},
+ {say:()=>'Treatments tracks every sitting. I\'ll collect payment for sitting one, and an invoice is raised.',run(){closeModal();const a=window._demoA;showScreen('treatments');if(a)setTimeout(()=>paySitting(a.id,0),500)}},
+ {say:()=>'Billing now shows the invoice with 18% GST.',run(){showScreen('billing');setTimeout(()=>hl('#inv-'+D.invoices[D.invoices.length-1].id),200)}},
+ {say:()=>'Stock deducted by itself: gloves and anaesthetic went down with the sitting.',run(){showScreen('stock');hl('#stk-s0');hl('#stk-s3')}},
+ {say:()=>'The AI builder adds new modules from a sentence. Here\'s a lab-orders module.',run(){showScreen('aibuilder');$('#bd').value='Track lab orders for crowns and bridges';hl('#bd')}},
+ {say:()=>'Built. It now lives under Modules and can be switched on or off.',run(){$('#bd').value='Track lab orders for crowns';build();hl('#main .grid .card:last-child')}},
+ {say:()=>'That\'s the tour. Everything here is yours to click. Ask me anything with the ✨ button.',run(){showScreen('dashboard');$('#aria').classList.add('on')}}
+];
+let ag=-1;
+function hl(sel){setTimeout(()=>{const e=$(sel);if(e){e.classList.add('hl');e.scrollIntoView({block:'center'});setTimeout(()=>e.classList.remove('hl'),3500)}},150)}
+function startAgent(){if(!AUTH)return;ag=-1;$('#agent').classList.add('on');agentNext()}
+function stopAgent(){ag=-1;$('#agent').classList.remove('on');try{speechSynthesis.cancel()}catch(e){}}
+function agentNext(){ag++;if(ag>=SCRIPT.length){stopAgent();return}const s=SCRIPT[ag];try{closeModal();s.run()}catch(e){console.error(e)}
+ const t=s.say();$('#agN').textContent=(ag+1)+' / '+SCRIPT.length;$('#agT').textContent=t;
+ try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.rate=1.05;speechSynthesis.speak(u)}catch(e){}}
+
+if(AUTH&&LS.g('mf_data',null)){D=LS.g('mf_data',null);startApp()}
+</script>
