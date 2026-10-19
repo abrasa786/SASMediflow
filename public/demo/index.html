@@ -92,7 +92,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)
   <p>Patients, multi-sitting treatment plans, billing, stock and WhatsApp reminders in one place. An AI agent walks you through every module, live.</p>
   <div class="row"><button class="btn" onclick="doDemo()">🎯 Start live demo</button><button class="btn ghost" onclick="openAuth('signup')">Create my clinic</button></div>
  </div></div>
- <div class="wrap sec"><h2>Everything a dental clinic needs</h2><p style="color:var(--mut)">Built around how clinics actually work: sittings, tooth charts, GST invoices and chair-side stock.</p>
+ <div class="wrap sec"><h2>Everything a dental clinic needs</h2><p style="color:var(--mut)">Pick your specialty at sign up. Dental ships fully built with sittings, tooth charts, GST invoices and chair-side stock. Every pack is customisable with the AI builder.</p>
   <div class="grid" style="margin-top:16px">
    <div class="card"><h3>🦷 Patients & tooth chart</h3><p>FDI-notation chart, allergy alerts, full history.</p></div>
    <div class="card"><h3>📅 Multi-sitting plans</h3><p>Root canal in 3 sittings? Each with its own amount, date and payment.</p></div>
@@ -124,14 +124,14 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)
   <label>Password</label><input id="sPw" type="password"><p id="sErr" style="color:var(--bad);margin:6px 0"></p>
   <button class="btn" style="width:100%" onclick="doSignup()">Create clinic & enter</button></div>
  <div id="t-demo" hidden><p>Jump straight in with a fully loaded dental clinic. No credentials needed. Aria, our AI agent, will show you each module.</p>
-  <label>Your name (for the walkthrough)</label><input id="dN" placeholder="Dr. Anita">
+  <label>Your name (for the walkthrough)</label><input id="dN" placeholder="Dr. Anita"><label>Specialty pack</label><select id="dSp"><option value="dental">Dental (fully loaded)</option><option value="derm">Dermatology (starter)</option><option value="ortho">Orthopaedics (starter)</option><option value="general">General Practice (starter)</option></select>
   <button class="btn" style="width:100%;margin-top:12px" onclick="doDemo()">🎯 Enter live demo</button></div>
  <button class="btn ghost sm" style="margin-top:12px" onclick="closeAuth()">Close</button>
 </div></div>
 
 <div id="app">
  <aside class="side" id="side"><div class="logo"><i>M</i>Mediflow</div><div id="nav"></div></aside>
- <div class="mainw"><div class="top"><button class="btn ghost sm menu" onclick="side.classList.toggle('on')">☰</button><h2 id="ttl">Dashboard</h2>
+ <div class="mainw"><div class="top"><button class="btn ghost sm menu" onclick="side.classList.toggle('on')">☰</button><h2 id="ttl">Dashboard</h2><span class="tag" id="spTag"></span>
   <button class="btn ghost sm" onclick="startAgent()">▶ Demo agent</button><button class="btn ghost sm" onclick="toggleTheme()">🌓</button><button class="btn ghost sm" onclick="logout()">Log out</button></div>
   <div id="main"></div></div>
  <button class="fab b2" onclick="tp('aria')" title="Aria AI">✨</button><button class="fab" onclick="tp('bot')" title="Booking chatbot">💬</button>
@@ -155,7 +155,7 @@ const dstr=(off=0)=>{const d=new Date();d.setDate(d.getDate()+off);return d.toIS
 function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display='none',2600)}
 function toggleTheme(){const r=document.documentElement;r.dataset.theme=(r.dataset.theme==='dark'||(!r.dataset.theme&&matchMedia('(prefers-color-scheme:dark)').matches))?'light':'dark'}
 
-const TP={
+const DENTAL_TREATMENTS={
  'root-canal':{label:'Root Canal Treatment',icon:'🦷',total:25000,steps:['Diagnosis & Pulp Removal','Canal Shaping & Filling','Crown Placement'],splits:[5000,5000,15000],gap:[0,7,21],use:{'Gloves (box)':1,'Local Anaesthetic':1}},
  cleaning:{label:'Teeth Cleaning',icon:'✨',total:1500,steps:['Scaling & Polishing'],splits:[1500],gap:[0],use:{'Scaling Tips':1,'Polishing Paste':1,'Gloves (box)':1}},
  ortho:{label:'Orthodontic Treatment',icon:'😁',total:60000,steps:['Consult & Fitting','Monthly Adjustment 1','Monthly Adjustment 2','Retainer'],splits:[20000,10000,10000,20000],gap:[0,30,60,90],use:{'Ortho Wire':1}},
@@ -166,9 +166,60 @@ const TP={
  implant:{label:'Dental Implant',icon:'🔩',total:45000,steps:['Surgery','Abutment','Crown'],splits:[25000,10000,10000],gap:[0,90,120],use:{}},
  consult:{label:'Consultation',icon:'🩺',total:500,steps:['Consultation'],splits:[500],gap:[0],use:{}}
 };
-const KW={'cleaning':'cleaning','scaling':'cleaning','root canal':'root-canal','rct':'root-canal','brace':'ortho','ortho':'ortho','extract':'extraction','fill':'filling','crown':'crown','cap':'crown','whiten':'whitening','implant':'implant','consult':'consult','checkup':'consult'};
+const DENTAL_KW={'cleaning':'cleaning','scaling':'cleaning','root canal':'root-canal','rct':'root-canal','brace':'ortho','ortho':'ortho','extract':'extraction','fill':'filling','crown':'crown','cap':'crown','whiten':'whitening','implant':'implant','consult':'consult','checkup':'consult'};
 
-function seed(){
+const even=(n,tot)=>Array.from({length:n},(_,i)=>i<n-1?Math.floor(tot/n):tot-Math.floor(tot/n)*(n-1));
+const TT=(label,icon,total,steps,gap,use,splits)=>({label,icon,total,steps,splits:splits||even(steps.length,total),gap,use:use||{}});
+const sess=n=>Array.from({length:n},(_,i)=>'Sitting '+(i+1));
+const PACKS={
+ dental:{key:'dental',label:'Dental',chart:'tooth',treatments:DENTAL_TREATMENTS,kw:DENTAL_KW,fields:[],clinicName:'Bright Smile Dental',stock:null,
+  demo:{treat:'root canal',treatLabel:'a root canal',hl:['Gloves (box)','Local Anaesthetic'],module:'Track lab orders for crowns and bridges'}},
+ derm:{key:'derm',label:'Dermatology',chart:'record',clinicName:'Glow Skin Clinic',
+  treatments:{consult:TT('Consultation','🩺',600,['Consultation'],[0]),
+   acne:TT('Acne Treatment Program','🧴',12000,['Assessment & Peel','Follow-up 1','Follow-up 2','Review'],[0,14,28,56],{'Gloves (box)':1,'Peel Solution':1},[4000,3000,3000,2000]),
+   laser:TT('Laser Hair Removal','⚡',24000,sess(6),[0,30,60,90,120,150],{'Laser Gel':1}),
+   peel:TT('Chemical Peel','✨',9000,sess(3),[0,21,42],{'Peel Solution':1,'Gloves (box)':1}),
+   prp:TT('PRP Hair Therapy','💉',15000,sess(3),[0,30,60],{'PRP Kit':1})},
+  kw:{acne:'acne',laser:'laser',hair:'laser',peel:'peel',prp:'prp',consult:'consult',checkup:'consult'},
+  fields:[{k:'skinType',label:'Skin type'},{k:'concern',label:'Primary concern'},{k:'allergens',label:'Known allergens'}],
+  stock:[['Gloves (box)','Consumables',20,10,'box'],['Peel Solution','Materials',8,5,'bottle'],['Laser Gel','Consumables',10,5,'tube'],['PRP Kit','Materials',4,5,'kit'],['Sunscreen Samples','Consumables',50,20,'pcs']],
+  demo:{treat:'acne',treatLabel:'an acne treatment program',hl:['Gloves (box)','Peel Solution'],module:'Track before and after photos'}},
+ ortho:{key:'ortho',label:'Orthopaedics',chart:'record',clinicName:'Strong Bones Ortho Care',
+  treatments:{consult:TT('Consultation','🩺',500,['Consultation'],[0]),
+   physio:TT('Physiotherapy Package','🏃',7500,sess(5),[0,3,6,9,12],{'Crepe Bandage':1}),
+   cast:TT('Fracture Cast & Follow-up','🦴',9000,['Reduction & Cast','Check 1','Check 2','Cast removal'],[0,7,21,42],{'Plaster Roll':2,'Gloves (box)':1},[5000,1000,1000,2000]),
+   injection:TT('Joint Injection','💉',3500,['Injection'],[0],{'Injection Kit':1})},
+  kw:{physio:'physio',fracture:'cast',cast:'cast',injection:'injection',consult:'consult',checkup:'consult'},
+  fields:[{k:'site',label:'Affected site'},{k:'side',label:'Side (L/R)'},{k:'injury',label:'Injury / diagnosis'}],
+  stock:[['Gloves (box)','Consumables',20,10,'box'],['Plaster Roll','Materials',15,10,'roll'],['Crepe Bandage','Consumables',30,15,'pcs'],['Injection Kit','Medicines',12,8,'kit']],
+  demo:{treat:'physio',treatLabel:'a physiotherapy package',hl:['Crepe Bandage','Gloves (box)'],module:'Track physiotherapy equipment'}},
+ general:{key:'general',label:'General Practice',chart:'record',clinicName:'City Care Clinic',
+  treatments:{consult:TT('Consultation','🩺',400,['Consultation'],[0]),
+   checkup:TT('Health Checkup Package','📋',3000,['Tests','Report review'],[0,3],{'Gloves (box)':1,'Syringes':2},[2000,1000]),
+   vaccine:TT('Vaccination','💉',800,['Vaccination'],[0],{'Syringes':1}),
+   minor:TT('Minor Procedure','🩹',1500,['Procedure'],[0],{'Dressing Kit':1}),
+   diabetes:TT('Diabetes Care Plan','🩸',4500,sess(3),[0,30,60],{'Test Strips':2})},
+  kw:{checkup:'checkup','health check':'checkup',vaccin:'vaccine',minor:'minor',dressing:'minor',diabet:'diabetes',consult:'consult'},
+  fields:[{k:'bp',label:'Blood pressure'},{k:'history',label:'Medical history'},{k:'meds',label:'Current medications'}],
+  stock:[['Gloves (box)','Consumables',20,10,'box'],['Syringes','Consumables',60,30,'pcs'],['Test Strips','Consumables',40,20,'strip'],['Dressing Kit','Materials',10,8,'kit']],
+  demo:{treat:'checkup',treatLabel:'a health checkup package',hl:['Syringes','Gloves (box)'],module:'Track referral letters'}}
+};
+let PACK,TP,KW;
+function packFor(label){label=label||'';return /dental/i.test(label)?'dental':/dermat/i.test(label)?'derm':/ortho/i.test(label)?'ortho':'general'}
+function loadPack(key){PACK=PACKS[key]||PACKS.dental;const c=(typeof D!=='undefined'&&D)||{};TP=Object.assign({},PACK.treatments,c.customTreatments||{});KW=Object.assign({},PACK.kw,c.customKw||{})}
+const FIELDS=()=>PACK.fields.concat((D&&D.customFields)||[]);
+function mkSittings(tr,date,tot,paidN){const t=TP[tr],b=new Date(date);return t.steps.map((s,i)=>{const d=new Date(b);d.setDate(d.getDate()+t.gap[i]);return{label:s,amount:Math.round(t.splits[i]*tot/t.total),paid:i<paidN,date:d.toISOString().slice(0,10)}})}
+function seed(key){key=key||'dental';loadPack('dental');const d=seedDental();loadPack(key);d.specialty=key;d.specialtyLabel=PACK.label;
+ if(key==='dental')return d;
+ const all=Object.keys(TP),multi=all.filter(k=>TP[k].steps.length>1);
+ d.settings.clinicName=PACK.clinicName;
+ d.patients.forEach(p=>{p.teeth={};p.extra={};p.notes=''});
+ d.appointments=d.patients.slice(0,6).map((p,i)=>{const tr=i<multi.length?multi[i]:all[i%all.length],t=TP[tr],off=[0,1,2,3,5,-1][i],sit=mkSittings(tr,dstr(off),t.total,i===0?0:Math.min(1,t.steps.length-1));
+  return{id:'a'+(i+1),patientId:p.id,patientName:p.name,phone:p.phone,treatment:tr,treatmentLabel:t.label,date:dstr(off),time:['10:00','17:00','11:30','16:00','12:00','15:00'][i],doctor:'Dr. Anita Desai',totalAmount:t.total,sittings:sit,currentSitting:sit.filter(s=>s.paid).length,totalSittings:sit.length,status:'scheduled',notes:''}});
+ d.stock=PACK.stock.map((x,i)=>({id:'s'+i,name:x[0],category:x[1],qty:x[2],minQty:x[3],unit:x[4],lastUsed:dstr(-i)}));
+ d.invoices.forEach((iv,n)=>{iv.treatment=TP[all[n%all.length]].label});
+ return d}
+function seedDental(){
  const mk=(id,name,age,g,ph,alerts,notes,teeth)=>({id,name,age,gender:g,phone:ph,alerts,notes,teeth,created:dstr(-60)});
  const P=[mk('p1','Priya Sharma',27,'F','9876543210','','Sensitivity on lower right',{16:'treated',46:'issue'}),
   mk('p2','Rahul Mehta',34,'M','9811122233','Penicillin allergy','Needs RCT on 36',{36:'issue',26:'crown'}),
@@ -199,20 +250,20 @@ $$('.tabs button').forEach(b=>b.onclick=()=>authTab(b.dataset.t));
 $('#sL').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{window._logo=r.result;const i=$('#sLp');i.src=r.result;i.style.display='block'};r.readAsDataURL(f)};
 function doLogin(){const e=$('#lE').value.trim(),p=$('#lP').value;const acc=LS.g('mf_accounts',[]).find(a=>a.email===e&&a.pw===p);
  if(!acc){$('#lErr').textContent='No account found. Sign up below or try the live demo.';return}
- AUTH={email:e,name:acc.name,demo:false};LS.s('mf_auth',AUTH);D=LS.g('mf_data_'+e,null)||D||blank(acc);startApp()}
-function blank(acc){const d=seed();d.patients=[];d.appointments=[];d.invoices=[];d.tasks=[];d.settings.clinicName=acc.clinic;d.settings.doctorName=acc.name;return d}
+ AUTH={email:e,name:acc.name,demo:false};LS.s('mf_auth',AUTH);const sv=LS.g('mf_data',null);D=(sv&&sv.owner===e)?sv:blank(acc);D.owner=e;save();startApp()}
+function blank(acc){const k=packFor(acc.specialty);const d=seed(k);d.specialtyLabel=acc.specialty;d.patients=[];d.appointments=[];d.invoices=[];d.tasks=[];d.settings.clinicName=acc.clinic;d.settings.doctorName=acc.name;return d}
 function doSignup(){const g=id=>$(id).value.trim(),a={name:g('#sN'),clinic:g('#sC'),email:g('#sE'),phone:g('#sPh'),domain:g('#sD'),specialty:$('#sS').value,pw:$('#sPw').value,logo:window._logo||''};
  if(!a.name||!a.clinic||!a.email||a.pw.length<6){$('#sErr').textContent='Name, clinic, email and a 6+ character password are required.';return}
  const acs=LS.g('mf_accounts',[]);if(acs.some(x=>x.email===a.email)){$('#sErr').textContent='Email already registered. Log in instead.';return}
- acs.push(a);LS.s('mf_accounts',acs);D=blank(a);D.settings.phone=a.phone;D.settings.domain=a.domain;D.settings.logo=a.logo;
+ acs.push(a);LS.s('mf_accounts',acs);D=blank(a);D.owner=a.email;D.settings.phone=a.phone;D.settings.domain=a.domain;D.settings.logo=a.logo;
  AUTH={email:a.email,name:a.name,demo:false};LS.s('mf_auth',AUTH);save();startApp();toast('Welcome, '+a.name+'! Your clinic is ready.')}
-function doDemo(){const n=($('#dN')&&$('#dN').value.trim())||'there';AUTH={email:'demo',name:n,demo:true};LS.s('mf_auth',AUTH);D=seed();save();startApp();setTimeout(startAgent,600)}
+function doDemo(){const n=($('#dN')&&$('#dN').value.trim())||'there';AUTH={email:'demo',name:n,demo:true};LS.s('mf_auth',AUTH);D=seed((document.querySelector('#dSp')||{}).value||'dental');D.owner='demo';save();startApp();setTimeout(startAgent,600)}
 function logout(){AUTH=null;try{localStorage.removeItem('mf_auth')}catch(e){}stopAgent();$('#app').classList.remove('on');$('#landing').style.display='block'}
 
 /* shell */
 const SCREENS=[['dashboard','🏠','Dashboard'],['appointments','📅','Appointments'],['patients','👥','Patients'],['treatments','🦷','Treatments'],['billing','🧾','Billing'],['stock','📦','Stock'],['staff','👤','Staff'],['analytics','📊','Analytics'],['modules','🧩','Modules'],['tasks','✅','Tasks'],['aibuilder','🛠','AI Builder'],['howworks','❓','How It Works'],['settings','⚙️','Settings']];
 let cur='dashboard';
-function startApp(){closeAuth();$('#landing').style.display='none';$('#app').classList.add('on');
+function startApp(){loadPack(D.specialty||'dental');$('#spTag').textContent=(D.specialtyLabel||PACK.label)+' pack';closeAuth();$('#landing').style.display='none';$('#app').classList.add('on');
  $('#nav').innerHTML=SCREENS.map(s=>`<button data-s="${s[0]}" onclick="showScreen('${s[0]}')">${s[1]} ${s[2]}</button>`).join('');
  botMsg('Hi! Tell me patient name, age, treatment, when and phone, and I will book it.');
  ariaMsg('b',`Hi ${esc(AUTH.name)}! I'm Aria. Ask me about any module, or tap a chip below.`);ariaChips();
@@ -232,8 +283,8 @@ dashboard(){const today=dstr(),A=D.appointments,rev=D.invoices.filter(i=>i.statu
  <div class="card"><h3>Low stock</h3>${low.map(s=>`<p>${esc(s.name)} <span class="tag bad">${s.qty} ${s.unit}</span></p>`).join('')||'<p>All stocked up ✅</p>'}</div></div>`},
 appointments(){$('#main').innerHTML=`<div class="toolbar"><h3>All appointments</h3><button class="btn sm" onclick="apptModal()">+ New appointment</button></div><div class="card tw"><table><tr><th>Date</th><th>Patient</th><th>Treatment</th><th>Sitting</th><th>Paid / Total</th><th>Status</th><th></th></tr>
  ${D.appointments.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(a=>`<tr id="row-${a.id}"><td>${a.date} ${a.time}</td><td>${esc(a.patientName)}</td><td>${esc(a.treatmentLabel)}</td><td>${Math.min(a.currentSitting+1,a.totalSittings)}/${a.totalSittings}</td><td>${inr(paidOf(a))} / ${inr(a.totalAmount)}</td><td><span class="tag ${a.status==='completed'?'ok':''}">${a.status}</span></td><td><button class="btn ghost sm" onclick="apptWA('${a.id}')">💬</button> <button class="btn ghost sm" onclick="calLink('${a.id}')">📆</button></td></tr>`).join('')}</table></div>`},
-patients(){$('#main').innerHTML=`<div class="toolbar"><h3>Patients</h3><input id="pq" placeholder="Search…" style="max-width:220px" oninput="pFilter()"><button class="btn sm" onclick="patModal()">+ Add patient</button></div><div class="card tw"><table id="pt"><tr><th>Name</th><th>Age</th><th>Phone</th><th>Alerts</th><th></th></tr>${D.patients.map(p=>`<tr data-n="${esc(p.name.toLowerCase())}" id="prow-${p.id}"><td>${esc(p.name)}</td><td>${p.age}</td><td>${esc(p.phone)}</td><td>${p.alerts?`<span class="tag bad">${esc(p.alerts)}</span>`:''}</td><td><button class="btn ghost sm" onclick="chartModal('${p.id}')">Tooth chart</button></td></tr>`).join('')}</table></div>`},
-treatments(){const act=D.appointments.filter(a=>a.totalSittings>1);$('#main').innerHTML=`<div class="toolbar"><h3>Multi-sitting treatment plans</h3></div><div class="grid">${act.map(a=>`<div class="card"><h3>${TP[a.treatment].icon} ${esc(a.treatmentLabel)}</h3><p style="color:var(--mut)">${esc(a.patientName)} · ${inr(a.totalAmount)}</p><div class="bar"><i style="width:${paidOf(a)/a.totalAmount*100}%"></i></div>
+patients(){$('#main').innerHTML=`<div class="toolbar"><h3>Patients</h3><input id="pq" placeholder="Search…" style="max-width:220px" oninput="pFilter()"><button class="btn sm" onclick="patModal()">+ Add patient</button></div><div class="card tw"><table id="pt"><tr><th>Name</th><th>Age</th><th>Phone</th><th>Alerts</th><th></th></tr>${D.patients.map(p=>`<tr data-n="${esc(p.name.toLowerCase())}" id="prow-${p.id}"><td>${esc(p.name)}</td><td>${p.age}</td><td>${esc(p.phone)}</td><td>${p.alerts?`<span class="tag bad">${esc(p.alerts)}</span>`:''}</td><td><button class="btn ghost sm" onclick="chartModal('${p.id}')">${PACK.chart==='tooth'?'Tooth chart':'Clinical record'}</button></td></tr>`).join('')}</table></div>`},
+treatments(){const act=D.appointments.filter(a=>a.totalSittings>1);$('#main').innerHTML=`<div class="toolbar"><h3>Multi-sitting treatment plans</h3><button class="btn sm" onclick="treatModal()">+ Add treatment</button></div><div class="card" style="margin-bottom:12px"><b>${esc(PACK.label)} treatment catalog</b><p>${Object.values(TP).map(t=>`${t.icon} ${esc(t.label)} · ${inr(t.total)} · ${t.steps.length} sitting${t.steps.length>1?'s':''}`).join('<br>')}</p></div><div class="grid">${act.map(a=>`<div class="card"><h3>${TP[a.treatment].icon} ${esc(a.treatmentLabel)}</h3><p style="color:var(--mut)">${esc(a.patientName)} · ${inr(a.totalAmount)}</p><div class="bar"><i style="width:${paidOf(a)/a.totalAmount*100}%"></i></div>
  ${a.sittings.map((s,i)=>`<p>${s.paid?'✅':'⬜'} ${i+1}. ${esc(s.label)} <small style="color:var(--mut)">${s.date}</small> <b>${inr(s.amount)}</b> ${s.paid?'':`<button class="btn sm ok" onclick="paySitting('${a.id}',${i})">Collect</button>`}</p>`).join('')}</div>`).join('')}</div>`},
 billing(){const tot=D.invoices.filter(i=>i.status==='paid').reduce((x,i)=>x+i.amount,0);$('#main').innerHTML=`<div class="stats">${stat(inr(tot),'Collected')}${stat(inr(D.invoices.filter(i=>i.status!=='paid').reduce((x,i)=>x+i.amount,0)),'Pending')}</div><div class="toolbar"><h3>Invoices</h3><button class="btn sm" onclick="invModal()">+ New invoice</button></div><div class="card tw"><table id="it"><tr><th>#</th><th>Patient</th><th>Treatment</th><th>Amount</th><th>Date</th><th>Status</th><th></th></tr>${D.invoices.map(i=>`<tr id="inv-${i.id}"><td>${i.id}</td><td>${esc(i.patientName)}</td><td>${esc(i.treatment)}</td><td>${inr(i.amount)}</td><td>${i.date}</td><td><span class="tag ${i.status==='paid'?'ok':'warn'}">${i.status}${i.mode?' · '+i.mode:''}</span></td><td><button class="btn ghost sm" onclick="invView('${i.id}')">View</button></td></tr>`).join('')}</table></div>`},
 stock(){$('#main').innerHTML=`<div class="toolbar"><h3>Inventory</h3><button class="btn sm" onclick="stockAdd()">+ Add item</button></div><div class="card tw"><table><tr><th>Item</th><th>Category</th><th>Qty</th><th>Min</th><th>Last used</th><th></th></tr>${D.stock.map(s=>`<tr id="stk-${s.id}"><td>${esc(s.name)}</td><td>${esc(s.category)}</td><td><span class="tag ${s.qty<=s.minQty?'bad':'ok'}">${s.qty} ${s.unit}</span></td><td>${s.minQty}</td><td>${s.lastUsed}</td><td><button class="btn ghost sm" onclick="stockAdj('${s.id}',-1)">−</button> <button class="btn ghost sm" onclick="stockAdj('${s.id}',5)">+5</button></td></tr>`).join('')}</table></div>`},
@@ -255,7 +306,7 @@ function patModal(pre){modal(`<h3>Add patient</h3><label>Name</label><input id="
  if(pre){$('#mN').value=pre.name;$('#mA').value=pre.age;$('#mP').value=pre.phone}}
 function patSave(){const n=$('#mN').value.trim();if(!n){toast('Name required');return}
  const p={id:uid('p'),name:n,age:+$('#mA').value||0,gender:$('#mG').value,phone:$('#mP').value.trim(),alerts:$('#mAl').value,notes:$('#mNo').value,teeth:{},created:dstr()};D.patients.push(p);save();closeModal();if(cur==='patients')R.patients();toast('Patient added: '+n);return p}
-function chartModal(id){const p=D.patients.find(x=>x.id===id);const row=a=>`<div class="teeth">${a.map(n=>`<button class="tooth ${p.teeth[n]||''}" onclick="cycle('${id}',${n},this)">${n}</button>`).join('')}</div>`;
+function chartModal(id){if(PACK.chart!=='tooth')return recModal(id);const p=D.patients.find(x=>x.id===id);const row=a=>`<div class="teeth">${a.map(n=>`<button class="tooth ${p.teeth[n]||''}" onclick="cycle('${id}',${n},this)">${n}</button>`).join('')}</div>`;
  modal(`<h3>${esc(p.name)} · tooth chart</h3><p style="color:var(--mut)">Tap a tooth to cycle: healthy → treated → issue → crown.</p><small>Upper</small>${row([18,17,16,15,14,13,12,11])}${row([21,22,23,24,25,26,27,28])}<small>Lower</small>${row([48,47,46,45,44,43,42,41])}${row([31,32,33,34,35,36,37,38])}<p><span class="tag ok">treated</span> <span class="tag bad">issue</span> <span class="tag warn">crown</span></p>`)}
 function cycle(id,n,el){const p=D.patients.find(x=>x.id===id),st=['','treated','issue','crown'],nx=st[(st.indexOf(p.teeth[n]||'')+1)%4];if(nx)p.teeth[n]=nx;else delete p.teeth[n];el.className='tooth '+nx;save()}
 function apptModal(pre){pre=pre||{};modal(`<h3>New appointment</h3><label>Patient</label><select id="aP">${D.patients.map(p=>`<option value="${p.id}" ${pre.pid===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select><label>Treatment</label><select id="aT" onchange="$('#aTot').value=TP[this.value].total">${Object.entries(TP).map(([k,t])=>`<option value="${k}" ${pre.tr===k?'selected':''}>${t.icon} ${t.label}</option>`).join('')}</select><div class="two"><div><label>Date</label><input id="aD" type="date" value="${pre.date||dstr(1)}"></div><div><label>Time</label><input id="aTm" type="time" value="${pre.time||'10:00'}"></div></div><label>Total plan amount (₹)</label><input id="aTot" type="number" value="${TP[pre.tr||'root-canal'].total}"><div style="margin-top:12px"><button class="btn" onclick="apptSave()">Book</button></div>`)}
@@ -281,9 +332,18 @@ function stockAdd(){modal(`<h3>Add stock item</h3><label>Name</label><input id="
 function togMod(id){const m=D.modules.find(x=>x.id===id);m.active=!m.active;save();R.modules()}
 function addTask(){const v=$('#tI').value.trim();if(!v)return;D.tasks.push({id:uid('t'),title:v,col:'todo',priority:'med'});save();R.tasks()}
 function moveTask(id){const t=D.tasks.find(x=>x.id===id),c=['todo','doing','done'];t.col=c[(c.indexOf(t.col)+1)%3];save();R.tasks()}
-function build(){const v=$('#bd').value.trim();if(!v){toast('Describe the module first');return}const name=v.split(/\s+/).slice(0,3).join(' ');D.modules.push({id:uid('m'),name:name.charAt(0).toUpperCase()+name.slice(1),desc:v,icon:'✨',active:true});save();toast('Module built and switched on');showScreen('modules')}
+function build(){const v=$('#bd').value.trim();if(!v){toast('Describe the module first');return}
+ const tm=v.match(/treatment\s+(?:called\s+)?(.+?)\s+(?:for|at|price)\s*₹?\s*(\d+)/i),fm=v.match(/field\s+(?:called\s+)?(.+)/i);
+ if(tm){addTreatment(tm[1].trim(),+tm[2],+((v.match(/(\d+)\s*sittings?/i)||[])[1])||1);return}
+ if(fm&&/^\s*(add|create)/i.test(v)){const lb=fm[1].trim();D.customFields=(D.customFields||[]).concat([{k:'c'+Date.now(),label:lb}]);save();toast('Field added to patient record: '+lb);showScreen('patients');return}const name=v.split(/\s+/).slice(0,3).join(' ');D.modules.push({id:uid('m'),name:name.charAt(0).toUpperCase()+name.slice(1),desc:v,icon:'✨',active:true});save();toast('Module built and switched on');showScreen('modules')}
 function saveSet(){Object.keys(D.settings).forEach(k=>{const e=$('#set-'+k);if(e)D.settings[k]=e.value});save();toast('Settings saved')}
 
+function recModal(id){const p=D.patients.find(x=>x.id===id);p.extra=p.extra||{};modal(`<h3>${esc(p.name)} · clinical record</h3><p style="color:var(--mut)">${esc(PACK.label)} record template. Add fields from the AI builder: "add field Blood group".</p>${FIELDS().map(f=>`<label>${esc(f.label)}</label><input id="rf-${f.k}" value="${esc(p.extra[f.k]||'')}">`).join('')}<div style="margin-top:12px"><button class="btn" onclick="recSave('${id}')">Save record</button></div>`)}
+function recSave(id){const p=D.patients.find(x=>x.id===id);p.extra=p.extra||{};FIELDS().forEach(f=>p.extra[f.k]=document.getElementById('rf-'+f.k).value);save();closeModal();toast('Record saved')}
+function treatModal(){modal(`<h3>Add treatment to your catalog</h3><label>Name</label><input id="tN" placeholder="e.g. Scar Revision Program"><div class="two"><div><label>Total price (₹)</label><input id="tP" type="number" value="5000"></div><div><label>Sittings</label><input id="tS" type="number" value="1" min="1" max="12"></div></div><label>Chatbot keyword</label><input id="tK" placeholder="e.g. scar"><div style="margin-top:12px"><button class="btn" onclick="addTreatment($('#tN').value.trim(),+$('#tP').value,+$('#tS').value||1,$('#tK').value.trim())">Add treatment</button></div>`)}
+function addTreatment(name,price,n,kw){if(!name||!price){toast('Name and price needed');return}n=Math.max(1,Math.min(12,n));const key='c_'+name.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+ D.customTreatments=D.customTreatments||{};D.customKw=D.customKw||{};D.customTreatments[key]=TT(name,'⭐',price,n===1?[name]:sess(n),Array.from({length:n},(_,i)=>i*14));D.customKw[(kw||name.split(' ')[0]).toLowerCase()]=key;
+ loadPack(D.specialty);save();closeModal();toast('Treatment added: '+name+' ('+n+' sitting'+(n>1?'s':'')+', '+inr(price)+')');if(cur==='treatments')R.treatments();else if(cur==='aibuilder')showScreen('treatments')}
 /* booking chatbot */
 function botMsg(t,u){const d=document.createElement('div');d.className='bub '+(u?'u':'b');d.innerHTML=t;$('#botM').appendChild(d);$('#botM').scrollTop=1e9}
 function botSend(txt){const i=$('#botI');const text=(txt||i.value).trim();if(!text)return;i.value='';botMsg(esc(text),1);const r=parseBooking(text);setTimeout(()=>botMsg(r),250);return r}
@@ -299,7 +359,7 @@ function parseBooking(t){const l=t.toLowerCase();const age=(t.match(/(\d{1,3})\s
  return `✅ Booked <b>${a.treatmentLabel}</b> for <b>${esc(p.name)}</b> on ${a.date} at ${time}. ${a.totalSittings>1?a.totalSittings+' sittings planned, total '+inr(a.totalAmount)+'. ':''}<a href="#" onclick="apptWA('${a.id}');return false">Send WhatsApp reminder</a>`}
 
 /* Aria */
-const KB={patients:'Patients: add records, set allergy alerts, and tap "Tooth chart" to mark teeth in FDI notation.',appointments:'Appointments: book manually or by chat. Each treatment becomes sittings, so a root canal is 3 visits with its own amounts.',billing:'Billing: pick patient, treatment and amount. 18% GST is added, and invoices can be viewed and paid by UPI, card, cash or a Razorpay link.',stock:'Stock: items turn red below their minimum. Collecting a sitting auto-deducts the consumables that treatment uses.',whatsapp:'WhatsApp: the 💬 button on any appointment opens a pre-written reminder to the patient.',builder:'AI Builder: describe a new module in plain words and it appears under Modules, switched on.',treatments:'Treatments: see each plan with progress, and collect payment per sitting.'};
+const KB={patients:'Patients: add records, set allergy alerts, and open the specialty record: a tooth chart for dental, custom fields for other packs.',appointments:'Appointments: book manually or by chat. Each treatment becomes sittings, so a root canal is 3 visits with its own amounts.',billing:'Billing: pick patient, treatment and amount. 18% GST is added, and invoices can be viewed and paid by UPI, card, cash or a Razorpay link.',stock:'Stock: items turn red below their minimum. Collecting a sitting auto-deducts the consumables that treatment uses.',whatsapp:'WhatsApp: the 💬 button on any appointment opens a pre-written reminder to the patient.',builder:'AI Builder: describe a new module in plain words and it appears under Modules, switched on.',treatments:'Treatments: see each plan with progress, and collect payment per sitting.'};
 function ariaMsg(w,t){const d=document.createElement('div');d.className='bub '+(w==='u'?'u':'b');d.innerHTML=t;$('#ariaM').appendChild(d);$('#ariaM').scrollTop=1e9}
 function ariaChips(){$('#ariaC').innerHTML=['patients','appointments','billing','stock','whatsapp','builder'].map(k=>`<button onclick="ariaAsk('${k}')">${k}</button>`).join('')}
 function ariaAsk(k){ariaMsg('u',k);ariaMsg('b',KB[k]+` <a href="#" onclick="showScreen('${({whatsapp:'appointments',builder:'aibuilder'})[k]||k}');return false">▶ Show me</a>`)}
@@ -309,16 +369,16 @@ function ariaSend(){const i=$('#ariaI'),t=i.value.trim();if(!t)return;i.value=''
 /* demo agent */
 const SCRIPT=[
  {say:()=>`Welcome ${AUTH.name}. I'm Aria. I'll take you through the clinic module by module. Press Next any time.`,run(){showScreen('dashboard')}},
- {say:()=>'Patients first. I\'m adding Ananya Verma, 29, for a root canal.',run(){showScreen('patients');patModal();$('#mN').value='Ananya Verma';$('#mA').value=29;$('#mP').value='9988776655';$('#mAl').value='Latex allergy';hl('#mN')}},
+ {say:()=>'Patients first. I\'m adding Ananya Verma, 29, for '+PACK.demo.treatLabel+'.',run(){showScreen('patients');patModal();$('#mN').value='Ananya Verma';$('#mA').value=29;$('#mP').value='9988776655';$('#mAl').value='Latex allergy';hl('#mN')}},
  {say:()=>'Saved. Every patient gets a tooth chart you can tap to mark treated, issue or crown.',run(){const p=patSave();showScreen('patients');if(p)hl('#prow-'+p.id);window._demoP=p}},
- {say:()=>'Now booking by chat. Type it like you would on WhatsApp and the assistant does the rest.',run(){showScreen('appointments');$('#bot').classList.add('on');$('#botI').value='Ananya Verma root canal tomorrow 10am 9988776655';hl('#botI')}},
- {say:()=>'Booked. Notice the root canal became 3 sittings with a split amount.',run(){const r=botSend('Ananya Verma root canal tomorrow 10am 9988776655');$('#bot').classList.remove('on');showScreen('appointments');setTimeout(()=>{const a=D.appointments[D.appointments.length-1];window._demoA=a;if(a)hl('#row-'+a.id)},300)}},
+ {say:()=>'Now booking by chat. Type it like you would on WhatsApp and the assistant does the rest.',run(){showScreen('appointments');$('#bot').classList.add('on');$('#botI').value='Ananya Verma '+PACK.demo.treat+' tomorrow 10am 9988776655';hl('#botI')}},
+ {say:()=>'Booked. Notice the treatment became several sittings with a split amount.',run(){const r=botSend('Ananya Verma '+PACK.demo.treat+' tomorrow 10am 9988776655');$('#bot').classList.remove('on');showScreen('appointments');setTimeout(()=>{const a=D.appointments[D.appointments.length-1];window._demoA=a;if(a)hl('#row-'+a.id)},300)}},
  {say:()=>'One tap opens a WhatsApp reminder, ready to send.',run(){const a=window._demoA||D.appointments[0];apptWA(a.id)}},
  {say:()=>'Treatments tracks every sitting. I\'ll collect payment for sitting one, and an invoice is raised.',run(){closeModal();const a=window._demoA;showScreen('treatments');if(a)setTimeout(()=>paySitting(a.id,0),500)}},
  {say:()=>'Billing now shows the invoice with 18% GST.',run(){showScreen('billing');setTimeout(()=>hl('#inv-'+D.invoices[D.invoices.length-1].id),200)}},
- {say:()=>'Stock deducted by itself: gloves and anaesthetic went down with the sitting.',run(){showScreen('stock');hl('#stk-s0');hl('#stk-s3')}},
- {say:()=>'The AI builder adds new modules from a sentence. Here\'s a lab-orders module.',run(){showScreen('aibuilder');$('#bd').value='Track lab orders for crowns and bridges';hl('#bd')}},
- {say:()=>'Built. It now lives under Modules and can be switched on or off.',run(){$('#bd').value='Track lab orders for crowns';build();hl('#main .grid .card:last-child')}},
+ {say:()=>'Stock deducted by itself: the consumables for that treatment went down with the sitting.',run(){showScreen('stock');PACK.demo.hl.forEach(n=>{const s=D.stock.find(x=>x.name===n);if(s)hl('#stk-'+s.id)})}},
+ {say:()=>'The AI builder adds new modules from a sentence. Here\'s a new module.',run(){showScreen('aibuilder');$('#bd').value=PACK.demo.module;hl('#bd')}},
+ {say:()=>'Built. It now lives under Modules and can be switched on or off.',run(){$('#bd').value=PACK.demo.module;build();hl('#main .grid .card:last-child')}},
  {say:()=>'That\'s the tour. Everything here is yours to click. Ask me anything with the ✨ button.',run(){showScreen('dashboard');$('#aria').classList.add('on')}}
 ];
 let ag=-1;
