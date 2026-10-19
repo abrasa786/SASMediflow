@@ -206,6 +206,16 @@ pre.json{margin:0;background:var(--surface2);border:1px solid var(--line);border
 .end h3{font-size:22px;margin-bottom:6px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.intro{position:fixed;inset:0;z-index:50;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(6px);display:grid;place-items:center;padding:16px}
+.intro[hidden]{display:none}
+.intro .box{background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);max-width:460px;width:100%;padding:26px;text-align:center}
+.intro h1{font-size:22px;margin:12px 0 8px;text-wrap:balance}
+.intro p{color:var(--muted);margin-bottom:18px}
+.intro .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.speaking{display:inline-flex;gap:2px;align-items:flex-end;height:12px;margin-left:6px;vertical-align:middle}
+.speaking i{width:3px;background:var(--accent);border-radius:2px;animation:eq .8s infinite ease-in-out}
+.speaking i:nth-child(2){animation-delay:.15s}.speaking i:nth-child(3){animation-delay:.3s}
+@keyframes eq{0%,100%{height:3px}50%{height:12px}}
 </style>
 </head><body>
 
@@ -213,6 +223,7 @@ pre.json{margin:0;background:var(--surface2);border:1px solid var(--line);border
   <div class="top">
     <div class="brand"><span class="logo">M</span> Mediflow <span class="pill">Guided demo · no login needed</span></div>
     <div class="top-r">
+      <button class="pill btn" data-act="voice" id="voiceBtn">🔇 Voice off</button>
       <button class="pill btn" data-act="restart">↺ Restart tour</button>
       <button class="pill btn" data-act="theme" id="themeBtn">◐ Theme</button>
     </div>
@@ -233,6 +244,17 @@ pre.json{margin:0;background:var(--surface2);border:1px solid var(--line);border
       <div class="bar"><div class="dots"><i></i><i></i><i></i></div><div class="url" id="url">mediflow.app</div></div>
       <div id="screen"></div>
     </section>
+  </div>
+</div>
+<div class="intro" id="intro" role="dialog" aria-label="Start the guided demo">
+  <div class="box">
+    <div class="logo" style="margin:0 auto;width:46px;height:46px;font-size:22px;border-radius:14px">M</div>
+    <h1>Mediflow guided demo</h1>
+    <p id="introTxt">Aria will talk you through every module, from building a custom app to booking, doctor assignment, three-sitting treatments and WhatsApp. About 6 minutes. Turn your sound on.</p>
+    <div class="row">
+      <button class="btn primary" data-act="startvoice" id="introVoice">🔊 Start with voice</button>
+      <button class="btn" data-act="startquiet">Read it instead</button>
+    </div>
   </div>
 </div>
 <script>
@@ -696,6 +718,34 @@ const CH=[
 ];
 function setPlan(n){world({plan:n})}
 
+/* ───────────── voice (browser text-to-speech) ───────────── */
+const TTS=typeof window.speechSynthesis!=="undefined"&&typeof window.SpeechSynthesisUtterance!=="undefined";
+let voiceOn=false,voice=null,tok=0,speaking=false;
+function pickVoice(){if(!TTS)return;const vs=speechSynthesis.getVoices();voice=vs.find(v=>/en[-_]IN/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang)&&/female|zira|samantha|aria|jenny|google uk english female/i.test(v.name))||vs.find(v=>/^en/i.test(v.lang))||null}
+if(TTS){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
+const plain=h=>{const d=document.createElement("div");d.innerHTML=h;return d.textContent.replace(/\s+/g," ").trim()};
+function cancelSpeech(){tok++;speaking=false;if(TTS)try{speechSynthesis.cancel()}catch(e){}}
+function speak(text,done){
+  cancelSpeech();const my=tok;speaking=true;
+  const parts=(text.match(/[^.!?:]+[.!?:]*/g)||[text]).map(x=>x.trim()).filter(Boolean);let i=0,fin=false;
+  const finish=()=>{if(fin||my!==tok)return;fin=true;speaking=false;if(done)done()};
+  const safety=setTimeout(finish,4000+text.length*90);
+  const nextPart=()=>{
+    if(my!==tok)return;
+    if(i>=parts.length){clearTimeout(safety);finish();return}
+    const u=new SpeechSynthesisUtterance(parts[i++]);if(voice){u.voice=voice;u.lang=voice.lang}else u.lang="en-IN";
+    u.rate=1;u.pitch=1;u.onend=nextPart;u.onerror=nextPart;
+    try{speechSynthesis.speak(u)}catch(e){clearTimeout(safety);finish()}
+  };
+  nextPart();
+}
+function narrate(){
+  if(!voiceOn||!TTS)return;
+  const st=CH[pos.c].steps[pos.s];
+  speak(st.t+". "+plain(st.say),()=>{if(playing){clearTimeout(timer);timer=setTimeout(next,1100)}});
+}
+function setVoice(on){voiceOn=on&&TTS;if(!voiceOn)cancelSpeech();const b=$("#voiceBtn");if(b)b.textContent=voiceOn?"🔊 Voice on":"🔇 Voice off";render()}
+
 /* ───────────── controller ───────────── */
 const pos={c:0,s:0};let timer=null,playing=false;
 const total=CH.reduce((n,c)=>n+c.steps.length,0);
@@ -711,13 +761,15 @@ function render(){
   $("#bBack").disabled=flat()===0;
   const last=flat()===total-1;$("#bNext").textContent=last?"Done ✓":"Next →";$("#bNext").disabled=last;
   $("#bPlay").textContent=playing?"⏸ Pause":"▶ Auto";
+  if(voiceOn)$("#say .aria b").insertAdjacentHTML("afterend",'<span class="speaking" aria-hidden="true"><i></i><i></i><i></i></span>');
   renderScreen();
   const act=document.querySelector(".chap.on");if(act&&act.scrollIntoView&&window.innerWidth<=980)act.scrollIntoView({block:"nearest",inline:"center"});
 }
-function go(c,s){pos.c=c;pos.s=s;applyStep();render();schedule()}
+function go(c,s){pos.c=c;pos.s=s;applyStep();render();if(voiceOn){clearTimeout(timer);narrate()}else schedule()}
 function next(){const c=CH[pos.c];if(pos.s<c.steps.length-1)go(pos.c,pos.s+1);else if(pos.c<CH.length-1)go(pos.c+1,0);else stop()}
 function back(){if(pos.s>0)go(pos.c,pos.s-1);else if(pos.c>0)go(pos.c-1,CH[pos.c-1].steps.length-1)}
 function stop(){playing=false;clearTimeout(timer);$("#bPlay").textContent="▶ Auto"}
+function startPlay(){playing=true;$("#bPlay").textContent="⏸ Pause";if(flat()>=total-1){go(0,0)}else if(voiceOn){if(!speaking)narrate()}else schedule()}
 function schedule(){clearTimeout(timer);if(!playing)return;if(flat()>=total-1){stop();return}const len=(CH[pos.c].steps[pos.s].say||"").length;timer=setTimeout(next,Math.min(14000,5500+len*28))}
 function jumpChapter(id){const i=CH.findIndex(c=>c.id===id);if(i>=0)go(i,0)}
 
@@ -727,7 +779,10 @@ document.addEventListener("click",e=>{
   switch(a){
     case"next":stop();next();break;
     case"back":stop();back();break;
-    case"play":playing=!playing;if(playing){if(flat()>=total-1)go(0,0);else schedule()}else stop();$("#bPlay").textContent=playing?"⏸ Pause":"▶ Auto";break;
+    case"play":if(playing){stop()}else{startPlay()}break;
+    case"voice":setVoice(!voiceOn);if(voiceOn)narrate();break;
+    case"startvoice":$("#intro").hidden=true;setVoice(true);go(0,0);startPlay();break;
+    case"startquiet":$("#intro").hidden=true;go(0,0);break;
     case"restart":stop();go(0,0);break;
     case"chap":stop();go(+v,0);break;
     case"goto":stop();jumpChapter(el.dataset.ch);break;
@@ -754,6 +809,7 @@ document.addEventListener("keydown",e=>{
 });
 
 seed();BASE=kpis();
+if(!TTS){$("#voiceBtn").hidden=true;$("#introVoice").hidden=true;$("#introTxt").textContent="This browser cannot speak, so Aria's narration is shown as text. Use Next, or Auto to advance by itself."}
 go(0,0);
 })();
 
