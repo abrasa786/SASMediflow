@@ -15,6 +15,9 @@ export default function SignupPage() {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [loading, setLoading] = useState(false);
+  const [needsConfirm, setNeedsConfirm] = useState(true);
+  const [resending, setResending] = useState(false);
+  const [resendMsg, setResendMsg] = useState("");
   const [error, setError] = useState("");
 
   // Step 1 — Clinic info
@@ -28,6 +31,16 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  async function resend() {
+    setResending(true); setResendMsg("");
+    try {
+      const r = await fetch("/api/auth/resend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
+      const d = await r.json();
+      setResendMsg(r.ok ? d.message : d.error || "Could not resend.");
+    } catch { setResendMsg("Could not resend. Please try again."); }
+    setResending(false);
+  }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -43,6 +56,7 @@ export default function SignupPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create clinic");
+      setNeedsConfirm(data.needsEmailConfirmation !== false);
       setStep(3);
     } catch (err: any) {
       setError(err.message);
@@ -215,13 +229,21 @@ export default function SignupPage() {
             <div className="text-center py-4">
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center text-3xl mx-auto mb-5 shadow-lg">🎉</div>
               <h1 className="text-xl font-bold text-gray-900 mb-2" style={{ fontFamily: "Sora, Inter, sans-serif" }}>Clinic created!</h1>
-              <p className="text-sm text-gray-500 mb-6">
-                <strong>{clinicName}</strong> is live. Check your email to confirm your account, then sign in.
-              </p>
-              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 text-left text-sm">
-                <p className="font-semibold text-blue-700 mb-2">📧 Check your email</p>
-                <p className="text-blue-600 text-xs">We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account, then sign in below.</p>
-              </div>
+              {needsConfirm ? (
+                <>
+                  <p className="text-sm text-gray-500 mb-6"><strong>{clinicName}</strong> is ready. Confirm your email to sign in.</p>
+                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-4 text-left text-sm">
+                    <p className="font-semibold text-blue-700 mb-2">📧 Check your email</p>
+                    <p className="text-blue-600 text-xs">We sent a confirmation link to <strong>{email}</strong>. Click it, then sign in. Check spam if it doesn&apos;t arrive within a minute.</p>
+                  </div>
+                  <button type="button" onClick={resend} disabled={resending} className="w-full mb-3 py-2.5 border border-blue-200 text-blue-700 rounded-xl text-sm font-medium hover:bg-blue-50 disabled:opacity-60">
+                    {resending ? "Sending…" : "Resend confirmation email"}
+                  </button>
+                  {resendMsg && <p className="text-xs text-gray-600 mb-4">{resendMsg}</p>}
+                </>
+              ) : (
+                <p className="text-sm text-gray-500 mb-6"><strong>{clinicName}</strong> is live. You can sign in now.</p>
+              )}
               <Link href="/login" className="block w-full py-3 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-sm">
                 Sign in to your clinic →
               </Link>

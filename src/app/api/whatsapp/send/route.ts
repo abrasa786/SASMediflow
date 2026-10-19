@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireClinicMember } from "@/lib/server/auth";
+import { HttpError } from "@/lib/server/http";
 
 const WA_BASE = "https://graph.facebook.com/v18.0";
 
@@ -42,6 +44,8 @@ async function sendWhatsApp(payload: object) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    // Only signed-in staff of a clinic may send; otherwise anyone could message from the clinic's number.
+    await requireClinicMember(req, body.clinicId);
     const { type = "text", to, message, template, language = "en_US", components } = body;
 
     if (!to) {
@@ -78,6 +82,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, result });
   } catch (e: any) {
+    if (e instanceof HttpError) return NextResponse.json({ error: e.message }, { status: e.status });
     console.error("WhatsApp error:", e);
     return NextResponse.json({ error: e.message }, { status: 500 });
   }

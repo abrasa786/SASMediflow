@@ -3,7 +3,19 @@
  * which uses Meta Cloud API (not Twilio)
  */
 
+import { getActiveClinicId, getSession } from "./auth";
+
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "";
+
+/** The send route requires a signed-in clinic member, so attach the session token and clinic. */
+async function postWhatsApp(payload: Record<string, unknown>) {
+  const session = await getSession();
+  return fetch(`${APP_URL}/api/whatsapp/send`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token ?? ""}` },
+    body: JSON.stringify({ clinicId: getActiveClinicId(), ...payload }),
+  }).then(r => r.json());
+}
 
 export async function sendAppointmentReminder({
   to,
@@ -24,11 +36,7 @@ export async function sendAppointmentReminder({
 }) {
   const message = `Hi ${patientName}! 👋\n\nThis is a reminder for your appointment at *${clinicName}*.\n\n📅 Date: ${date}\n🕐 Time: ${time}${doctorName ? `\n👨‍⚕️ Doctor: ${doctorName}` : ""}${clinicAddress ? `\n📍 ${clinicAddress}` : ""}\n\nPlease arrive 10 minutes early. Reply CANCEL to cancel.\n\nSee you soon! 🏥`;
 
-  return fetch(`${APP_URL}/api/whatsapp/send`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ type: "text", to, message }),
-  }).then(r => r.json());
+  return postWhatsApp({ type: "text", to, message });
 }
 
 export async function sendBookingConfirmation({
@@ -55,11 +63,7 @@ export async function sendBookingConfirmation({
   const modeText = mode === "video" ? "📹 Video Consultation" : "🏥 In-clinic Visit";
   const message = `✅ *Appointment Confirmed!*\n\nHi ${patientName}, your appointment has been booked.\n\n📅 ${date} at ${time}${doctorName ? `\n👨‍⚕️ ${doctorName}` : ""}\n${modeText}\n🏥 ${clinicName}${fee ? `\n💰 Fee: ₹${fee}` : ""}${invoiceNumber ? `\n📄 Invoice: ${invoiceNumber}` : ""}\n\nFor any changes, please call us. See you soon! 😊`;
 
-  return fetch(`${APP_URL}/api/whatsapp/send`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ type: "text", to, message }),
-  }).then(r => r.json());
+  return postWhatsApp({ type: "text", to, message });
 }
 
 export async function sendInvoiceLink({
@@ -77,9 +81,5 @@ export async function sendInvoiceLink({
 }) {
   const message = `🧾 *Invoice from ${clinicName}*\n\nHi ${patientName},\n\nYour invoice ${invoiceNumber} for ₹${total.toLocaleString("en-IN")} has been generated.\n\nThank you for choosing ${clinicName}! 💙`;
 
-  return fetch(`${APP_URL}/api/whatsapp/send`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ type: "text", to, message }),
-  }).then(r => r.json());
+  return postWhatsApp({ type: "text", to, message });
 }

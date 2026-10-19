@@ -15,13 +15,31 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [clinics, setClinics] = useState<Clinic[]>([]);
+  const [unconfirmed, setUnconfirmed] = useState(false);
+  const [info, setInfo] = useState("");
+
+  async function resendConfirmation() {
+    setInfo("");
+    try {
+      const r = await fetch("/api/auth/resend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
+      const d = await r.json();
+      setInfo(r.ok ? d.message : d.error || "Could not resend.");
+    } catch { setInfo("Could not resend. Please try again."); }
+  }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
     const { error: authErr } = await signInWithEmail(email, password);
-    if (authErr) { setError(authErr.message); setLoading(false); return; }
+    if (authErr) {
+      const notConfirmed = /not confirmed/i.test(authErr.message);
+      setUnconfirmed(notConfirmed);
+      setError(notConfirmed ? "Your email isn't confirmed yet. Click the link we emailed you, or resend it below." : authErr.message);
+      setLoading(false);
+      return;
+    }
+    setUnconfirmed(false);
     try {
       const myClinics = await getMyClinics();
       if (myClinics.length === 0) {
@@ -102,6 +120,10 @@ export default function LoginPage() {
                   />
                 </div>
                 {error && <div className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</div>}
+                {unconfirmed && (
+                  <button type="button" onClick={resendConfirmation} className="text-xs text-blue-600 hover:underline">Resend confirmation email</button>
+                )}
+                {info && <div className="text-xs text-gray-600">{info}</div>}
                 <button
                   type="submit"
                   disabled={loading}

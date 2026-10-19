@@ -1,10 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { HttpError, handle } from "@/lib/server/http";
 import { createAdminClient } from "@/lib/supabase";
 import type { Schema } from "./types";
 
-export class HttpError extends Error {
-  constructor(public status: number, message: string) { super(message); }
-}
+export { HttpError, handle };
 
 /** Verifies the bearer token and that the caller is an active admin of the clinic. */
 export async function requireClinicAdmin(req: NextRequest, clinicId: unknown) {
@@ -33,11 +32,3 @@ export async function loadSchema(db: any, clinicId: string): Promise<Schema> {
   return (data as Schema) ?? { objects: [], apps: [] };
 }
 
-export async function handle(fn: () => Promise<any>) {
-  try { return NextResponse.json(await fn()); }
-  catch (e: any) {
-    const status = e instanceof HttpError ? e.status : 500;
-    if (status === 500) console.error("builder error:", e);
-    return NextResponse.json({ error: e?.message ?? "Unexpected error" }, { status });
-  }
-}
