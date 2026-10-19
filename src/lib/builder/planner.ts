@@ -1,3 +1,4 @@
+import { BUILDER_TOOLS_PROMPT, parseAssistantRequest, parseBuilderRequest } from "./agent-tools";
 import { recommendFields } from "./recommend";
 import { toApiName, validatePlan } from "./validate";
 import type { FieldSpec, FieldType, Plan, Schema, Step } from "./types";
@@ -28,6 +29,7 @@ TOOLS (the only steps allowed):
 - hide_field     {object, field}     (data is kept; the "name" field cannot be hidden)
 - create_app     {api_name, label, icon?, description?, objects?: string[]}  -> an app whose tabs are those objects
 - add_tab        {app, kind?: "object"|"dashboard"|"report"|"page", object?, label?}
+${BUILDER_TOOLS_PROMPT}
 
 FieldSpec = {api_name, label?, data_type, required?, unique?, picklist_values?: string[], lookup_object?, help_text?}
 data_type is one of: text, long_text, number, currency, date, datetime, boolean, picklist, email, phone, url, lookup.
@@ -39,7 +41,8 @@ RULES
 - When the admin names an object but no fields, include 4-8 useful fields a real hospital would need (status dropdowns, dates, lookups to related objects, notes). Prefer lookups between related objects you are creating.
 - Order steps so dependencies come first (create objects before apps and lookups).
 - If the request is ambiguous or unsafe, set plan to null and ask 1-3 short questions.
-- Requests about profiles, permission sets, dashboards, reports, automations or WhatsApp are not available yet: say so in "message", set plan to null, and suggest what you can do now.
+- Requests about automations, WhatsApp templates or anything outside the tools above are not available yet: say so in "message", set plan to null, and suggest what you can do now.
+- Never invent fields for built-in sources (appointments, invoices, patients, stock).
 - Do not invent extra objects the admin did not imply.
 
 Reply with ONLY this JSON:
@@ -137,6 +140,11 @@ function rulesPlan(inp: Input): PlannerResult {
     return { tool: "create_object", args: { api_name: api, label: label.replace(/\b\w/g, (c) => c.toUpperCase()), fields } };
   };
 
+  // reports, dashboards, booking rules, permission sets
+  if (parseAssistantRequest(p, inp.schema)) return { message: "Reports and dashboards are made in the AI Assistant chat, and everyone on the team can use it. Ask it there, for example: “Create a dashboard called Daily ops with appointments by doctor and unpaid invoices by month”.", plan: null, source: "rules" };
+  const ag = parseBuilderRequest(p, inp.schema);
+  if (ag) return "error" in ag ? { message: ag.error, plan: null, source: "rules" } : finish(ag.steps, ag.message);
+
   // recommend fields
   let m = p.match(/(?:recommend|suggest)\w*\s+(?:some\s+)?(?:fields?\s+)?(?:for|on|to)\s+(?:the\s+)?(.+)$/i);
   if (m) {
@@ -210,7 +218,7 @@ function rulesPlan(inp: Input): PlannerResult {
   }
 
   return {
-    message: "I can create apps and objects (new tables), add or hide fields, and add tabs. Try: “Create a Lab app with Lab Test and Lab Order”, “Add fields urgent and result notes to lab order”, or “Recommend fields for ward”. To control who sees your data use the Access control tab, and for dashboards and reports use the Reports tab.",
+    message: "I can create apps and tables, add or hide fields, change booking rules, set who can see what, and create flows (when something happens, do something). Try: “Create a Lab app with Lab Test and Lab Order”, “Give nurses access to lab orders”, “Remind patients the day before their appointment”, or “Set appointment slots to 20 minutes”.",
     plan: null,
     source: "rules",
   };

@@ -8,6 +8,8 @@ import { isAddDoctor, parseAddDoctor, mergeDoctor, type DoctorDraft } from "@/li
 import { AiDisabledError, generate } from "@/lib/ai/gateway";
 import { answerLocally, deidentifiedContext, loadFacts } from "@/lib/ai/local-answers";
 import { checkScope, OutOfScopeError, refusal } from "@/lib/ai/scope";
+import { runAssistantModules } from "@/lib/assistant";
+import { loadSchema } from "@/lib/builder/server";
 import { getPolicy, isUuid, loadHistory, logInteraction, newSession } from "@/lib/ai/store";
 
 export const dynamic = "force-dynamic";
@@ -221,6 +223,10 @@ async function handleAddDoctor(db: any, clinicId: string, role: string, prev: Do
   return { reply: lines.join("\n"), draft: null, actions: [{ label: "Open Availability", url: "/availability" }] };
 }
 
+async function customTerms(db: any, clinicId: string): Promise<string[]> {
+  try { const sc = await loadSchema(db, clinicId); return sc.objects.filter((o) => !o.is_system).flatMap((o) => [o.label, o.plural_label]); } catch { return []; }
+}
+
 export async function POST(req: NextRequest) {
   return handle(async () => {
     const b = await req.json();
@@ -241,16 +247,23 @@ export async function POST(req: NextRequest) {
     const run = async (): Promise<Reply> => {
       // Scope guard first: out-of-syllabus questions are refused here, before any parsing, lookup or model call.
       const open = !!(prev?.intent && prev.intent !== "other");
-      const sc = checkScope(message, { module: "assistant", hasOpenRequest: open, hasHistory: history.length > 0 });
+      const terms = await customTerms(db, b.clinicId);
+      const sc = checkScope(message, { module: "assistant", hasOpenRequest: open, hasHistory: history.length > 0, terms });
       if (!sc.ok) { intentName = "out_of_scope"; return { reply: refusal("assistant", botName, undefined), draft: open ? prev : null }; }
       if (prev?.intent && prev.intent !== "other" && ABORT.test(message)) return { reply: "No problem, I've dropped that request.", draft: null };
 
+      // Calendar, records and reports/dashboards: the assistant's modules, for everyone within their role.
+      const ax = await runAssistantModules({ db, clinicId: b.clinicId, userId, role, message, prev, today, botName });
+      if (ax) { intentName = ax.intent ?? "assistant_module"; return { reply: ax.reply, draft: ax.draft, actions: ax.actions } as Reply; }
+
+      
+      const prev2: BookingDraft | undefined = prev?.intent?.startsWith("ax:") ? undefined : prev;   // a half-finished assistant-module request that wasn't answered is dropped
       // Adding a doctor (admin) is handled before booking, because words like "shift" would otherwise look like a reschedule.
-      const adding = (prev as any)?.intent === "add_doctor";
-      if (adding || isAddDoctor(message)) { intentName = "add_doctor"; return handleAddDoctor(db, b.clinicId, role, adding ? (prev as any) : undefined, message, adding); }
+      const adding = (prev2 as any)?.intent === "add_doctor";
+      if (adding || isAddDoctor(message)) { intentName = "add_doctor"; return handleAddDoctor(db, b.clinicId, role, adding ? (prev2 as any) : undefined, message, adding); }
 
       const parsed = parseBookingText(message, today);
-      const active = prev?.intent && prev.intent !== "other" ? prev.intent : undefined;
+      const active = prev2?.intent && prev2.intent !== "other" ? prev2.intent : undefined;
       // While a request is open, a bare "yes"/"ok" must not be mistaken for a patient name
       if (active && /^\s*(yes|yeah|yep|ok|okay|sure|confirm)\W*$/i.test(message)) delete parsed.name;
       const intent = parsed.intent !== "other" ? parsed.intent : active;
@@ -261,7 +274,7 @@ export async function POST(req: NextRequest) {
         return { reply: qa.reply, draft: null };
       }
       intentName = intent;
-      const merged = mergeDraft(prev, { ...parsed, intent });
+      const merged = mergeDraft(prev2, { ...parsed, intent });
       return intent === "book" ? await handleBooking(db, b.clinicId, userId, merged) : await handleCancelOrMove(db, b.clinicId, userId, merged, intent, today);
     };
 

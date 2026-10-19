@@ -1,3 +1,4 @@
+import { describeAgentStep, normalizeAgentStep } from "./agent-tools";
 import { FIELD_TYPES, type FieldSpec, type FieldType, type Plan, type Schema, type Step } from "./types";
 
 const MAX_STEPS = 40, MAX_FIELDS = 60, MAX_OBJECTS = 25, MAX_APPS = 15, MAX_TABS = 20;
@@ -46,6 +47,7 @@ export function validatePlan(raw: any, schema: Schema): { ok: true; plan: Plan }
   let customObjects = schema.objects.filter((o) => !o.is_system).length;
 
   const steps: Step[] = [];
+  const reportNames = new Set<string>();
   raw.steps.forEach((s: any, i: number) => {
     const where = `Step ${i + 1}`;
     const a = s?.args ?? {};
@@ -128,8 +130,11 @@ export function validatePlan(raw: any, schema: Schema): { ok: true; plan: Plan }
         steps.push({ tool: "add_tab", args: { app, kind, object: obj, label: a.label ? String(a.label).slice(0, 80) : undefined } });
         return;
       }
-      default:
-        errors.push(`${where}: "${s?.tool ?? "(missing)"}" is not a tool the builder can run`);
+      default: {
+        const ag = normalizeAgentStep(s, schema, where, errors, reportNames);
+        if (!ag && !errors.some((e) => e.startsWith(where))) errors.push(`${where}: "${s?.tool ?? "(missing)"}" is not a tool the builder can run`);
+        if (ag) steps.push(ag);
+      }
     }
   });
 
@@ -159,5 +164,6 @@ export function describeStep(s: Step): string {
     case "hide_field": return `Hide field “${s.args.field}” on “${s.args.object}” (data is kept)`;
     case "create_app": return `Create app “${s.args.label}”${s.args.objects?.length ? " with tabs: " + s.args.objects.join(", ") : ""}`;
     case "add_tab": return `Add ${s.args.kind ?? "object"} tab${s.args.object ? ` “${s.args.object}”` : ""} to app “${s.args.app}”`;
+    default: return describeAgentStep(s);
   }
 }

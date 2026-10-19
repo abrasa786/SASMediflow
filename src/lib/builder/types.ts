@@ -15,7 +15,10 @@ export interface FieldSpec {
   help_text?: string;
 }
 
+import type { AgentStep } from "./agent-tools";
+
 export type Step =
+  | AgentStep
   | { tool: "create_object"; args: { api_name: string; label?: string; plural_label?: string; description?: string; icon?: string; fields?: FieldSpec[] } }
   | { tool: "add_field"; args: { object: string; field: FieldSpec } }
   | { tool: "hide_field"; args: { object: string; field: string } }

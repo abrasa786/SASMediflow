@@ -35,6 +35,7 @@ const DOMAIN = new RegExp("\\b(" + [
   "setup", "set up", "settings?", "branding", "logo", "domain", "website", "permissions?", "access", "roles?",
   "objects?", "tables?", "fields?", "apps?", "tabs?", "dropdowns?", "picklists?", "lookups?", "records?", "templates?", "undo", "rollback", "recommend\\w*",
   "today'?s?", "tomorrow", "this week",
+  "agenda", "calendar", "free", "slots?", "available", "holiday", "vacation", "no[- ]?show", "completed", "chart", "graphs?", "flows?", "automation",
 ].join("|") + ")\\b", "i");
 
 const SOFT_MOVE = /\b(move|shift|postpone|push)\b.*\b(mon|tue|wed|thu|fri|sat|sun|tomorrow|today|next|\d{1,2}\s?(am|pm)|\d{1,2}:\d{2})/i;
@@ -45,7 +46,7 @@ export interface ScopeResult { ok: boolean; kind?: "smalltalk"; topic?: string }
 
 export function checkScope(
   text: string,
-  opts: { module: ScopeModule; hasOpenRequest?: boolean; hasHistory?: boolean },
+  opts: { module: ScopeModule; hasOpenRequest?: boolean; hasHistory?: boolean; terms?: string[] },
 ): ScopeResult {
   const t = text.trim();
   for (const [re, topic] of HARD) if (re.test(t)) return { ok: false, topic };
@@ -53,6 +54,8 @@ export function checkScope(
   if (opts.hasOpenRequest) return { ok: true };                       // replying to a question we asked (name, time…)
   if (FOLLOW_UP.test(t) && opts.hasHistory) return { ok: true };
   if (DOMAIN.test(t) || SOFT_MOVE.test(t)) return { ok: true };
+  const low = t.toLowerCase();
+  if (opts.terms?.some((x) => x.length >= 3 && low.includes(x.toLowerCase()))) return { ok: true };   // this clinic's own tables, e.g. "Lab Test"
   return { ok: false, topic: "other topics" };
 }
 

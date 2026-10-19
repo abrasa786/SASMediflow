@@ -3,6 +3,7 @@ import { handle, HttpError } from "@/lib/server/http";
 import { requireClinicMember } from "@/lib/server/auth";
 import { bookAppointmentViaEngine } from "@/lib/booking/engine";
 import { notifyAppointment } from "@/lib/booking/notify";
+import { processFlowsSoon } from "@/lib/flows/engine";
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 const str = (v: unknown, max = 300) => (typeof v === "string" && v.trim() ? v.trim().slice(0, max) : undefined);
@@ -28,6 +29,7 @@ export async function POST(req: NextRequest) {
       symptoms: str(b.symptoms), notes: str(b.notes), fee, source: "clinic",
     });
     const notifications = b.notify === false ? [] : await notifyAppointment(db, b.clinicId, details, "confirmation");
+    await processFlowsSoon(db, b.clinicId);
     return { details, notifications };
   });
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import { getActiveClinicId } from "@/lib/auth";
+import { authFetch } from "@/lib/api";
 import { getInvoices, createInvoice, updateInvoice, searchClinicPatients } from "@/lib/clinic";
 import type { Invoice, ClinicPatient, InvoiceStatus, PaymentMethod } from "@/types";
 
@@ -87,6 +88,7 @@ export default function BillingPage() {
     if (error) { setErr(error.message); return; }
     setShowNew(false);
     resetForm();
+    runFlows();
     load(clinicId);
   }
 
@@ -98,8 +100,12 @@ export default function BillingPage() {
 
   async function markPaid(inv: Invoice) {
     await updateInvoice(inv.id, { status: "paid", paid_amount: inv.total });
+    runFlows();
     load(clinicId);
   }
+
+  /** Tell the server a payment happened so any flow waiting for it (a thank-you, a task) runs now. */
+  function runFlows() { authFetch("/api/flows/process", { body: { clinicId } }).catch(() => null); }
 
   const filtered = filter === "all" ? invoices : invoices.filter(i => i.status === filter);
   const totalRevenue = invoices.filter(i => ["paid", "partially_paid"].includes(i.status ?? "")).reduce((s, i) => s + (i.total ?? 0), 0);

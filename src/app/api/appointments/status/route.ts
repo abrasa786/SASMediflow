@@ -3,6 +3,7 @@ import { handle, HttpError } from "@/lib/server/http";
 import { requireClinicMember } from "@/lib/server/auth";
 import { setStatusViaEngine } from "@/lib/booking/engine";
 import { notifyAppointment } from "@/lib/booking/notify";
+import { processFlowsSoon } from "@/lib/flows/engine";
 
 export async function POST(req: NextRequest) {
   return handle(async () => {
@@ -13,6 +14,7 @@ export async function POST(req: NextRequest) {
     // Only a real cancellation is announced; completing or marking no-show stays quiet.
     const notifications = details.changed && b.status === "cancelled" && b.notify !== false
       ? await notifyAppointment(db, b.clinicId, details, "cancellation") : [];
+    await processFlowsSoon(db, b.clinicId);
     return { details, notifications };
   });
 }

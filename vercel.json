@@ -1,3 +1,12 @@
 {
-  "crons": [{ "path": "/api/ai/purge", "schedule": "30 21 * * *" }]
+  "crons": [
+    {
+      "path": "/api/ai/purge",
+      "schedule": "30 21 * * *"
+    },
+    {
+      "path": "/api/flows/run",
+      "schedule": "30 11 * * *"
+    }
+  ]
 }

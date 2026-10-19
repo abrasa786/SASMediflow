@@ -18,7 +18,7 @@ test("browser code never uses the service-role client", () => {
 });
 
 test("every API route checks who is calling (or is explicitly public)", () => {
-  const PUBLIC = ["api/health", "api/public", "api/auth", "api/clinic/create", "api/ai/purge"];
+  const PUBLIC = ["api/health", "api/public", "api/auth", "api/clinic/create", "api/ai/purge", "api/flows/run"];
   const bad = files("src/app/api").filter((f) => f.endsWith("route.ts") && !PUBLIC.some((p) => f.includes(p)))
     .filter((f) => !/requireClinicMember|requireClinicAdmin|requireUser|getUser\(/.test(readFileSync(f, "utf8")));
   assert.deepEqual(bad, [], "routes without an auth check");

@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { handle, HttpError } from "@/lib/server/http";
 import { requireClinicMember } from "@/lib/server/auth";
 import { throwRpc } from "@/lib/server/rpc";
+import { processFlowsSoon } from "@/lib/flows/engine";
 
 /** Record a (part-)payment against a sitting's invoice. */
 export async function POST(req: NextRequest) {
@@ -13,6 +14,7 @@ export async function POST(req: NextRequest) {
     if (amount !== null && !Number.isFinite(amount)) throw new HttpError(400, "Enter a valid amount.");
     const { data, error } = await db.rpc("tx_pay_sitting", { p_clinic: b.clinicId, p_actor: userId, p_sitting: b.sittingId, p_amount: amount, p_method: b.method ?? "cash" });
     if (error) throwRpc(error);
+    await processFlowsSoon(db, b.clinicId);
     return data;
   });
 }

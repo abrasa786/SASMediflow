@@ -58,7 +58,7 @@ export function buildMessages(d: any, kind: NotifyKind): { patient: string; doct
   };
 }
 
-async function sendViaCloudApi(phone: string, text: string, template?: { name: string; params: string[] }) {
+export async function sendViaCloudApi(phone: string, text: string, template?: { name: string; params: string[] }) {
   const id = process.env.WHATSAPP_PHONE_NUMBER_ID, token = process.env.WHATSAPP_ACCESS_TOKEN;
   const ver = process.env.WHATSAPP_API_VERSION || "v21.0";
   const body = template
@@ -78,7 +78,7 @@ async function sendViaCloudApi(phone: string, text: string, template?: { name: s
   return j?.messages?.[0]?.id as string | undefined;
 }
 
-const configured = () => !!(process.env.WHATSAPP_PHONE_NUMBER_ID && process.env.WHATSAPP_ACCESS_TOKEN);
+export const whatsappConfigured = () => !!(process.env.WHATSAPP_PHONE_NUMBER_ID && process.env.WHATSAPP_ACCESS_TOKEN);
 
 async function deliver(
   db: any, ctx: { clinicId: string; appointmentId: string }, recipient: "patient" | "doctor",
@@ -89,7 +89,7 @@ async function deliver(
   let providerId: string | undefined;
   if (!phone) {
     r = { recipient, phone: rawPhone ?? null, status: "skipped", channel: "link", error: recipient === "patient" ? "No valid phone number on file" : "Doctor has no phone number saved" };
-  } else if (!configured()) {
+  } else if (!whatsappConfigured()) {
     r = { recipient, phone, status: "link", channel: "link", link: waLink(phone, text) };
   } else {
     try {

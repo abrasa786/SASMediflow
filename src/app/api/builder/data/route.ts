@@ -1,3 +1,4 @@
+import { raiseFlowEvent } from "@/lib/flows/engine";
 import { NextRequest } from "next/server";
 import { handle, HttpError } from "@/lib/server/http";
 import { requireClinicMember } from "@/lib/server/auth";
@@ -41,6 +42,7 @@ export async function POST(req: NextRequest) {
       if (b.values == null || typeof b.values !== "object") throw new HttpError(400, "Nothing to save.");
       const { data, error } = await db.rpc("builder_rec_save", { p: { clinic_id: b.clinicId, actor: userId, object: b.object, id: b.id ?? null, values: b.values } });
       if (error) throwRpc(error);
+      await raiseFlowEvent(db, b.clinicId, b.id ? "record_updated" : "record_created", { object: b.object, values: b.values, label: String(b.values?.name ?? "") });
       return data;
     }
     if (b.action === "delete") {
