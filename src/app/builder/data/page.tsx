@@ -59,7 +59,7 @@ export default function DataPage() {
     if (!cid) { router.push("/login"); return; }
     setClinicId(cid);
     getMyRoleInClinic(cid).then((r) => setIsAdmin(r === "admin"));
-    authFetch(`/api/builder/data?clinicId=${cid}`).then((r) => { setTables(r.tables); if (r.tables[0]) setCur(r.tables[0].api_name); else setLoading(false); }).catch((e) => { setErr(e.message); setLoading(false); });
+    authFetch(`/api/builder/data?clinicId=${cid}`).then((r) => { setTables(r.tables); if (r.tables[0]) { const want = new URLSearchParams(window.location.search).get("table"); setCur(r.tables.find((t: Table) => t.api_name === want)?.api_name ?? r.tables[0].api_name); } else setLoading(false); }).catch((e) => { setErr(e.message); setLoading(false); });
   }, [router]);
   useEffect(() => { if (clinicId && cur) { loadRows(clinicId, cur, q); const t = tables.find((x) => x.api_name === cur); if (t) loadLookups(clinicId, t); } }, [cur]); // eslint-disable-line react-hooks/exhaustive-deps
 

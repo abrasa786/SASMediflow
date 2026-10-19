@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { signOut, clearActiveClinicId } from "@/lib/auth";
+import { useEffect, useState } from "react";
+import { signOut, clearActiveClinicId, getActiveClinicId } from "@/lib/auth";
+import { authFetch } from "@/lib/api";
 import type { ClinicRole } from "@/types";
 
 const NAV = [
@@ -47,6 +49,11 @@ interface Props {
 export default function Sidebar({ clinicName, userEmail, role, logoUrl, brandColor }: Props) {
   const pathname = usePathname();
   const router = useRouter();
+  const [apps, setApps] = useState<{ api_name: string; plural_label: string; icon?: string }[]>([]);
+  useEffect(() => {      // tables the AI Builder made, that this person may open
+    const cid = getActiveClinicId(); if (!cid) return;
+    authFetch(`/api/builder/data?clinicId=${cid}`).then((r) => setApps(r.tables ?? [])).catch(() => setApps([]));
+  }, [pathname]);
 
   async function handleLogout() {
     clearActiveClinicId();
@@ -95,6 +102,17 @@ export default function Sidebar({ clinicName, userEmail, role, logoUrl, brandCol
             </Link>
           );
         })}
+        {apps.length > 0 && (
+          <div className="pt-3 mt-2 border-t border-slate-800">
+            <p className="px-3 pb-1 text-[11px] uppercase tracking-wide text-slate-500">Your apps</p>
+            {apps.map((a) => (
+              <Link key={a.api_name} href={`/builder/data?table=${a.api_name}`}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800">
+                <span className="text-base">{a.icon ?? "📄"}</span>{a.plural_label}
+              </Link>
+            ))}
+          </div>
+        )}
       </nav>
 
       {/* User */}
