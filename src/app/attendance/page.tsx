@@ -107,7 +107,7 @@ export default function AttendancePage() {
         </section>
       </div>
 
-      {fix && <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4"><div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+      {fix && <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-start sm:items-center justify-center p-4 overflow-y-auto"><div className="bg-white rounded-2xl p-6 w-full max-w-sm">
         <h2 className="font-bold text-slate-900 mb-1">Correct attendance</h2><p className="text-sm text-slate-500 mb-4">{fix.name} · {date}</p>
         <div className="grid grid-cols-2 gap-3"><label className="text-xs text-slate-600">Check in<input type="time" className={inp + " w-full mt-1"} value={fix.in} onChange={(e) => setFix({ ...fix, in: e.target.value })} /></label>
           <label className="text-xs text-slate-600">Check out<input type="time" className={inp + " w-full mt-1"} value={fix.out} onChange={(e) => setFix({ ...fix, out: e.target.value })} /></label></div>

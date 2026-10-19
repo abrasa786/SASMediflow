@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AssistantWidget from "@/components/AssistantWidget";
 import Sidebar from "./Sidebar";
@@ -15,6 +15,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<ClinicRole | null>(null);
   const [email, setEmail] = useState("");
   const [ready, setReady] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const closeMenu = useCallback(() => setMenu(false), []);
 
   useEffect(() => {
     // Show the last known clinic/role instantly (so moving between pages does not flash "Loading…"),
@@ -61,15 +63,24 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       <Sidebar
+        open={menu}
+        onClose={closeMenu}
         clinicName={clinic?.brand_name ?? clinic?.name ?? "Clinic"}
         userEmail={email}
         role={role ?? undefined}
         logoUrl={clinic?.logo_url}
         brandColor={clinic?.primary_color}
       />
-      <main className="flex-1 min-h-screen overflow-y-auto" style={{ marginLeft: "var(--sidebar-w, 240px)" }}>
-        {children}
-      </main>
+      <div className="flex-1 min-w-0 lg:ml-[var(--sidebar-w,240px)]">
+        {/* Phone top bar: menu button + clinic name */}
+        <header className="lg:hidden sticky top-0 z-30 flex items-center gap-3 px-3 h-14 bg-slate-900 text-white">
+          <button onClick={() => setMenu(true)} aria-label="Open menu" aria-controls="app-menu" aria-expanded={menu} className="w-10 h-10 -ml-1 flex items-center justify-center rounded-lg hover:bg-slate-800 text-2xl">☰</button>
+          <p className="font-semibold text-sm truncate">{clinic?.brand_name ?? clinic?.name ?? "Clinic"}</p>
+        </header>
+        <main className="min-h-screen overflow-x-hidden">
+          {children}
+        </main>
+      </div>
       <AssistantWidget botName={clinic?.ai_name || "Assistant"} color={clinic?.primary_color} />
     </div>
   );

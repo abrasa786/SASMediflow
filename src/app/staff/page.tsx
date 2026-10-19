@@ -123,7 +123,7 @@ export default function StaffPage() {
 
       {/* Invite modal */}
       {showInvite && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => { setShowInvite(false); setInviteMsg(""); setInviteErr(""); }}>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-start sm:items-center justify-center p-4 overflow-y-auto" onClick={() => { setShowInvite(false); setInviteMsg(""); setInviteErr(""); }}>
           <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-bold text-slate-900">Add staff member</h2>

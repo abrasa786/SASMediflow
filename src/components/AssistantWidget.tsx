@@ -48,7 +48,7 @@ export default function AssistantWidget({ botName, color }: { botName: string; c
   return (
     <>
       {open && (
-        <section aria-label={`${botName} chat`} className="fixed z-50 bottom-24 right-5 w-[min(380px,calc(100vw-2rem))] h-[min(560px,calc(100vh-8rem))] bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+        <section aria-label={`${botName} chat`} className="fixed z-[60] max-lg:inset-0 max-lg:rounded-none lg:bottom-24 lg:right-5 lg:w-[380px] lg:h-[min(560px,calc(100vh-8rem))] bg-white border border-slate-200 lg:rounded-2xl shadow-2xl flex flex-col overflow-hidden">
           <header className="px-4 py-3 text-white flex items-center justify-between" style={{ background: accent }}>
             <div className="min-w-0"><p className="font-semibold text-sm truncate">🤖 {botName}</p><p className="text-[11px] opacity-80">Calendar, records and reports, by chat</p></div>
             <div className="flex items-center gap-1">
@@ -76,13 +76,13 @@ export default function AssistantWidget({ botName, color }: { botName: string; c
             <div ref={end} />
           </div>
           <form onSubmit={(e) => { e.preventDefault(); send(); }} className="p-2 border-t border-slate-100 flex gap-2 bg-white">
-            <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type a request…" aria-label="Message" className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
+            <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type a request…" aria-label="Message" className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-slate-200 text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
             <button disabled={busy || !input.trim()} className="px-3 py-2 rounded-xl text-white text-sm font-medium disabled:opacity-50" style={{ background: accent }}>Send</button>
           </form>
         </section>
       )}
       <button onClick={() => setOpen((o) => !o)} aria-label={open ? `Close ${botName}` : `Open ${botName}`} aria-expanded={open}
-        className="fixed z-50 bottom-5 right-5 w-14 h-14 rounded-full text-white text-2xl shadow-xl hover:scale-105 transition-transform" style={{ background: accent }}>{open ? "✕" : "🤖"}</button>
+        className={`fixed z-50 bottom-4 right-4 lg:bottom-5 lg:right-5 w-14 h-14 ${open ? "max-lg:hidden" : ""} rounded-full text-white text-2xl shadow-xl hover:scale-105 transition-transform`} style={{ background: accent }}>{open ? "✕" : "🤖"}</button>
     </>
   );
 }

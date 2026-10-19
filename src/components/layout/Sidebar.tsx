@@ -46,9 +46,12 @@ interface Props {
   role?: ClinicRole;
   logoUrl?: string | null;
   brandColor?: string | null;
+  /** Phone/tablet: the menu is a slide-out drawer. */
+  open?: boolean;
+  onClose?: () => void;
 }
 
-export default function Sidebar({ clinicName, userEmail, role, logoUrl, brandColor }: Props) {
+export default function Sidebar({ clinicName, userEmail, role, logoUrl, brandColor, open = false, onClose }: Props) {
   const pathname = usePathname();
   const router = useRouter();
   interface AppTab { label: string; kind: string; path?: string | null; object?: string | null }
@@ -65,6 +68,14 @@ export default function Sidebar({ clinicName, userEmail, role, logoUrl, brandCol
   function pick(v: string) { setMode(v); try { localStorage.setItem("mf_app_" + cid, v); } catch { /* ignore */ } const a = apps.find((x) => x.api_name === v); if (a) router.push(`/apps/${a.api_name}`); }
   const tabHref = (app: AppInfo, t: AppTab) => t.path || (t.kind === "object" && t.object ? `/builder/data?table=${t.object}` : `/apps/${app.api_name}`);
   const cur = apps.find((x) => x.api_name === mode);
+  // Close the drawer after every navigation, and let Escape close it.
+  useEffect(() => { onClose?.(); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+  useEffect(() => {
+    if (!open) return;
+    const k = (e: KeyboardEvent) => { if (e.key === "Escape") onClose?.(); };
+    window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k);
+  }, [open, onClose]);
 
   async function handleLogout() {
     clearActiveClinicId();
@@ -75,9 +86,12 @@ export default function Sidebar({ clinicName, userEmail, role, logoUrl, brandCol
   const visibleNav = NAV.filter((n) => !n.roles || (role && n.roles.includes(role)));
 
   return (
+    <>
+    {open && <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={onClose} aria-hidden="true" />}
     <aside
-      className="fixed left-0 top-0 h-screen bg-slate-900 text-slate-300 flex flex-col z-40"
-      style={{ width: "var(--sidebar-w, 240px)" }}
+      id="app-menu"
+      aria-label="Main menu"
+      className={`fixed left-0 top-0 h-[100dvh] bg-slate-900 text-slate-300 flex flex-col z-50 lg:z-40 w-[min(280px,85vw)] lg:w-[var(--sidebar-w,240px)] transition-transform duration-200 ${open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
     >
       {/* Clinic header */}
       <div className="px-4 py-5 border-b border-slate-800">
@@ -90,6 +104,7 @@ export default function Sidebar({ clinicName, userEmail, role, logoUrl, brandCol
             <p className="text-white font-semibold text-sm truncate">{clinicName}</p>
             <p className="text-slate-500 text-xs">Mediflow Clinic</p>
           </div>
+          <button onClick={onClose} aria-label="Close menu" className="ml-auto lg:hidden text-slate-400 hover:text-white text-xl px-2 py-1">✕</button>
         </div>
       </div>
 
@@ -98,7 +113,7 @@ export default function Sidebar({ clinicName, userEmail, role, logoUrl, brandCol
         <div className="px-3 pt-3">
           <label className="sr-only" htmlFor="app-launcher">App launcher</label>
           <select id="app-launcher" value={cur ? mode : ""} onChange={(e) => pick(e.target.value)}
-            className="w-full bg-slate-800 text-slate-200 text-sm rounded-lg px-3 py-2 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500">
+            className="w-full bg-slate-800 text-slate-200 text-base md:text-sm rounded-lg px-3 py-2 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500">
             <option value="">▦ All screens</option>
             {apps.map((a) => <option key={a.api_name} value={a.api_name}>{a.icon ?? "🧩"} {a.label}</option>)}
           </select>
@@ -166,5 +181,6 @@ export default function Sidebar({ clinicName, userEmail, role, logoUrl, brandCol
         </button>
       </div>
     </aside>
+    </>
   );
 }

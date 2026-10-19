@@ -106,7 +106,7 @@ export default function PatientsPage() {
               {search ? "No patients match your search" : "No patients yet — add the first one"}
             </div>
           ) : (
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto"><table className="w-full text-sm min-w-[560px]">
               <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wide">
                 <tr>
                   <th className="px-5 py-3 text-left font-medium">Name</th>
@@ -135,7 +135,7 @@ export default function PatientsPage() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           )}
         </div>
       </div>

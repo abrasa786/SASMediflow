@@ -93,7 +93,7 @@ export default function UsersPage() {
         </div>
       </div>
       {confirm && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setConfirm(null)}>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-start sm:items-center justify-center p-4 overflow-y-auto" onClick={() => setConfirm(null)}>
           <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <h2 className="font-bold text-slate-900 mb-2">Delete {confirm.name || confirm.email}?</h2>
             <p className="text-sm text-slate-600 mb-5">They lose access to this clinic immediately. Their past appointments, invoices and attendance stay on record.</p>

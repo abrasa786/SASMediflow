@@ -54,7 +54,7 @@ export default function ManageAppsPage() {
           </div>
         ))}
         {sel && (
-          <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Who can see this">
+          <div className="fixed inset-0 z-50 bg-black/40 flex items-start sm:items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Who can see this">
             <div className="bg-white rounded-2xl p-5 w-full max-w-md">
               <h2 className="font-semibold text-slate-900 mb-1">Who can see {sel.tab ? `“${sel.tab}”` : "this app"}?</h2>
               <p className="text-xs text-slate-500 mb-3">Pick roles, permission sets, or everyone.</p>
