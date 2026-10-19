@@ -78,11 +78,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, clinicId: existing.clinic_id, needsEmailConfirmation, resent: true });
     }
 
-    const { data: clinic, error: clinicError } = await admin
-      .from("clinics")
-      .insert({ name: clinicName, brand_name: brandName || clinicName, specialty, city: city || null, is_active: true, ...(colour ? { primary_color: colour } : {}), ...(aiNameClean ? { ai_name: aiNameClean } : {}), ...(tagline ? { tagline: String(tagline).slice(0, 120) } : {}), ...(slugClean ? { slug: slugClean } : {}), ...(domainClean ? { custom_domain: domainClean, domain_verified: false, domain_token: newDomainToken() } : {}) })
-      .select()
-      .single();
+    const fullRow = { name: clinicName, brand_name: brandName || clinicName, specialty, city: city || null, is_active: true, ...(colour ? { primary_color: colour } : {}), ...(aiNameClean ? { ai_name: aiNameClean } : {}), ...(tagline ? { tagline: String(tagline).slice(0, 120) } : {}), ...(slugClean ? { slug: slugClean } : {}), ...(domainClean ? { custom_domain: domainClean, domain_verified: false, domain_token: newDomainToken() } : {}) };
+    let { data: clinic, error: clinicError } = await admin.from("clinics").insert(fullRow).select().single();
+    // A database that is behind (a branding migration not run yet) must not block sign-up: create with the basics.
+    if (clinicError && /schema cache|column/i.test(clinicError.message)) {
+      console.error("clinics insert failed, retrying with basic fields (run the latest migrations):", clinicError.message);
+      ({ data: clinic, error: clinicError } = await admin.from("clinics").insert({ name: clinicName, brand_name: brandName || clinicName, specialty, city: city || null, is_active: true }).select().single());
+    }
     if (clinicError) {
       await admin.auth.admin.deleteUser(userId);
       return NextResponse.json({ error: clinicError.message }, { status: 500 });
