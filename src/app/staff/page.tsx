@@ -42,8 +42,9 @@ export default function StaffPage() {
     const id = getActiveClinicId();
     if (!id) { router.push("/login"); return; }
     setClinicId(id);
+    const cid: string = id;
     async function init() {
-      const [s, r] = await Promise.all([getStaffMembers(id), getMyRoleInClinic(id)]);
+      const [s, r] = await Promise.all([getStaffMembers(cid), getMyRoleInClinic(cid)]);
       setStaff(s);
       setMyRole(r as ClinicRole);
       setLoading(false);

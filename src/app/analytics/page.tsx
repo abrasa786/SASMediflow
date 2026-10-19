@@ -142,7 +142,7 @@ export default function AnalyticsPage() {
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${period === p ? "bg-blue-600 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${period === p ? "bg-sky-600 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
               >
                 {p === "week" ? "This Week" : p === "month" ? "This Month" : "This Year"}
               </button>
@@ -152,14 +152,14 @@ export default function AnalyticsPage() {
 
         {loading ? (
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent" />
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-sky-600 border-t-transparent" />
           </div>
         ) : (
           <>
             {/* KPI Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               {[
-                { label: "Total Revenue", value: `₹${totalRevenue >= 100000 ? (totalRevenue / 100000).toFixed(1) + "L" : totalRevenue >= 1000 ? Math.round(totalRevenue / 1000) + "K" : totalRevenue}`, sub: `${paidInvoices} paid invoices`, color: "from-blue-600 to-violet-600" },
+                { label: "Total Revenue", value: `₹${totalRevenue >= 100000 ? (totalRevenue / 100000).toFixed(1) + "L" : totalRevenue >= 1000 ? Math.round(totalRevenue / 1000) + "K" : totalRevenue}`, sub: `${paidInvoices} paid invoices`, color: "from-sky-600 to-sky-700" },
                 { label: "Appointments", value: totalAppts.toString(), sub: `${period === "week" ? "this week" : period === "month" ? "this month" : "this year"}`, color: "from-emerald-500 to-teal-600" },
                 { label: "Avg per Invoice", value: `₹${avgPerInvoice >= 1000 ? Math.round(avgPerInvoice / 1000) + "K" : avgPerInvoice}`, sub: "per paid invoice", color: "from-amber-500 to-orange-600" },
                 { label: "No-show Rate", value: `${noShowRate}%`, sub: `${noShowCount} no-shows`, color: noShowCount > 0 ? "from-red-500 to-rose-600" : "from-emerald-500 to-teal-600" },
@@ -187,7 +187,7 @@ export default function AnalyticsPage() {
                         <div className="text-xs font-semibold text-gray-500 w-8">{m.month}</div>
                         <div className="flex-1 h-6 bg-gray-100 rounded-lg overflow-hidden">
                           <div
-                            className="h-full bg-gradient-to-r from-blue-500 to-violet-500 rounded-lg transition-all duration-700"
+                            className="h-full bg-gradient-to-r from-sky-500 to-sky-600 rounded-lg transition-all duration-700"
                             style={{ width: `${maxMonthRev > 0 ? (m.revenue / maxMonthRev) * 100 : 0}%` }}
                           />
                         </div>
@@ -237,7 +237,7 @@ export default function AnalyticsPage() {
                       <div key={d.name}>
                         <div className="flex justify-between text-sm mb-1.5">
                           <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center text-white text-xs font-bold">{d.name[0]}</div>
+                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-sky-600 to-sky-700 flex items-center justify-center text-white text-xs font-bold">{d.name[0]}</div>
                             <span className="font-medium text-gray-800">{d.name}</span>
                           </div>
                           <div className="text-right">

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import LogoPicker from "@/components/LogoPicker";
 
@@ -13,7 +12,6 @@ const SPECIALTIES = [
 ];
 
 export default function SignupPage() {
-  const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [loading, setLoading] = useState(false);
   const [needsConfirm, setNeedsConfirm] = useState(true);
@@ -199,7 +197,7 @@ export default function SignupPage() {
           {step === 2 && (
             <form onSubmit={handleCreate}>
               <h1 className="text-xl font-bold text-gray-900 mb-1" style={{ fontFamily: "Sora, Inter, sans-serif" }}>Create your admin account</h1>
-              <p className="text-sm text-gray-500 mb-5">You'll be the clinic admin. You can invite staff next.</p>
+              <p className="text-sm text-gray-500 mb-5">You&apos;ll be the clinic admin. You can invite staff next.</p>
 
               <div className="space-y-4">
                 <div>

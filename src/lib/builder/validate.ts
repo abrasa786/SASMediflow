@@ -23,7 +23,7 @@ function normField(raw: any, errors: string[], where: string): FieldSpec | null 
   if (type === "picklist") {
     const vals = Array.isArray(raw.picklist_values) ? raw.picklist_values.map((v: any) => String(v).trim()).filter(Boolean) : [];
     if (!vals.length) { errors.push(`${where}: dropdown field "${api}" needs at least one value`); return null; }
-    out.picklist_values = Array.from(new Set(vals)).slice(0, 50);
+    out.picklist_values = Array.from(new Set<string>(vals)).slice(0, 50);
   }
   if (type === "lookup") out.lookup_object = toApiName(raw.lookup_object);
   return out;

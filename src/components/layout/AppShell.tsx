@@ -15,23 +15,30 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    // Show the last known clinic/role instantly (so moving between pages does not flash "Loading…"),
+    // then confirm with the server and correct it if anything changed (e.g. a role was changed).
+    const clinicId = getActiveClinicId();
+    try {
+      const raw = clinicId ? sessionStorage.getItem("mf_shell_" + clinicId) : null;
+      if (raw) { const c = JSON.parse(raw); setClinic(c.clinic); setRole(c.role); setEmail(c.email); setReady(true); }
+    } catch { /* cache is optional */ }
+
     async function init() {
       const session = await getSession();
       if (!session) { router.push("/login"); return; }
-
-      const clinicId = getActiveClinicId();
       if (!clinicId) { router.push("/login"); return; }
 
       const [c, r] = await Promise.all([
         getClinic(clinicId),
         getMyRoleInClinic(clinicId),
       ]);
-      if (!c || !r) { router.push("/login"); return; }
+      if (!c || !r) { try { sessionStorage.removeItem("mf_shell_" + clinicId); } catch { /* ignore */ } router.push("/login"); return; }
 
       setClinic(c);
       setRole(r as ClinicRole);
       setEmail(session.user.email ?? "");
       setReady(true);
+      try { sessionStorage.setItem("mf_shell_" + clinicId, JSON.stringify({ clinic: c, role: r, email: session.user.email ?? "" })); } catch { /* ignore */ }
     }
     init();
   // eslint-disable-next-line react-hooks/exhaustive-deps

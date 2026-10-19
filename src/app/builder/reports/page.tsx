@@ -8,8 +8,8 @@ import BuilderTabs from "@/components/BuilderTabs";
 import ReportView from "@/components/ReportView";
 import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
+import { inputCls as inp } from "@/components/ui";
 
-const inp = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky-500";
 const OPS: [string, string][] = [["eq", "is"], ["neq", "is not"], ["contains", "contains"], ["gt", "greater than"], ["gte", "at least"], ["lt", "less than"], ["lte", "at most"], ["empty", "is empty"], ["notempty", "is filled"]];
 const AGG: [string, string][] = [["count", "Count"], ["sum", "Total"], ["avg", "Average"], ["min", "Lowest"], ["max", "Highest"]];
 type Mode = "rows" | "grouped" | "number";

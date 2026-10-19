@@ -22,7 +22,7 @@ export function platformHosts(): string[] {
 }
 
 export function checkDomain(raw: unknown): string {
-  let d = String(raw ?? "").trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/:\d+$/, "");
+  const d = String(raw ?? "").trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/:\d+$/, "");
   if (!HOST.test(d)) throw new HttpError(400, "Enter a domain like clinic.yourname.com (no https:// or slashes).");
   if (d.endsWith(".vercel.app") || d.endsWith(".supabase.co") || platformHosts().includes(d)) throw new HttpError(400, "That address belongs to the platform. Use your own domain.");
   return d;

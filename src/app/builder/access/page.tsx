@@ -7,8 +7,8 @@ import BuilderTabs from "@/components/BuilderTabs";
 import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
 import { getMyRoleInClinic } from "@/lib/clinic";
+import { inputCls as inp } from "@/components/ui";
 
-const inp = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky-500";
 const BUILTIN = [{ api_name: "appointments", label: "Appointments" }, { api_name: "invoices", label: "Invoices" }, { api_name: "patients", label: "Patients" }, { api_name: "stock", label: "Stock" }];
 interface Perm { read: boolean; create: boolean; edit: boolean; delete: boolean; read_scope: "all" | "own"; edit_scope: "all" | "own" }
 const none = (): Perm => ({ read: false, create: false, edit: false, delete: false, read_scope: "all", edit_scope: "own" });

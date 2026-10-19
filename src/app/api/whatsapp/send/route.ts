@@ -4,18 +4,6 @@ import { HttpError } from "@/lib/server/http";
 
 const WA_BASE = "https://graph.facebook.com/v18.0";
 
-interface SendTextPayload {
-  to: string;
-  message: string;
-}
-
-interface SendTemplatePayload {
-  to: string;
-  template: string;
-  language?: string;
-  components?: object[];
-}
-
 async function sendWhatsApp(payload: object) {
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;

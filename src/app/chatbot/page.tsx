@@ -85,7 +85,7 @@ export default function ChatbotPage() {
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 bg-white shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-sky-400 to-indigo-600 rounded-xl flex items-center justify-center text-white text-lg">🤖</div>
+            <div className="w-10 h-10 bg-gradient-to-br from-sky-400 to-sky-700 rounded-xl flex items-center justify-center text-white text-lg">🤖</div>
             <div>
               <h1 className="font-bold text-slate-900">Clinic AI Assistant</h1>
               <p className="text-xs text-emerald-600 font-medium">● Books appointments · Live clinic data</p>

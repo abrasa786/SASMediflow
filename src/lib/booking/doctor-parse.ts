@@ -19,7 +19,7 @@ const hhmm = (min: number) => `${String(Math.floor(min / 60)).padStart(2, "0")}:
 
 export function parseShift(text: string): Pick<DoctorDraft, "start" | "end" | "shiftError"> {
   const m = text.match(/(?:shift|timings?|hours|available|working|duty)?\s*[:=]?\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*(?:-|–|—|to|till|until)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?(?!\d)/i);
-  if (!m || !/(shift|timing|hours|available|working|duty|\bam\b|\bpm\b|:\d\d)/i.test(text)) return {};
+  if (!m || !/(shift|timing|hours|available|working|duty|\d\s*(?:am|pm)\b|:\d\d)/i.test(text)) return {};
   let s = to24(+m[1], +(m[2] ?? 0), m[3]);
   let e = to24(+m[4], +(m[5] ?? 0), m[6]);
   if (!m[3] && s >= 60 && s <= 7 * 60 + 59 && +m[1] <= 7) s += 12 * 60;           // "2-11" → 2 PM
@@ -46,7 +46,7 @@ export function parseAddDoctor(text: string): DoctorDraft {
   Object.assign(out, parseShift(text));
   const dr = text.match(/\b(sun|mon|tue|wed|thu|fri|sat)[a-z]*\s*(?:-|to|–)\s*(sun|mon|tue|wed|thu|fri|sat)[a-z]*/i);
   if (dr) {
-    let a = DAYS.indexOf(dr[1].toLowerCase()), b = DAYS.indexOf(dr[2].toLowerCase()); const d: number[] = [];
+    const a = DAYS.indexOf(dr[1].toLowerCase()), b = DAYS.indexOf(dr[2].toLowerCase()); const d: number[] = [];
     for (let i = a; ; i = (i + 1) % 7) { d.push(i); if (i === b) break; }
     out.days = d;
   }

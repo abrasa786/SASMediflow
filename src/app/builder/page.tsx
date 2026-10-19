@@ -132,7 +132,7 @@ export default function BuilderPage() {
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {msgs.map((m) => (
                 <div key={m.id} className={m.role === "user" ? "flex justify-end" : "flex"}>
-                  <div className={`max-w-[92%] rounded-2xl px-4 py-2.5 text-sm ${m.role === "user" ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white" : "bg-gray-100 text-gray-800"}`}>
+                  <div className={`max-w-[92%] rounded-2xl px-4 py-2.5 text-sm ${m.role === "user" ? "bg-gradient-to-r from-sky-600 to-sky-700 text-white" : "bg-gray-100 text-gray-800"}`}>
                     <p className="whitespace-pre-wrap">{m.text}</p>
                     {m.plan && m.lines && (
                       <div className="mt-3 rounded-xl bg-white text-gray-800 border border-gray-200 p-3">
@@ -142,7 +142,7 @@ export default function BuilderPage() {
                         </ol>
                         {m.state === "pending" && (
                           <div className="mt-3 flex gap-2">
-                            <button disabled={busy} onClick={() => apply(m)} className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 text-white text-xs font-semibold disabled:opacity-60">Approve &amp; apply</button>
+                            <button disabled={busy} onClick={() => apply(m)} className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-sky-600 to-sky-700 text-white text-xs font-semibold disabled:opacity-60">Approve &amp; apply</button>
                             <button disabled={busy} onClick={() => setMsgs((x) => x.map((y) => (y.id === m.id ? { ...y, state: "discarded" } : y)))} className="px-3.5 py-2 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600">Discard</button>
                           </div>
                         )}
@@ -160,14 +160,14 @@ export default function BuilderPage() {
             {msgs.length <= 2 && (
               <div className="px-4 pb-2 flex flex-wrap gap-2">
                 {EXAMPLES.map((x) => (
-                  <button key={x} onClick={() => send(x)} className="text-xs px-3 py-1.5 rounded-full border border-gray-200 bg-gray-50 hover:border-blue-300 text-gray-600">{x}</button>
+                  <button key={x} onClick={() => send(x)} className="text-xs px-3 py-1.5 rounded-full border border-gray-200 bg-gray-50 hover:border-sky-300 text-gray-600">{x}</button>
                 ))}
               </div>
             )}
             <form onSubmit={(e) => { e.preventDefault(); send(); }} className="p-3 border-t border-gray-100 flex gap-2">
               <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="e.g. Create a Pharmacy app with Medicine and Supplier"
-                className="flex-1 min-w-0 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              <button disabled={busy || !input.trim()} className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 text-white text-sm font-semibold disabled:opacity-50">Send</button>
+                className="flex-1 min-w-0 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
+              <button disabled={busy || !input.trim()} className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-sky-600 to-sky-700 text-white text-sm font-semibold disabled:opacity-50">Send</button>
             </form>
           </div>
 
@@ -175,7 +175,7 @@ export default function BuilderPage() {
           <div className="bg-white rounded-2xl border border-gray-200 min-w-0 overflow-hidden" style={{ maxHeight: "calc(100vh - 190px)" }}>
             <div className="flex border-b border-gray-100 text-sm">
               {(["schema", "history"] as const).map((t) => (
-                <button key={t} onClick={() => setTab(t)} className={`flex-1 py-2.5 font-semibold ${tab === t ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-400"}`}>
+                <button key={t} onClick={() => setTab(t)} className={`flex-1 py-2.5 font-semibold ${tab === t ? "text-sky-600 border-b-2 border-sky-600" : "text-gray-400"}`}>
                   {t === "schema" ? "Your apps & tables" : "Change history"}
                 </button>
               ))}
@@ -184,7 +184,7 @@ export default function BuilderPage() {
               {tab === "schema" ? (
                 <>
                   {schema.apps.map((a) => (
-                    <div key={a.api_name} className="mb-3 rounded-xl bg-blue-50 p-3">
+                    <div key={a.api_name} className="mb-3 rounded-xl bg-sky-50 p-3">
                       <p className="font-semibold text-gray-800">{a.icon} {a.label}</p>
                       <p className="text-xs text-gray-500 mt-0.5">Tabs: {a.tabs.map((t) => t.label).join(", ") || "none"}</p>
                     </div>
@@ -210,7 +210,7 @@ export default function BuilderPage() {
                         <span className={h.status === "applied" ? "text-emerald-600" : h.status === "failed" ? "text-red-500" : "text-gray-400"}>
                           {h.status} · {new Date(h.created_at).toLocaleString()}
                         </span>
-                        {h.status === "applied" && <button onClick={() => undo(h.id)} disabled={busy} className="font-semibold text-blue-600 disabled:opacity-50">Undo</button>}
+                        {h.status === "applied" && <button onClick={() => undo(h.id)} disabled={busy} className="font-semibold text-sky-600 disabled:opacity-50">Undo</button>}
                       </div>
                       {h.error && <p className="text-xs text-red-500 mt-1">{h.error}</p>}
                     </div>

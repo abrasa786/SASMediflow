@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email sending isn't set up for this address yet. Ask the account owner to add SMTP in Supabase (Authentication → Emails → SMTP Settings)." }, { status: 400 });
     }
     return NextResponse.json({ ok: true, message: "If that address has an unconfirmed account, a new confirmation email is on its way." });
-  } catch (e: any) {
+  } catch {
     return NextResponse.json({ error: "Could not resend. Please try again." }, { status: 500 });
   }
 }

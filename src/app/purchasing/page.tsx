@@ -10,13 +10,10 @@ import { authFetch } from "@/lib/api";
 import { supabase as sb } from "@/lib/supabase";
 import { getMyRoleInClinic } from "@/lib/clinic";
 import type { ClinicRole } from "@/types";
+import { inr, todayIso, dayLabel as day } from "@/lib/format";
+import { inputCls as inp, labelCls as lbl } from "@/components/ui";
 
 const supabase = sb as any;
-const inr = (n: number) => "₹" + (Math.round((Number(n) || 0) * 100) / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 });
-const day = (iso?: string | null) => iso ? new Date(iso + "T00:00:00Z").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }) : "–";
-const todayIso = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-const inp = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white";
-const lbl = "text-xs font-medium text-slate-600 block mb-1";
 const STATUS: Record<string, string> = { ordered: "bg-sky-100 text-sky-700", partially_received: "bg-amber-100 text-amber-800", received: "bg-emerald-100 text-emerald-700", cancelled: "bg-slate-100 text-slate-500", draft: "bg-slate-100 text-slate-600", unpaid: "bg-red-100 text-red-700", partial: "bg-amber-100 text-amber-800", paid: "bg-emerald-100 text-emerald-700" };
 
 interface Supplier { id: string; name: string; contact_name?: string; phone?: string; email?: string; address?: string; gstin?: string; payment_terms_days: number; notes?: string }

@@ -14,7 +14,8 @@ select clinic_provision('aaaaaaaa-0000-0000-0000-000000000001');  -- idempotent
 do $$ begin
   assert (select count(*) from price_list where clinic_id='aaaaaaaa-0000-0000-0000-000000000001')=7, 'price list seeded once';
   assert (select count(*) from treatment_templates where clinic_id='aaaaaaaa-0000-0000-0000-000000000001')=2, 'templates seeded once';
-  assert (select count(*) from clinic_patients)=0 and (select count(*) from appointments)=0, 'no patient data is seeded';
+  assert (select count(*) from clinic_patients where clinic_id in ('aaaaaaaa-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-000000000002'))=0
+     and (select count(*) from appointments where clinic_id in ('aaaaaaaa-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-000000000002'))=0, 'no patient data is seeded';
 end $$;
 
 insert into doctors(id,clinic_id,name) values ('d0000000-0000-0000-0000-00000000000a','aaaaaaaa-0000-0000-0000-000000000001','Dr A'),('d0000000-0000-0000-0000-00000000000b','bbbbbbbb-0000-0000-0000-000000000002','Dr B');

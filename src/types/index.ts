@@ -3,7 +3,7 @@ export type AppointmentStatus = "confirmed" | "cancelled" | "completed" | "no_sh
 export type AppointmentMode = "in_clinic" | "video";
 export type InvoiceStatus = "draft" | "sent" | "paid" | "partially_paid" | "cancelled";
 export type PaymentMethod = "cash" | "upi" | "card" | "insurance" | "other";
-export type StockCategory = "medicine" | "consumable" | "equipment" | "other";
+export type StockCategory = "medicine" | "consumable" | "equipment" | "lab_supply" | "other";
 
 export interface Clinic {
   id: string;
@@ -26,6 +26,12 @@ export interface Clinic {
   open_time?: string;
   close_time?: string;
   gstin?: string;
+  specialty?: string;
+  city?: string;
+  state?: string;
+  website?: string;
+  gst_number?: string;
+  working_hours?: { days?: string[]; open?: string; close?: string };
   whatsapp_enabled?: boolean;
   whatsapp_phone_id?: string;
   google_calendar_id?: string;
@@ -125,6 +131,7 @@ export interface StockItem {
   quantity: number;
   min_quantity?: number;
   unit_price?: number;
+  supplier?: string;
   expiry_date?: string;
   notes?: string;
   created_at?: string;
@@ -139,6 +146,7 @@ export interface StaffMember {
   specialty?: string;
   email?: string;
   name?: string;
+  is_active?: boolean;
   created_at?: string;
 }
 

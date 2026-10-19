@@ -109,7 +109,7 @@ export function parseBookingText(text: string, today = todayInTz()): BookingDraf
              (m = lt().match(new RegExp(`\\b(${MONTHS.join("|")})[a-z]*\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b`)))) {
     const first = /^\d/.test(m[1]);
     const d = +(first ? m[1] : m[2]); const mo = MONTHS.indexOf(first ? m[2] : m[1]) + 1;
-    let y = +today.slice(0, 4); let iso = `${y}-${pad(mo)}-${pad(d)}`;
+    const y = +today.slice(0, 4); let iso = `${y}-${pad(mo)}-${pad(d)}`;
     if (iso < today) iso = `${y + 1}-${pad(mo)}-${pad(d)}`;
     if (d >= 1 && d <= 31) { out.date = iso; t = t.replace(new RegExp(m[0], "i"), " | "); }
   }

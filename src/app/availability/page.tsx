@@ -129,7 +129,7 @@ export default function AvailabilityPage() {
                     ))}
                   </div>
                   <button onClick={saveSchedule} className="mt-4 px-4 py-2.5 bg-sky-500 hover:bg-sky-600 disabled:opacity-60 text-white rounded-xl text-sm font-semibold">Save schedule</button>
-                  <p className="text-xs text-slate-400 mt-2">Doctors with no saved schedule follow the clinic's working hours.</p>
+                  <p className="text-xs text-slate-400 mt-2">Doctors with no saved schedule follow the clinic&apos;s working hours.</p>
                 </section>
 
                 <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5">
@@ -137,7 +137,7 @@ export default function AvailabilityPage() {
                   <div className="grid sm:grid-cols-3 gap-3">
                     <div><label className="text-xs font-medium text-slate-600 block mb-1">Slot length (minutes)</label><input type="number" min={5} max={120} value={slot} onChange={(e) => setSlot(e.target.value)} placeholder="Clinic default" className={`${inputCls} w-full`} /></div>
                     <div><label className="text-xs font-medium text-slate-600 block mb-1">Consultation fee (₹)</label><input type="number" min={0} value={fee} onChange={(e) => setFee(e.target.value)} className={`${inputCls} w-full`} /></div>
-                    <div><label className="text-xs font-medium text-slate-600 block mb-1">Doctor's mobile</label><input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="For booking alerts" className={`${inputCls} w-full`} /></div>
+                    <div><label className="text-xs font-medium text-slate-600 block mb-1">Doctor&apos;s mobile</label><input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="For booking alerts" className={`${inputCls} w-full`} /></div>
                   </div>
                   <button onClick={saveProfile} className="mt-4 px-4 py-2.5 bg-sky-500 hover:bg-sky-600 disabled:opacity-60 text-white rounded-xl text-sm font-semibold">Save details</button>
                 </section>

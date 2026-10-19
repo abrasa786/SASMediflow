@@ -335,7 +335,7 @@ function BookModal({ clinicId, doctors, defaultDate, onClose, onBooked }: { clin
           <p className="font-semibold text-emerald-800">{d.patient?.name}{d.patient_created ? " · new patient record created" : ""}</p>
           <p className="text-emerald-700 mt-1">📅 {niceDate(a.date)} at {a.time}</p>
           <p className="text-emerald-700">👨‍⚕️ {d.doctor?.name ?? "Duty doctor"}{d.assigned_how === "auto_usual" ? " (patient's usual doctor)" : d.assigned_how === "auto_free" ? " (auto-assigned: first free doctor)" : ""}</p>
-          {d.assignment?.new && <p className="text-emerald-700">🔗 Added to {d.doctor?.name}'s patients</p>}
+          {d.assignment?.new && <p className="text-emerald-700">🔗 Added to {d.doctor?.name}&apos;s patients</p>}
           {d.phone_shared && <p className="text-amber-700 mt-1">ℹ️ This number is shared with another patient, so a separate record was kept.</p>}
         </div>
         <NotificationList items={done.notifications ?? []} />

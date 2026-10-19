@@ -136,7 +136,7 @@ export default function TasksPage() {
           </div>
           <button
             onClick={() => { resetModal(); setShowModal(true); }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-sm"
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-sky-600 to-sky-700 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-sm"
           >
             <span className="text-lg leading-none">+</span> Add Task
           </button>
@@ -157,7 +157,7 @@ export default function TasksPage() {
 
         {loading ? (
           <div className="flex items-center justify-center h-48">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent" />
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-sky-600 border-t-transparent" />
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -202,7 +202,7 @@ export default function TasksPage() {
                         <div className="flex items-center gap-2">
                           {task.assigned_to && (
                             <div className="flex items-center gap-1.5">
-                              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-xs font-bold">{task.assigned_to[0]?.toUpperCase()}</div>
+                              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-sky-500 to-sky-600 flex items-center justify-center text-white text-xs font-bold">{task.assigned_to[0]?.toUpperCase()}</div>
                               <span className="text-xs text-gray-500">{task.assigned_to}</span>
                             </div>
                           )}
@@ -220,7 +220,7 @@ export default function TasksPage() {
                           {col.key !== "done" && (
                             <button onClick={() => moveTask(task.id, col.key === "todo" ? "in_progress" : "done")} className="p-1 text-gray-400 hover:text-gray-700 text-xs" title="Move forward">→</button>
                           )}
-                          <button onClick={() => openEdit(task)} className="p-1 text-gray-400 hover:text-blue-600 text-xs">✏️</button>
+                          <button onClick={() => openEdit(task)} className="p-1 text-gray-400 hover:text-sky-600 text-xs">✏️</button>
                           <button onClick={() => { if (confirm("Delete this task?")) deleteTask(task.id); }} className="p-1 text-gray-400 hover:text-red-500 text-xs">🗑</button>
                         </div>
                       </div>
@@ -257,7 +257,7 @@ export default function TasksPage() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Sterilise OT Room 2"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
                 />
               </div>
               <div>
@@ -267,13 +267,13 @@ export default function TasksPage() {
                   onChange={(e) => setDescription(e.target.value)}
                   rows={2}
                   placeholder="Optional details…"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 resize-none"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Priority</label>
-                  <select value={priority} onChange={(e) => setPriority(e.target.value as Priority)} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select value={priority} onChange={(e) => setPriority(e.target.value as Priority)} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
                     <option value="high">🔴 High</option>
                     <option value="medium">🟡 Medium</option>
                     <option value="low">🟢 Low</option>
@@ -281,18 +281,18 @@ export default function TasksPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Due Date</label>
-                  <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
                 </div>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Assign To</label>
-                <input type="text" value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)} placeholder="e.g. Dr. Sharma, Ward Boy…" className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input type="text" value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)} placeholder="e.g. Dr. Sharma, Ward Boy…" className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
               </div>
             </div>
 
             <div className="flex gap-3 mt-6">
               <button onClick={resetModal} className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-semibold transition-all">Cancel</button>
-              <button onClick={saveTask} disabled={saving || !title.trim()} className="flex-[2] py-2.5 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-xl text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-all shadow-sm">
+              <button onClick={saveTask} disabled={saving || !title.trim()} className="flex-[2] py-2.5 bg-gradient-to-r from-sky-600 to-sky-700 text-white rounded-xl text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-all shadow-sm">
                 {saving ? "Saving…" : editTask ? "Save changes" : "Create task"}
               </button>
             </div>

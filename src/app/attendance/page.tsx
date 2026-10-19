@@ -7,9 +7,9 @@ import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
 import { supabase as sb } from "@/lib/supabase";
 import { getMyRoleInClinic } from "@/lib/clinic";
+import { todayIso } from "@/lib/format";
 
 const supabase = sb as any;
-const todayIso = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 const tm = (iso?: string | null) => iso ? new Date(iso).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true }) : "–";
 const hrs = (a?: string | null, b?: string | null) => { if (!a || !b) return "–"; const m = Math.round((+new Date(b) - +new Date(a)) / 60000); return `${Math.floor(m / 60)}h ${m % 60}m`; };
 const inp = "px-3 py-2 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky-500";

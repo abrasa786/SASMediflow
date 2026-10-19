@@ -5,6 +5,10 @@ import { parseBookingText, mergeDraft, missingForBooking, todayInTz, formatDateN
 import { bookAppointmentViaEngine, rescheduleViaEngine, setStatusViaEngine, suggestSlots } from "@/lib/booking/engine";
 import { notifyAppointment, type NotificationResult } from "@/lib/booking/notify";
 import { isAddDoctor, parseAddDoctor, mergeDoctor, type DoctorDraft } from "@/lib/booking/doctor-parse";
+import { AiDisabledError, generate } from "@/lib/ai/gateway";
+import { answerLocally, deidentifiedContext, loadFacts } from "@/lib/ai/local-answers";
+import { checkScope, OutOfScopeError, refusal } from "@/lib/ai/scope";
+import { getPolicy, isUuid, loadHistory, logInteraction, newSession } from "@/lib/ai/store";
 
 export const dynamic = "force-dynamic";
 
@@ -152,50 +156,26 @@ async function handleCancelOrMove(db: any, clinicId: string, userId: string, d: 
   }
 }
 
-// ── clinic Q&A (Gemini) ─────────────────────────────────────────────
-async function clinicContext(db: any, clinicId: string): Promise<string> {
-  const today = todayInTz();
-  const [{ data: clinic }, { data: appts }, { data: patients }, { data: invoices }, { data: stock }] = await Promise.all([
-    db.from("clinics").select("name, brand_name, specialty, city").eq("id", clinicId).single(),
-    db.from("appointments").select("appointment_time, status, consultation_fee, symptoms, clinic_patients(name), doctors(name)").eq("clinic_id", clinicId).eq("appointment_date", today).order("start_time"),
-    db.from("clinic_patients").select("name, phone, conditions").eq("clinic_id", clinicId).order("created_at", { ascending: false }).limit(10),
-    db.from("invoices").select("total, status").eq("clinic_id", clinicId).gte("created_at", `${today}T00:00:00`),
-    db.from("stock_items").select("name, quantity, min_quantity, unit").eq("clinic_id", clinicId),
-  ]);
-  const billed = (appts ?? []).reduce((s: number, a: any) => s + (a.consultation_fee || 0), 0);
-  const paid = (invoices ?? []).filter((i: any) => i.status === "paid").reduce((s: number, i: any) => s + (i.total || 0), 0);
-  const low = (stock ?? []).filter((s: any) => s.min_quantity != null && s.quantity <= s.min_quantity);
-  const cnt = (st: string) => (appts ?? []).filter((a: any) => a.status === st).length;
-  return `CLINIC: ${clinic?.brand_name || clinic?.name} (${clinic?.specialty}, ${clinic?.city})
-DATE: ${today}
-TODAY'S APPOINTMENTS (${appts?.length ?? 0}):
-${(appts ?? []).map((a: any) => `- ${a.appointment_time}: ${a.clinic_patients?.name ?? "Unknown"} with ${a.doctors?.name ?? "duty doctor"} [${a.status}] ₹${a.consultation_fee ?? 0} — ${a.symptoms || "check-up"}`).join("\n") || "None"}
-STATUS: confirmed ${cnt("confirmed")}, completed ${cnt("completed")}, cancelled ${cnt("cancelled")}, no-show ${cnt("no_show")}
-REVENUE TODAY: ₹${paid} collected / ₹${billed} billed
-RECENT PATIENTS:
-${(patients ?? []).map((p: any) => `- ${p.name}${p.phone ? ` (${p.phone})` : ""}${p.conditions ? ` | ${p.conditions}` : ""}`).join("\n") || "None"}
-LOW STOCK (${low.length}):
-${low.map((s: any) => `- ${s.name}: ${s.quantity} ${s.unit ?? ""} (min ${s.min_quantity})`).join("\n") || "All items adequately stocked"}`;
-}
+// ── clinic Q&A ──────────────────────────────────────────────────────
+// 1) our own backend answers the common questions (nothing leaves our system);
+// 2) only if the clinic admin switched external AI on, a de-identified summary goes through the AI gateway.
+interface QA { reply: string; source: "local" | "external"; sentText?: string; redactions?: number }
 
-async function askGemini(db: any, clinicId: string, message: string, history: any[]): Promise<string> {
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) return "AI answers aren't switched on yet (no Gemini key is set). I can still book, cancel and reschedule appointments. Try: “Book Priya Sharma 9876543210 tomorrow 10am”.";
-  const ctx = await clinicContext(db, clinicId);
-  const model = process.env.GEMINI_MODEL || "gemini-2.0-flash";
-  const system = `You are a concise clinic assistant with live access to this data:\n\n${ctx}\n\nAnswer using only this data. Use ₹ and Indian number format. If something isn't in the data, say so. Under 150 words. You can also tell the user they can type things like "Book Anita 9876543210 tomorrow 4pm", "Cancel Rahul's appointment" or "Move Asha to Friday 11am" to manage appointments.`;
-  const contents = [
-    ...history.slice(-8).filter((m: any) => typeof m?.content === "string").map((m: any) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: String(m.content).slice(0, 1500) }] })),
-    { role: "user", parts: [{ text: message }] },
-  ];
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-    method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key },
-    body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, generationConfig: { temperature: 0.3, maxOutputTokens: 512 } }),
-    signal: AbortSignal.timeout(20000),
-  });
-  if (!res.ok) { const e: any = await res.json().catch(() => ({})); throw new HttpError(502, e?.error?.message ?? "The AI service is not responding. Try again shortly."); }
-  const j: any = await res.json();
-  return j.candidates?.[0]?.content?.parts?.[0]?.text ?? "Sorry, I couldn't generate a response.";
+async function answerQuestion(db: any, clinicId: string, userId: string, message: string, history: { role: "user" | "assistant"; content: string }[], botName: string): Promise<QA> {
+  const facts = await loadFacts(db, clinicId);
+  const small = checkScope(message, { module: "assistant" });
+  if (small.ok && small.kind === "smalltalk") return { source: "local", reply: `Hi! I'm ${botName}, ${facts.clinicName}'s assistant. I can book, cancel and move appointments, and answer questions about today's appointments, revenue, unpaid invoices, low stock and patients.` };
+  const local = answerLocally(message, facts);
+  if (local) return { reply: local, source: "local" };
+  try {
+    const system = `You are ${botName}, a concise clinic assistant. You only know this de-identified summary; names like "Patient A" are placeholders.\n\n${deidentifiedContext(facts)}\n\nAnswer using only this data. Use ₹ and Indian number format. If something is not in the data, say so. Under 150 words. Never ask for or repeat personal contact details.`;
+    const out = await generate({ db, clinicId, userId, system, turns: [...history, { role: "user", content: message }], names: facts.names, maxTokens: 512, temperature: 0.3, scope: { module: "assistant", text: message, hasHistory: history.length > 0 } });
+    return { reply: out.text || "Sorry, I couldn't generate a response.", source: "external", sentText: out.sentText, redactions: out.redactions };
+  } catch (e) {
+    if (e instanceof OutOfScopeError) return { source: "local", reply: refusal("assistant", botName, facts.clinicName) };
+    if (!(e instanceof AiDisabledError)) throw e;
+    return { source: "local", reply: `I can answer questions about today's appointments, revenue, unpaid invoices, low stock and patient counts, and I can book, cancel and move appointments. For open-ended questions the clinic admin can switch on external AI in Settings → AI & privacy; until then your data stays inside this system.` };
+  }
 }
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -204,7 +184,7 @@ const t12 = (t: string) => { const [h, m] = t.split(":").map(Number); return `${
 /** "Add a new doctor …" typed in the chat: creates the doctor and their weekly hours. Admin only. */
 async function handleAddDoctor(db: any, clinicId: string, role: string, prev: DoctorDraft | undefined, message: string, continuing: boolean): Promise<Reply> {
   if (role !== "admin") return { reply: "Only the clinic admin can add doctors. Ask your admin, or open Staff → Invite.", draft: null };
-  let parsed = parseAddDoctor(message);
+  const parsed = parseAddDoctor(message);
   // while we're asking questions, a bare reply is the answer
   if (continuing && prev) {
     if (!prev.name && !parsed.name && /^[A-Za-z][A-Za-z.' ]{1,40}$/.test(message.trim())) parsed.name = message.trim().replace(/^dr\.?\s+/i, "");
@@ -247,32 +227,46 @@ export async function POST(req: NextRequest) {
     const { db, userId, role } = await requireClinicMember(req, b.clinicId);
     const message = typeof b.message === "string" ? b.message.trim().slice(0, 1000) : "";
     if (!message) throw new HttpError(400, "message is required.");
-    const history = Array.isArray(b.history) ? b.history : [];
+    const sessionId = isUuid(b.sessionId) ? b.sessionId : newSession();
+    const policy = await getPolicy(db, b.clinicId);
+    // The AI's memory is OUR database. When history is switched off the conversation is only what this one request carries.
+    const history = policy.retention_days > 0 ? await loadHistory(db, b.clinicId, userId, sessionId) : [];
     const prev: BookingDraft | undefined = b.draft && typeof b.draft === "object" ? b.draft : undefined;
     const today = todayInTz();
+    const { data: clinicRow } = await db.from("clinics").select("ai_name").eq("id", b.clinicId).maybeSingle();
+    const botName: string = clinicRow?.ai_name || "Assistant";
 
-    if (prev?.intent && prev.intent !== "other" && ABORT.test(message)) {
-      return { reply: "No problem, I've dropped that request.", draft: null } satisfies Reply;
-    }
+    let src: QA["source"] | "rules" = "rules";
+    let sent: string | undefined, redactions = 0, intentName: string | undefined;
+    const run = async (): Promise<Reply> => {
+      // Scope guard first: out-of-syllabus questions are refused here, before any parsing, lookup or model call.
+      const open = !!(prev?.intent && prev.intent !== "other");
+      const sc = checkScope(message, { module: "assistant", hasOpenRequest: open, hasHistory: history.length > 0 });
+      if (!sc.ok) { intentName = "out_of_scope"; return { reply: refusal("assistant", botName, undefined), draft: open ? prev : null }; }
+      if (prev?.intent && prev.intent !== "other" && ABORT.test(message)) return { reply: "No problem, I've dropped that request.", draft: null };
 
-    // Adding a doctor (admin) is handled before booking, because words like "shift" would otherwise look like a reschedule.
-    const adding = (prev as any)?.intent === "add_doctor";
-    if (adding || isAddDoctor(message)) return handleAddDoctor(db, b.clinicId, role, adding ? (prev as any) : undefined, message, adding);
+      // Adding a doctor (admin) is handled before booking, because words like "shift" would otherwise look like a reschedule.
+      const adding = (prev as any)?.intent === "add_doctor";
+      if (adding || isAddDoctor(message)) { intentName = "add_doctor"; return handleAddDoctor(db, b.clinicId, role, adding ? (prev as any) : undefined, message, adding); }
 
-    const parsed = parseBookingText(message, today);
-    const active = prev?.intent && prev.intent !== "other" ? prev.intent : undefined;
-    // While a request is open, a bare "yes"/"ok" must not be mistaken for a patient name
-    if (active && /^\s*(yes|yeah|yep|ok|okay|sure|confirm)\W*$/i.test(message)) delete parsed.name;
-    const intent = parsed.intent !== "other" ? parsed.intent : active;
+      const parsed = parseBookingText(message, today);
+      const active = prev?.intent && prev.intent !== "other" ? prev.intent : undefined;
+      // While a request is open, a bare "yes"/"ok" must not be mistaken for a patient name
+      if (active && /^\s*(yes|yeah|yep|ok|okay|sure|confirm)\W*$/i.test(message)) delete parsed.name;
+      const intent = parsed.intent !== "other" ? parsed.intent : active;
 
-    if (!intent) {
-      const reply = await askGemini(db, b.clinicId, message, history);
-      return { reply, draft: null } satisfies Reply;
-    }
+      if (!intent) {
+        const qa = await answerQuestion(db, b.clinicId, userId, message, history, botName);
+        src = qa.source; sent = qa.sentText; redactions = qa.redactions ?? 0; intentName = "question";
+        return { reply: qa.reply, draft: null };
+      }
+      intentName = intent;
+      const merged = mergeDraft(prev, { ...parsed, intent });
+      return intent === "book" ? await handleBooking(db, b.clinicId, userId, merged) : await handleCancelOrMove(db, b.clinicId, userId, merged, intent, today);
+    };
 
-    const merged = mergeDraft(prev, { ...parsed, intent });
-    const out = intent === "book" ? await handleBooking(db, b.clinicId, userId, merged)
-      : await handleCancelOrMove(db, b.clinicId, userId, merged, intent, today);
-    return out;
+    const out = await run();
+    await logInteraction(db, { clinicId: b.clinicId, userId, sessionId, module: "assistant", question: message, answer: out.reply, source: src, intent: intentName, sentText: sent, redactions });
+    return { ...out, sessionId };
   });
 }

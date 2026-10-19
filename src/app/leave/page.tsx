@@ -6,11 +6,11 @@ import AppShell from "@/components/layout/AppShell";
 import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
 import { supabase as sb } from "@/lib/supabase";
+import { todayIso, dayLabel } from "@/lib/format";
+import { inputCls as inp } from "@/components/ui";
 
 const supabase = sb as any;
-const todayIso = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-const dd = (s: string) => new Date(s + "T00:00:00Z").toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" });
-const inp = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky-500";
+const dayLabelNoYear = (s: string) => dayLabel(s, false);
 const ST: Record<string, string> = { pending: "bg-amber-100 text-amber-800", approved: "bg-emerald-100 text-emerald-700", rejected: "bg-red-100 text-red-700", cancelled: "bg-slate-100 text-slate-500" };
 
 export default function LeavePage() {
@@ -79,7 +79,7 @@ export default function LeavePage() {
           <section className="mb-8"><h2 className="font-semibold text-slate-900 mb-3">Waiting for your decision ({queue.length})</h2>
             <div className="space-y-3">{queue.map((l) => (
               <div key={l.id} className="bg-white rounded-xl border border-amber-200 p-4">
-                <p className="font-medium text-slate-900">{names[l.user_id] ?? "Staff"} <span className="text-slate-500 font-normal">· {l.leave_type} · {dd(l.from_date)}{l.to_date !== l.from_date ? ` – ${dd(l.to_date)}` : ""} · {l.days} day{l.days === 1 ? "" : "s"}{l.half_day ? " (half day)" : ""}</span></p>
+                <p className="font-medium text-slate-900">{names[l.user_id] ?? "Staff"} <span className="text-slate-500 font-normal">· {l.leave_type} · {dayLabelNoYear(l.from_date)}{l.to_date !== l.from_date ? ` – ${dayLabelNoYear(l.to_date)}` : ""} · {l.days} day{l.days === 1 ? "" : "s"}{l.half_day ? " (half day)" : ""}</span></p>
                 {l.reason && <p className="text-sm text-slate-600 mt-1">“{l.reason}”</p>}
                 <div className="flex flex-wrap gap-2 mt-3"><input className={inp + " flex-1 min-w-[10rem]"} placeholder="Note (optional)" value={note[l.id] ?? ""} onChange={(e) => setNote({ ...note, [l.id]: e.target.value })} />
                   <button onClick={() => decide(l, "approved")} className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold">Approve</button>
@@ -103,7 +103,7 @@ export default function LeavePage() {
           <section><h2 className="font-semibold text-slate-900 mb-3">My requests</h2>
             {mine.length === 0 ? <p className="text-sm text-slate-400">No leave requested yet.</p> : <div className="space-y-2">{mine.map((l) => (
               <div key={l.id} className="bg-white rounded-xl border border-slate-200 px-4 py-3 flex items-start justify-between gap-3">
-                <div className="min-w-0"><p className="text-sm font-medium text-slate-800 capitalize">{l.leave_type} · {dd(l.from_date)}{l.to_date !== l.from_date ? ` – ${dd(l.to_date)}` : ""} <span className="text-slate-400 font-normal">({l.days}d)</span></p>
+                <div className="min-w-0"><p className="text-sm font-medium text-slate-800 capitalize">{l.leave_type} · {dayLabelNoYear(l.from_date)}{l.to_date !== l.from_date ? ` – ${dayLabelNoYear(l.to_date)}` : ""} <span className="text-slate-400 font-normal">({l.days}d)</span></p>
                   {l.decision_note && <p className="text-xs text-slate-500">Note: {l.decision_note}</p>}</div>
                 <div className="text-right shrink-0"><span className={`text-xs px-2 py-0.5 rounded-full ${ST[l.status]}`}>{l.status}</span>
                   {(l.status === "pending" || (l.status === "approved" && l.to_date >= todayIso())) && <button onClick={() => cancel(l)} className="block ml-auto mt-1 text-xs text-red-600 hover:underline">Cancel</button>}</div>

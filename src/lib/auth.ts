@@ -30,6 +30,7 @@ export function setActiveClinicId(id: string) {
 
 export function clearActiveClinicId() {
   localStorage.removeItem("mf_active_clinic");
+  try { Object.keys(sessionStorage).filter((k) => k.startsWith("mf_shell_")).forEach((k) => sessionStorage.removeItem(k)); } catch { /* ignore */ }
 }
 
 export async function sendPasswordReset(email: string) {

@@ -3,9 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { authFetch } from "@/lib/api";
 import LogoPicker from "@/components/LogoPicker";
+import { inputCls as inp, labelCls as lbl } from "@/components/ui";
 
-const inp = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky-500";
-const lbl = "text-xs font-medium text-slate-600 block mb-1";
 
 export default function BrandingCard({ clinicId }: { clinicId: string }) {
   const [b, setB] = useState<any>(null);

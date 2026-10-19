@@ -8,7 +8,10 @@ export interface PlannerResult {
   questions?: string[];
   source: "gemini" | "rules";
 }
+/** Provided by the caller; goes through the AI gateway (policy, de-identification, rate limit). Absent = rules only. */
+export type Generate = (a: { system: string; turns: { role: "user" | "assistant"; content: string }[] }) => Promise<string>;
 interface Input {
+  generate?: Generate;
   prompt: string;
   schema: Schema;
   history?: { role: "user" | "assistant"; content: string }[];
@@ -48,38 +51,26 @@ function schemaForPrompt(s: Schema): string {
   return `OBJECTS:\n${objs.join("\n") || "(none yet)"}\nAPPS:\n${apps.join("\n") || "(none yet)"}`;
 }
 
-async function callGemini(contents: any[]): Promise<any> {
-  const model = process.env.GEMINI_MODEL || "gemini-2.0-flash";
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY! },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: SYSTEM }] },
-      contents,
-      generationConfig: { temperature: 0.2, maxOutputTokens: 4096, responseMimeType: "application/json" },
-    }),
-  });
-  if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.error?.message ?? `Gemini error ${res.status}`);
-  const data = await res.json();
-  const text: string = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+async function callModel(inp: Input, turns: { role: "user" | "assistant"; content: string }[]): Promise<any> {
+  const text = await inp.generate!({ system: SYSTEM, turns });
   return JSON.parse(text.replace(/^```json\s*|```$/g, "").trim());
 }
 
 async function geminiPlan(inp: Input): Promise<PlannerResult> {
   const ctx = `CLINIC SPECIALTY: ${inp.specialty || "general"}\nCURRENT SCHEMA:\n${schemaForPrompt(inp.schema)}`;
-  const contents: any[] = [
-    ...(inp.history ?? []).slice(-6).map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
-    { role: "user", parts: [{ text: `${ctx}\n\nADMIN REQUEST: ${inp.prompt}` }] },
+  const turns: { role: "user" | "assistant"; content: string }[] = [
+    ...(inp.history ?? []).slice(-6),
+    { role: "user", content: `${ctx}\n\nADMIN REQUEST: ${inp.prompt}` },
   ];
-  let out = await callGemini(contents);
+  let out = await callModel(inp, turns);
   for (let attempt = 0; attempt < 2; attempt++) {
     if (!out?.plan) return { message: String(out?.message || "Could you tell me a bit more?"), plan: null, questions: out?.questions, source: "gemini" };
     const v = validatePlan(out.plan, inp.schema);
     if (v.ok) return { message: String(out.message || v.plan.summary), plan: v.plan, source: "gemini" };
     if (attempt === 1) return { message: "I couldn't build a valid plan from that. " + v.errors.slice(0, 3).join(" "), plan: null, source: "gemini" };
-    contents.push({ role: "model", parts: [{ text: JSON.stringify(out) }] });
-    contents.push({ role: "user", parts: [{ text: `The plan failed validation:\n- ${v.errors.join("\n- ")}\nReturn a corrected JSON reply.` }] });
-    out = await callGemini(contents);
+    turns.push({ role: "assistant", content: JSON.stringify(out) });
+    turns.push({ role: "user", content: `The plan failed validation:\n- ${v.errors.join("\n- ")}\nReturn a corrected JSON reply.` });
+    out = await callModel(inp, turns);
   }
   return { message: "Something went wrong planning that.", plan: null, source: "gemini" };
 }
@@ -226,11 +217,11 @@ function rulesPlan(inp: Input): PlannerResult {
 }
 
 export async function makePlan(inp: Input): Promise<PlannerResult> {
-  if (process.env.GEMINI_API_KEY) {
+  if (inp.generate) {
     try { return await geminiPlan(inp); }
-    catch (e: any) {
-      const r = rulesPlan(inp);
-      return { ...r, message: `${r.message}${r.plan ? "" : ""}`, source: "rules" };
+    catch {
+      // Gemini unreachable or returned junk: fall back to the built-in rules so the builder keeps working
+      return { ...rulesPlan(inp), source: "rules" };
     }
   }
   return rulesPlan(inp);

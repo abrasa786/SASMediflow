@@ -54,7 +54,7 @@ export default function StockPage() {
     let result = items;
     if (search) result = result.filter(i => i.name.toLowerCase().includes(search.toLowerCase()));
     if (catFilter !== "all") result = result.filter(i => i.category === catFilter);
-    if (showLowOnly) result = result.filter(i => i.quantity <= i.min_quantity);
+    if (showLowOnly) result = result.filter(i => i.quantity <= (i.min_quantity ?? 0));
     setFiltered(result);
   }, [items, search, catFilter, showLowOnly]);
 
@@ -70,7 +70,7 @@ export default function StockPage() {
     load(clinicId);
   }
 
-  const lowCount = items.filter(i => i.quantity <= i.min_quantity).length;
+  const lowCount = items.filter(i => i.quantity <= (i.min_quantity ?? 0)).length;
   const inp = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500";
 
   return (
@@ -135,7 +135,7 @@ export default function StockPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-50">
                   {filtered.map(item => {
-                    const low = item.quantity <= item.min_quantity;
+                    const low = item.quantity <= (item.min_quantity ?? 0);
                     const out = item.quantity === 0;
                     return (
                       <tr key={item.id} className={`hover:bg-slate-50 ${low ? "bg-amber-50/50" : ""}`}>
@@ -144,7 +144,7 @@ export default function StockPage() {
                           <p className="text-xs text-slate-400">{item.unit}</p>
                         </td>
                         <td className="px-5 py-3 hidden md:table-cell">
-                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full capitalize ${CATEGORY_COLORS[item.category]}`}>{item.category.replace("_", " ")}</span>
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full capitalize ${CATEGORY_COLORS[item.category ?? "other"]}`}>{(item.category ?? "other").replace("_", " ")}</span>
                         </td>
                         <td className="px-5 py-3 text-right">
                           <span className={`font-bold text-sm ${out ? "text-red-600" : low ? "text-amber-600" : "text-slate-900"}`}>{item.quantity}</span>

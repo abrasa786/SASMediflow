@@ -17,3 +17,13 @@ begin
   assert clinic_make_slug('www') = 'www-clinic';
   raise notice 'ALL BRANDING TESTS PASSED';
 end $$;
+
+do $$ declare a uuid := gen_random_uuid(); j jsonb;
+begin
+  insert into clinics(id,name,specialty,ai_name) values (a,'Aria Dental','Dental','Aria');
+  j := public_clinic((select slug from clinics where id=a), null);
+  assert j->>'ai_name' = 'Aria', 'public page carries the AI name';
+  begin update clinics set ai_name = '<script>' where id=a; raise exception 'should fail';
+  exception when check_violation then null; end;
+  raise notice 'ALL BRANDING TESTS PASSED';
+end $$;

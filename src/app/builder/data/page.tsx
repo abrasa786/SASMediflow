@@ -8,8 +8,8 @@ import BuilderTabs from "@/components/BuilderTabs";
 import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
 import { getMyRoleInClinic } from "@/lib/clinic";
+import { inputCls as inp } from "@/components/ui";
 
-const inp = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky-500";
 interface Field { api: string; label: string; type: string; required?: boolean; picklist_values?: string[]; lookup_object?: string }
 interface Table { api_name: string; label: string; plural_label: string; icon?: string; access: { read: boolean; create: boolean; edit: boolean; delete: boolean; read_scope: string; edit_scope: string }; fields: Field[] }
 
