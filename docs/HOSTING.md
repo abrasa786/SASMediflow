@@ -15,7 +15,7 @@ One deployment serves every clinic. Clinics are separated by `clinic_id` in the 
 ## 1. First-time setup (about 30 minutes)
 
 1. **Supabase project.** Create one in the region closest to your patients (for India choose Mumbai, `ap-south-1`; patient data then stays in India).
-2. **Run the migrations** in the SQL editor, in order: `001_schema.sql` (a brand-new project only), then `003` to `015` in order (`003` … `015`; `012` dashboard maths, `013` assistant/builder tools and flows, `014` App Manager, `015` WhatsApp chat and recall). The file `supabase/ALL_MIGRATIONS_003_015.sql` has them all in one. They are safe to run again. (There is no `002`, it is demo data only; skip it in production.)
+2. **Run the migrations** in the SQL editor, in order: `001_schema.sql` (a brand-new project only), then `003` to `016` in order (`003` … `016`; `012` dashboard maths, `013` assistant/builder tools and flows, `014` App Manager, `015` WhatsApp chat and recall, `016` insurance claims). The file `supabase/ALL_MIGRATIONS_003_015.sql` has `003`–`015` in one; run `016_insurance_claims.sql` after it. They are safe to run again. (There is no `002`, it is demo data only; skip it in production.)
 3. **Authentication → URL configuration.** Site URL = your production address (e.g. `https://app.yourdomain.com`). Add the same address, plus `http://localhost:3001`, to Redirect URLs.
 4. **Authentication → Emails → SMTP Settings.** Add your SMTP sender. Without it Supabase's built-in mailer sends only a few emails an hour and only to your own team, so real clinics cannot sign up. Keep "Confirm email" switched on.
 5. **Vercel.** Import the GitHub repo. Add the environment variables below, then deploy.
