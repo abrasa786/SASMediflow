@@ -219,7 +219,7 @@ function rulesPlan(inp: Input): PlannerResult {
   }
 
   return {
-    message: "I can create apps and objects (new tables), add or hide fields, and add tabs. Try: “Create a Lab app with Lab Test and Lab Order”, “Add fields urgent and result notes to lab order”, or “Recommend fields for ward”. Profiles, permissions, dashboards and reports are coming next.",
+    message: "I can create apps and objects (new tables), add or hide fields, and add tabs. Try: “Create a Lab app with Lab Test and Lab Order”, “Add fields urgent and result notes to lab order”, or “Recommend fields for ward”. To control who sees your data use the Access control tab, and for dashboards and reports use the Reports tab.",
     plan: null,
     source: "rules",
   };

@@ -23,6 +23,7 @@ const NAV = [
   { href: "/staff",        icon: "👤", label: "Staff",    roles: ["admin"] as ClinicRole[] },
   { href: "/chatbot",      icon: "🤖", label: "AI Assistant" },
   { href: "/builder",      icon: "🛠", label: "AI Builder", roles: ["admin"] as ClinicRole[] },
+  { href: "/builder/reports", icon: "📈", label: "Reports" },
   { href: "/settings",     icon: "⚙️", label: "Settings", roles: ["admin"] as ClinicRole[] },
 ];
 
@@ -38,9 +39,11 @@ interface Props {
   clinicName: string;
   userEmail: string;
   role?: ClinicRole;
+  logoUrl?: string | null;
+  brandColor?: string | null;
 }
 
-export default function Sidebar({ clinicName, userEmail, role }: Props) {
+export default function Sidebar({ clinicName, userEmail, role, logoUrl, brandColor }: Props) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -60,9 +63,10 @@ export default function Sidebar({ clinicName, userEmail, role }: Props) {
       {/* Clinic header */}
       <div className="px-4 py-5 border-b border-slate-800">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
-            M
-          </div>
+          {logoUrl
+            // eslint-disable-next-line @next/next/no-img-element
+            ? <img src={logoUrl} alt="" className="w-8 h-8 rounded-lg bg-white object-contain shrink-0" />
+            : <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shrink-0">M</div>}
           <div className="min-w-0">
             <p className="text-white font-semibold text-sm truncate">{clinicName}</p>
             <p className="text-slate-500 text-xs">Mediflow Clinic</p>
@@ -73,14 +77,15 @@ export default function Sidebar({ clinicName, userEmail, role }: Props) {
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
         {visibleNav.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(item.href + "/");
+          const active = pathname === item.href || (item.href !== "/builder" && pathname.startsWith(item.href + "/"));
           return (
             <Link
               key={item.href}
               href={item.href}
+              style={active && brandColor ? { background: brandColor } : undefined}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 active
-                  ? "bg-sky-500 text-white shadow-sm"
+                  ? `${brandColor ? "" : "bg-sky-500 "}text-white shadow-sm`
                   : "text-slate-400 hover:text-white hover:bg-slate-800"
               }`}
             >

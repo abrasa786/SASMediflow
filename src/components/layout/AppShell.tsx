@@ -54,6 +54,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         clinicName={clinic?.brand_name ?? clinic?.name ?? "Clinic"}
         userEmail={email}
         role={role ?? undefined}
+        logoUrl={clinic?.logo_url}
+        brandColor={clinic?.primary_color}
       />
       <main className="flex-1 min-h-screen overflow-y-auto" style={{ marginLeft: "var(--sidebar-w, 240px)" }}>
         {children}

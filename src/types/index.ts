@@ -15,6 +15,10 @@ export interface Clinic {
   email?: string;
   slug?: string;
   logo_url?: string;
+  primary_color?: string;
+  tagline?: string;
+  custom_domain?: string;
+  domain_verified?: boolean;
   about?: string;
   specialties?: string[];
   slot_duration_minutes?: number;

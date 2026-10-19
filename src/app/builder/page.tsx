@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import AppShell from "@/components/layout/AppShell";
+import BuilderTabs from "@/components/BuilderTabs";
 import { getActiveClinicId, getSession } from "@/lib/auth";
 import type { Plan, Schema } from "@/lib/builder/types";
 
@@ -118,6 +119,8 @@ export default function BuilderPage() {
           <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: "Sora, Inter, sans-serif" }}>AI Builder</h1>
           <p className="text-sm text-gray-500">Describe an app, table or field in plain words. You approve every change before it runs.</p>
         </div>
+
+        <BuilderTabs isAdmin />
 
         {loadErr && (
           <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">{loadErr}</div>

@@ -25,7 +25,7 @@ async function findUserByEmail(db: any, email: string): Promise<string | null> {
 export async function POST(req: NextRequest) {
   return handle(async () => {
     const b = await req.json();
-    const { db } = await requireClinicMember(req, b.clinicId, ["admin"]);
+    const { db, userId: callerId } = await requireClinicMember(req, b.clinicId, ["admin"]);
     const role = String(b.role ?? "");
     const email = typeof b.email === "string" ? b.email.trim().toLowerCase() : "";
     const name = typeof b.name === "string" ? b.name.trim().slice(0, 80) : "";
@@ -65,8 +65,16 @@ export async function POST(req: NextRequest) {
         if (error) throw new HttpError(400, /rate limit/i.test(error.message) ? "Too many emails were sent. Wait a little, or add your own SMTP in Supabase." : error.message);
         userId = data.user.id; invited = true;
       }
-      const { error: se } = await db.from("clinic_staff").upsert({ clinic_id: b.clinicId, user_id: userId, role, name: name || null, specialty: b.specialty || null, is_active: true }, { onConflict: "clinic_id,user_id" });
-      if (se) throw new HttpError(400, se.message);
+      // Never change the role of someone who is already an admin (this used to turn the owner into a doctor
+      // when they added themselves). An admin who also practises keeps admin and just gets a doctor profile.
+      const { data: existingMember } = await db.from("clinic_staff").select("role").eq("clinic_id", b.clinicId).eq("user_id", userId).maybeSingle();
+      if (existingMember?.role === "admin" || userId === callerId) {
+        if (role !== "doctor" && role !== "admin") throw new HttpError(409, "This person is an admin of the clinic. Their admin access was not changed.");
+        await db.from("clinic_staff").update({ name: name || undefined, specialty: b.specialty || null, is_active: true }).eq("clinic_id", b.clinicId).eq("user_id", userId);
+      } else {
+        const { error: se } = await db.from("clinic_staff").upsert({ clinic_id: b.clinicId, user_id: userId, role, name: name || null, specialty: b.specialty || null, is_active: true }, { onConflict: "clinic_id,user_id" });
+        if (se) throw new HttpError(400, se.message);
+      }
     }
 
     // 2. doctor profile + hours

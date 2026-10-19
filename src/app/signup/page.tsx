@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import LogoPicker from "@/components/LogoPicker";
 
 const SPECIALTIES = [
   "General Medicine", "Dental / Oral Care", "Dermatology", "Orthopaedics",
@@ -25,6 +26,15 @@ export default function SignupPage() {
   const [brandName, setBrandName] = useState("");
   const [specialty, setSpecialty] = useState("");
   const [city, setCity] = useState("");
+  const [logo, setLogo] = useState<string | null>(null);
+  const [color, setColor] = useState("#2563eb");
+  const [tagline, setTagline] = useState("");
+  const [slug, setSlug] = useState("");
+  const [slugTouched, setSlugTouched] = useState(false);
+  const [domain, setDomain] = useState("");
+  const [logoWarn, setLogoWarn] = useState("");
+  const autoSlug = (brandName || clinicName).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 38);
+  const shownSlug = slugTouched ? slug : autoSlug;
 
   // Step 2 — Admin account
   const [adminName, setAdminName] = useState("");
@@ -52,11 +62,12 @@ export default function SignupPage() {
       const res = await fetch("/api/clinic/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clinicName, brandName, specialty, city, adminName, email, password }),
+        body: JSON.stringify({ clinicName, brandName, specialty, city, adminName, email, password, logoDataUrl: logo, primaryColor: color, tagline, slug: shownSlug.length >= 3 ? shownSlug : undefined, customDomain: domain.trim() || undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create clinic");
       setNeedsConfirm(data.needsEmailConfirmation !== false);
+      setLogoWarn(data.logoWarning ?? "");
       setStep(3);
     } catch (err: any) {
       setError(err.message);
@@ -147,6 +158,32 @@ export default function SignupPage() {
                     placeholder="e.g. Bangalore"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
+                </div>
+                <div className="pt-2 border-t border-gray-100">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Your brand (optional, change anytime in Settings)</p>
+                  <LogoPicker value={logo} onChange={setLogo} />
+                  <div className="grid grid-cols-[1fr_auto] gap-3 mt-4 items-end">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Tagline</label>
+                      <input type="text" value={tagline} maxLength={120} onChange={(e) => setTagline(e.target.value)} placeholder="e.g. Gentle dental care for the whole family" className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Colour</label>
+                      <input type="color" value={color} onChange={(e) => setColor(e.target.value)} aria-label="Brand colour" className="h-10 w-14 rounded-lg border border-gray-200 bg-white p-1" />
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Your web address</label>
+                    <div className="flex items-center rounded-xl border border-gray-200 bg-gray-50 focus-within:ring-2 focus-within:ring-blue-500">
+                      <span className="pl-3.5 text-xs text-gray-400 whitespace-nowrap">/c/</span>
+                      <input type="text" value={shownSlug} onChange={(e) => { setSlugTouched(true); setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "")); }} className="flex-1 min-w-0 px-1.5 py-2.5 bg-transparent text-sm focus:outline-none" aria-label="Web address" />
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Your own domain</label>
+                    <input type="text" value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="e.g. appointments.yourclinic.com" className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <p className="text-xs text-gray-400 mt-1">Already own a domain? Enter it and we&apos;ll show the two DNS records to add after you sign in (Settings → Branding &amp; domain). Skip if you don&apos;t.</p>
+                  </div>
                 </div>
               </div>
 
@@ -244,6 +281,7 @@ export default function SignupPage() {
               ) : (
                 <p className="text-sm text-gray-500 mb-6"><strong>{clinicName}</strong> is live. You can sign in now.</p>
               )}
+              {logoWarn && <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2 mb-3">Your clinic was created, but the logo could not be saved ({logoWarn}). Upload it again in Settings → Branding &amp; domain.</p>}
               <Link href="/login" className="block w-full py-3 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-sm">
                 Sign in to your clinic →
               </Link>

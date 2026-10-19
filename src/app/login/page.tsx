@@ -25,9 +25,15 @@ export default function LoginPage() {
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [unconfirmed, setUnconfirmed] = useState(false);
   const [justConfirmed, setJustConfirmed] = useState(false);
+  const [brand, setBrand] = useState<{ name: string; logo_url?: string | null; primary_color?: string | null; tagline?: string | null } | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("confirmed")) setJustConfirmed(true);
+    // Branded sign-in: a clinic's own domain, or ?clinic=<web address>
+    const q = new URLSearchParams(window.location.search);
+    const slug = q.get("clinic");
+    const url = slug ? `/api/public/clinic?slug=${encodeURIComponent(slug)}` : `/api/public/clinic?host=${encodeURIComponent(window.location.host)}`;
+    fetch(url).then((r) => r.json()).then((d) => d.clinic && setBrand(d.clinic)).catch(() => null);
+    if (typeof window !== "undefined" && q.get("confirmed")) setJustConfirmed(true);
     // already signed in? go straight to the app
     (async () => {
       const s = await getSession();
@@ -84,13 +90,17 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen grid lg:grid-cols-[1.05fr_1fr] bg-white">
       {/* Left: why Mediflow */}
-      <aside className="hidden lg:flex flex-col justify-between bg-gradient-to-br from-sky-600 via-indigo-600 to-violet-700 text-white p-12 xl:p-16">
+      <aside className={`hidden lg:flex flex-col justify-between text-white p-12 xl:p-16 ${brand?.primary_color ? "" : "bg-gradient-to-br from-sky-600 via-indigo-600 to-violet-700"}`}
+        style={brand?.primary_color ? { background: `linear-gradient(135deg, ${brand.primary_color}, #1e1b4b)` } : undefined}>
         <a href="/" className="inline-flex items-center gap-2.5">
-          <span className="w-10 h-10 rounded-xl bg-white/20 border border-white/30 flex items-center justify-center font-bold text-xl">M</span>
-          <span className="text-2xl font-bold" style={{ fontFamily: "Sora, Inter, sans-serif" }}>Mediflow</span>
+          {brand?.logo_url
+            // eslint-disable-next-line @next/next/no-img-element
+            ? <img src={brand.logo_url} alt="" className="w-12 h-12 rounded-xl bg-white object-contain p-1" />
+            : <span className="w-10 h-10 rounded-xl bg-white/20 border border-white/30 flex items-center justify-center font-bold text-xl">{brand ? brand.name.charAt(0) : "M"}</span>}
+          <span className="text-2xl font-bold" style={{ fontFamily: "Sora, Inter, sans-serif" }}>{brand?.name ?? "Mediflow"}</span>
         </a>
         <div className="max-w-md">
-          <h2 className="text-3xl xl:text-4xl font-bold leading-tight" style={{ fontFamily: "Sora, Inter, sans-serif" }}>Run your whole clinic from one place.</h2>
+          <h2 className="text-3xl xl:text-4xl font-bold leading-tight" style={{ fontFamily: "Sora, Inter, sans-serif" }}>{brand ? (brand.tagline || `Welcome to ${brand.name}`) : "Run your whole clinic from one place."}</h2>
           <ul className="mt-8 space-y-5">
             {POINTS.map((p) => (
               <li key={p.t} className="flex gap-3.5">
@@ -107,8 +117,11 @@ export default function LoginPage() {
       <main className="flex items-center justify-center p-6 sm:p-10">
         <div className="w-full max-w-md">
           <a href="/" className="lg:hidden inline-flex items-center gap-2 mb-8">
-            <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 text-white flex items-center justify-center font-bold">M</span>
-            <span className="text-xl font-bold text-slate-900" style={{ fontFamily: "Sora, Inter, sans-serif" }}>Mediflow</span>
+            {brand?.logo_url
+              // eslint-disable-next-line @next/next/no-img-element
+              ? <img src={brand.logo_url} alt="" className="w-9 h-9 rounded-xl object-contain" />
+              : <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 text-white flex items-center justify-center font-bold">M</span>}
+            <span className="text-xl font-bold text-slate-900" style={{ fontFamily: "Sora, Inter, sans-serif" }}>{brand?.name ?? "Mediflow"}</span>
           </a>
 
           {step === "login" && (

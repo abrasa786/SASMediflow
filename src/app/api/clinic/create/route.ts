@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase";
+import { addDomainToVercel, checkColor, checkDomain, checkSlug, newDomainToken, saveLogo } from "@/lib/server/branding";
 
 /**
  * Creates the admin's login, the clinic, and the admin's staff record.
@@ -11,7 +12,7 @@ import { createAdminClient } from "@/lib/supabase";
  */
 export async function POST(req: NextRequest) {
   try {
-    const { clinicName, brandName, specialty, city, adminName, email, password } = await req.json();
+    const { clinicName, brandName, specialty, city, adminName, email, password, logoDataUrl, primaryColor, tagline, slug, customDomain } = await req.json();
 
     if (!clinicName || !specialty || !adminName || !email || !password) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
@@ -23,7 +24,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Password must be at least 8 characters." }, { status: 400 });
     }
 
+    // validate branding first so a bad logo/domain never leaves a half-created account
+    let colour: string | null, domainClean: string | null = null, slugClean: string | null = null;
+    try {
+      colour = checkColor(primaryColor);
+      if (customDomain) domainClean = checkDomain(customDomain);
+      if (slug) slugClean = checkSlug(slug);
+      if (logoDataUrl && !/^data:image\/(png|jpeg|webp);base64,/.test(logoDataUrl)) throw Object.assign(new Error("The logo must be a PNG, JPG or WebP image."), { status: 400 });
+      if (logoDataUrl && String(logoDataUrl).length > 1.45 * 1024 * 1024) throw Object.assign(new Error("The logo is too large. Use an image under 1 MB."), { status: 400 });
+    } catch (e: any) { return NextResponse.json({ error: e.message }, { status: e.status ?? 400 }); }
+
     const admin = createAdminClient() as any;
+    if (slugClean) {
+      const { data: s } = await admin.from("clinics").select("id").ilike("slug", slugClean).maybeSingle();
+      if (s) return NextResponse.json({ error: "That web address is already taken. Try another." }, { status: 409 });
+    }
     const appUrl = (process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin).replace(/\/$/, "");
     const autoConfirm = process.env.AUTO_CONFIRM_EMAILS === "true";
 
@@ -64,7 +79,7 @@ export async function POST(req: NextRequest) {
 
     const { data: clinic, error: clinicError } = await admin
       .from("clinics")
-      .insert({ name: clinicName, brand_name: brandName || clinicName, specialty, city: city || null, is_active: true })
+      .insert({ name: clinicName, brand_name: brandName || clinicName, specialty, city: city || null, is_active: true, ...(colour ? { primary_color: colour } : {}), ...(tagline ? { tagline: String(tagline).slice(0, 120) } : {}), ...(slugClean ? { slug: slugClean } : {}), ...(domainClean ? { custom_domain: domainClean, domain_verified: false, domain_token: newDomainToken() } : {}) })
       .select()
       .single();
     if (clinicError) {
@@ -85,7 +100,14 @@ export async function POST(req: NextRequest) {
     const { error: provisionError } = await admin.rpc("clinic_provision", { p_clinic: clinic.id });
     if (provisionError) console.error("clinic_provision failed (run migration 005):", provisionError.message);
 
-    return NextResponse.json({ success: true, clinicId: clinic.id, needsEmailConfirmation });
+    // Branding extras never block sign-up: the clinic exists, the admin can fix these in Settings.
+    let logoWarning: string | undefined;
+    if (logoDataUrl) {
+      try { const url = await saveLogo(admin, clinic.id, logoDataUrl); await admin.from("clinics").update({ logo_url: url }).eq("id", clinic.id); }
+      catch (e: any) { logoWarning = e.message; }
+    }
+    if (domainClean) await addDomainToVercel(domainClean);
+    return NextResponse.json({ success: true, clinicId: clinic.id, needsEmailConfirmation, slug: clinic.slug, logoWarning });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || "Internal server error" }, { status: 500 });
   }
