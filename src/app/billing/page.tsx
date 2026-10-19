@@ -168,6 +168,7 @@ export default function BillingPage() {
                       </td>
                       <td className="px-5 py-3 text-slate-500 text-xs hidden md:table-cell capitalize">{inv.payment_method ?? "—"}</td>
                       <td className="px-5 py-3">
+                        <a href={`/billing/print?id=${inv.id}`} target="_blank" rel="noreferrer" className="text-xs text-sky-700 hover:underline font-medium mr-3">Print</a>
                         {inv.status !== "paid" && inv.status !== "cancelled" && (
                           <button onClick={() => markPaid(inv)} className="text-xs text-emerald-600 hover:text-emerald-800 font-medium">Mark paid</button>
                         )}

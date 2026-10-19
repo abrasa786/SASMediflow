@@ -81,9 +81,12 @@ export default function StockPage() {
             <h1 className="text-2xl font-bold text-slate-900">Stock</h1>
             <p className="text-slate-500 text-sm mt-1">{items.length} items tracked</p>
           </div>
+          <div className="flex gap-2">
+          <a href="/purchasing" className="px-4 py-2 rounded-xl text-sm font-semibold border border-slate-300 hover:bg-slate-50">Purchase orders</a>
           <button onClick={() => { setEditing(EMPTY); setShowForm(true); setErr(""); }} className="bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded-xl text-sm font-semibold">
             + Add Item
           </button>
+          </div>
         </div>
 
         {/* Low stock alert */}
