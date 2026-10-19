@@ -100,7 +100,7 @@ async function continueOpen(c: AxCtx, schema: Schema, d: any, parseDate: any): P
   const obj = schema.objects.find((o) => o.api_name === d.object); if (!obj) return null;
   if (d.confirm) {
     if (!isYes(c.message)) return null;
-    const { data, error } = await c.db.rpc("builder_rec_save", { p: { clinic_id: c.clinicId, actor: c.userId, object: obj.api_name, id: d.id ?? null, values: d.values } });
+    const { error } = await c.db.rpc("builder_rec_save", { p: { clinic_id: c.clinicId, actor: c.userId, object: obj.api_name, id: d.id ?? null, values: d.values } });
     if (error) return { reply: `I couldn't save that: ${String(error.message).replace(/^[A-Z_]+:\s*/, "")}`, draft: null };
     const { raiseFlowEvent } = await import("@/lib/flows/engine");
     await raiseFlowEvent(c.db, c.clinicId, d.id ? "record_updated" : "record_created", { object: obj.api_name, values: d.values, label: String(d.values?.name ?? "") });

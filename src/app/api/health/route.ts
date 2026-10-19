@@ -12,7 +12,7 @@ export async function GET() {
     vercel_domains_optional: !!(process.env.VERCEL_API_TOKEN && process.env.VERCEL_PROJECT_ID),
     ai_data_key_recommended: !!process.env.AI_DATA_KEY, cron_secret_recommended: !!process.env.CRON_SECRET,
   };
-  const migrations: Record<string, boolean | null> = { "003_builder": null, "004_appointments": null, "005_tenant_safety": null, "006_purchasing_attendance_leave": null, "007_branding_domains": null, "008_builder_access_reports": null, "009_ai_trust_layer": null, "010_ai_name": null, "011_users_section": null };
+  const migrations: Record<string, boolean | null> = { "003_builder": null, "004_appointments": null, "005_tenant_safety": null, "006_purchasing_attendance_leave": null, "007_branding_domains": null, "008_builder_access_reports": null, "009_ai_trust_layer": null, "010_ai_name": null, "011_users_section": null, "012_dashboard_stats": null, "013_agent_tools": null };
   let database = false;
   if (env.supabase_url && env.service_role_key) {
     const db = createAdminClient();
@@ -26,6 +26,8 @@ export async function GET() {
       probe("008_builder_access_reports", db.from("permission_sets").select("id", { head: true, count: "exact" }).limit(1)),
       probe("009_ai_trust_layer", db.from("ai_questionnaire").select("id", { head: true, count: "exact" }).limit(1)),
       probe("010_ai_name", db.from("clinics").select("ai_name", { head: true, count: "exact" }).limit(1)),
+      probe("013_agent_tools", db.from("flows").select("id", { head: true, count: "exact" }).limit(1)),
+      probe("012_dashboard_stats", db.rpc("dashboard_stats", { p_clinic: "00000000-0000-0000-0000-000000000000" })),
       probe("011_users_section", db.from("user_removals").select("id", { head: true, count: "exact" }).limit(1)),
     ]);
   }

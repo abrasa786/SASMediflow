@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import SetupBanner from "@/components/SetupBanner";
 import { getActiveClinicId } from "@/lib/auth";
+import { authFetch } from "@/lib/api";
 import { getDashboardStats, getAppointments, todayIso } from "@/lib/clinic";
 import type { DashboardStats, Appointment } from "@/types";
 
@@ -20,6 +21,7 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [k, setK] = useState<any>(null);       // the full dashboard maths from /api/dashboard (migration 012)
 
   useEffect(() => {
     const clinicId = getActiveClinicId();
@@ -38,6 +40,7 @@ export default function DashboardPage() {
       }
     }
     load();
+    authFetch(`/api/dashboard?clinicId=${clinicId}`).then((r) => setK(r.stats)).catch(() => setK(null));
   }, [router]);
 
   const now = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
@@ -76,6 +79,57 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
+
+
+            {/* Clinic health: collected vs billed, dues, utilisation, no-shows, 7-day trend, doctor load, low stock */}
+            {k && (
+              <div className="mb-8 space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {[
+                    k.collected_today != null && { label: "Collected today", value: "₹" + Math.round(k.collected_today).toLocaleString("en-IN"), sub: `of ₹${Math.round(k.billed_today).toLocaleString("en-IN")} billed · ${k.collection_rate ?? 0}%` },
+                    k.outstanding != null && { label: "Outstanding dues", value: "₹" + Math.round(k.outstanding).toLocaleString("en-IN"), sub: `${k.outstanding_invoices} unpaid invoice${k.outstanding_invoices === 1 ? "" : "s"}` },
+                    { label: "Doctor utilisation", value: `${k.utilisation_pct ?? 0}%`, sub: `${k.booked_minutes} of ${k.available_minutes} min booked` },
+                    { label: "No-shows (30 days)", value: `${k.no_show_pct ?? 0}%`, sub: `${k.no_shows_30d} missed visit${k.no_shows_30d === 1 ? "" : "s"}` },
+                  ].filter(Boolean).map((c: any) => (
+                    <div key={c.label} className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+                      <div className="text-xs text-slate-500">{c.label}</div>
+                      <div className="text-2xl font-bold text-slate-900 mt-1">{c.value}</div>
+                      <div className="text-xs text-slate-400 mt-1">{c.sub}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {Array.isArray(k.trend) && k.trend.length > 0 && (
+                    <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+                      <h3 className="font-semibold text-slate-900 text-sm mb-3">Collected, last 7 days</h3>
+                      <div className="flex items-end gap-2 h-24">
+                        {(() => { const max = Math.max(1, ...k.trend.map((t: any) => Number(t.collected) || 0)); return k.trend.map((t: any) => (
+                          <div key={t.day} className="flex-1 flex flex-col items-center justify-end h-full" title={`${t.day}: ₹${Math.round(t.collected).toLocaleString("en-IN")}`}>
+                            <div className="w-full rounded-t bg-sky-400" style={{ height: `${Math.max(3, (Number(t.collected) / max) * 100)}%` }} />
+                            <span className="text-[10px] text-slate-400 mt-1">{String(t.day).slice(8)}</span>
+                          </div>)); })()}
+                      </div>
+                    </div>
+                  )}
+                  {Array.isArray(k.doctors) && k.doctors.length > 0 && (
+                    <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+                      <h3 className="font-semibold text-slate-900 text-sm mb-3">Doctor load today</h3>
+                      <ul className="space-y-2">
+                        {k.doctors.map((d: any) => (
+                          <li key={d.name} className="text-sm flex items-center justify-between gap-3">
+                            <span className="truncate text-slate-700">{d.name}</span>
+                            <span className="text-xs text-slate-500 shrink-0">{d.appointments} appt · {d.minutes} min</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+                {Array.isArray(k.low_stock_items) && k.low_stock_items.length > 0 && (
+                  <p className="text-xs text-amber-700">Low on: {k.low_stock_items.map((i: any) => i.name ?? i).slice(0, 6).join(", ")}</p>
+                )}
+              </div>
+            )}
 
             {/* Low stock alert */}
             {(stats?.lowStockCount ?? 0) > 0 && (

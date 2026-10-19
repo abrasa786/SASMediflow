@@ -64,6 +64,17 @@ sequenceDiagram
 - **Flow:** scope guard → intent parse (book / cancel / reschedule / add doctor / question) → booking engine, or `answerLocally` → optional gateway → log to `ai_questionnaire` → reply. A half-finished request (a booking missing the time) is carried as a `draft`.
 - **Bot name** comes from `clinics.ai_name`; the page shows what is remembered and lets the user delete it.
 
+### Division of work: assistant vs Builder
+| | Assistant (`/chatbot`, everyone, within their role) | AI Builder (`/builder`, admin) |
+|---|---|---|
+| Calendar | agenda, free times, leave add/remove, weekly hours (admin), book, cancel, move, mark done / no-show (`src/lib/assistant/calendar.ts`) | booking rule: doctor choice, slot length |
+| Records | add / update / list records of any table, saved as the caller so access rules apply (`records.ts`) | new tables, fields, apps, tabs |
+| Reports | ad-hoc "show X by Y", create reports and dashboards via `assistant_apply` (`reports.ts`) | permission sets |
+| Automation | none | flows: trigger (booked, cancelled, completed, no-show, invoice paid, record saved, stock low, day before, daily) → WhatsApp or task |
+Open requests continue through a draft whose `intent` starts with `ax:`; every change asks for "yes" first.
+
+**Flows engine:** DB triggers queue `flow_events` only when an active flow exists; `src/lib/flows/engine.ts` claims and runs them right after the action; `/api/flows/run` (daily cron) handles scheduled flows with per-day dedup. **Dashboard:** `dashboard_stats` (migration 012) computes collected vs billed, dues, utilisation, no-show rate, 7-day trend, doctor load and low stock.
+
 ## 11. AI Builder
 - **Screens/API:** `/builder` (chat), `/builder/{data,access,reports}`, `/api/builder/{plan,apply,rollback,schema,data,access,reports}`.
 - **Flow:** prompt → scope guard → planner (rules; or gateway when allowed) → **plan shown for approval** → `builder_apply_plan` applies everything in one transaction and records a change set → undo via `builder_rollback` (anything holding data is archived/hidden, never dropped).

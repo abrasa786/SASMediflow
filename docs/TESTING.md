@@ -22,6 +22,8 @@ Everything below runs in CI on every push (`.github/workflows/ci.yml`) and local
 | `branding_test.sql` | Slugs, colours, domain verification, public clinic view, AI name |
 | `builder_access_test.sql` | Permission sets, own-vs-all records, report access, saved reports |
 | `ai_trust_test.sql` | Questionnaire isolation, policy, rate limit, delete scopes, retention purge |
+| `dashboard_test.sql` | Dashboard maths: collected vs billed, dues, utilisation, no-show rate, trend, low stock |
+| `agent_tools_test.sql` | Reports/dashboards via the assistant, booking rule, permission sets, flows and events, rollback |
 | `users_test.sql` | Only an admin can delete a user; not yourself; never the last admin; other clinics untouched; history kept; removal audited |
 
 ## Results recorded on 19 Oct 2026 (sandbox, Postgres 16, Node 22)

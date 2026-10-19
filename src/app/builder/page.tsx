@@ -25,6 +25,9 @@ const EXAMPLES = [
   "Create an Inpatient app with Ward, Bed and Admission",
   "Recommend fields for surgery",
   "Add fields insurance provider and emergency contact to admission",
+  "When an appointment is booked, send the patient a WhatsApp confirmation",
+  "Every day remind patients a day before their appointment",
+  "Pick the least busy doctor and use 20 minute slots",
 ];
 
 async function api(path: string, body?: unknown) {

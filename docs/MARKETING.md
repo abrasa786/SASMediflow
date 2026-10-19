@@ -14,7 +14,9 @@ Small and mid-size **dental and multi-specialty clinics in India with 1–10 sta
 2. **Treatments by sitting**: plans, dues, stock use per visit.
 3. **AI that stays in its lane and in your data**: answers only clinic questions, stores nothing outside your database, deletable on demand, external AI off by default.
 4. **Build what you're missing**: the AI Builder adds apps and fields with approval and undo.
-5. **Per-clinic data isolation that is tested**, not just promised.
+5. **An assistant that does the work**: calendar, records and dashboards by chat; admins add flows and fields by describing them.
+6. **Your own address**: `www.yourclinic.com`, or `www.yourclinic.<ours>`.
+7. **Per-clinic data isolation that is tested**, not just promised.
 
 Don't claim HIPAA/ABDM/ISO certification, uptime guarantees, or integrations you haven't built.
 

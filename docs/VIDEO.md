@@ -30,6 +30,7 @@ You need three things: **real screen footage**, **a voice**, and **captions**. U
 | 0:44 | Invoice, part payment, print | "Bills, balances and printable invoices." |
 | 0:54 | Stock low alert → purchase order → received | "Never run out of gloves again." |
 | 1:02 | AI Builder: "Create a Laboratory app…" → approve → app appears | "Need something new? Describe it. You approve every change, and can undo." |
+| 1:08 | Chat: "Mark Dr Mehta on leave 25 to 27 Oct" → yes; "Create a dashboard called Daily ops…" → yes | "Calendar, records and dashboards, by chat, for everyone." |
 | 1:14 | Ask the bot "What is Kohli's score?" → polite refusal; Settings → AI & privacy | "Your assistant only talks about your clinic. What you type stays in your database, and you can delete it." |
 | 1:24 | Users screen, admin deletes a user | "Admins control who has access." |
 | 1:30 | Logo, web address, "Start free" | |

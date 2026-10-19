@@ -8,6 +8,7 @@ const TABS = [
   { href: "/builder/data", label: "Data" },
   { href: "/builder/reports", label: "Reports & dashboards" },
   { href: "/builder/access", label: "Access control", admin: true },
+  { href: "/builder/flows", label: "Automation flows", admin: true },
 ];
 
 export default function BuilderTabs({ isAdmin }: { isAdmin: boolean }) {
