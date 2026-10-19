@@ -153,6 +153,7 @@ export default function AppointmentsPage() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-semibold text-slate-900 text-sm">{a.patient?.name ?? "—"}</p>
                         {a.patient?.phone && <span className="text-xs text-slate-400">{a.patient.phone}</span>}
+                        {a.source === "online" && <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-medium">booked online{Number(a.advance_paid) > 0 ? ` · ₹${Number(a.advance_paid).toLocaleString("en-IN")} paid` : ""}</span>}
                         {a.source === "bot" && <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 font-medium">via assistant</span>}
                         {(a.assigned_by === "auto_usual" || a.assigned_by === "auto_free") && <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-medium">{a.assigned_by === "auto_usual" ? "usual doctor" : "auto-assigned"}</span>}
                       </div>

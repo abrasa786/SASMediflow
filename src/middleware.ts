@@ -21,18 +21,21 @@ export function middleware(req: NextRequest) {
     const u = req.nextUrl.clone(); u.protocol = "https"; u.host = CANONICAL; u.port = "";
     return NextResponse.redirect(u, 308);
   }
-  if (req.nextUrl.pathname !== "/") return NextResponse.next();
+  // "/" is the clinic's public page and "/book" its online booking page, on the clinic's own domain
+  const path = req.nextUrl.pathname;
+  if (path !== "/" && path !== "/book") return NextResponse.next();
+  const tail = path === "/book" ? "/book" : "";
   const host = (req.headers.get("host") ?? "").toLowerCase();
   if (ROOT && host.endsWith("." + ROOT)) {
     const sub = host.slice(0, -ROOT.length - 1).replace(/^www\./, "");
     if (!sub || RESERVED.has(sub) || sub.includes(".")) return NextResponse.next();
-    const u = req.nextUrl.clone(); u.pathname = "/c/" + sub; return NextResponse.rewrite(u);
+    const u = req.nextUrl.clone(); u.pathname = "/c/" + sub + tail; return NextResponse.rewrite(u);
   }
   if (ROOT && (host === ROOT || host === "www." + ROOT)) return NextResponse.next();
   const isPlatform = !host || host.startsWith("localhost") || host.endsWith(".vercel.app") || PLATFORM.includes(host);
   if (isPlatform) return NextResponse.next();
   const url = req.nextUrl.clone();
-  url.pathname = "/c/_host";
+  url.pathname = "/c/_host" + tail;
   return NextResponse.rewrite(url);
 }
 

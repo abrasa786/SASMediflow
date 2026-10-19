@@ -10,10 +10,14 @@ interface PublicClinic { slug: string; name: string; tagline?: string; ai_name?:
 export default function PublicClinicPage() {
   const { slug } = useParams<{ slug: string }>();
   const [c, setC] = useState<PublicClinic | null | undefined>(undefined);
+  const [online, setOnline] = useState<{ open: boolean; fee: number } | null>(null);
   useEffect(() => {
     const url = slug === "_host" ? `/api/public/clinic?host=${encodeURIComponent(window.location.host)}` : `/api/public/clinic?slug=${encodeURIComponent(slug)}`;
     fetch(url).then((r) => r.json()).then((d) => { setC(d.clinic); if (d.clinic) { applyBrand(d.clinic.primary_color); applyIdentity(d.clinic.name, d.clinic.logo_url); } }).catch(() => setC(null));
+    const q = slug === "_host" ? `host=${encodeURIComponent(window.location.host)}` : `clinic=${encodeURIComponent(slug)}`;
+    fetch(`/api/public/book/config?${q}`).then((r) => r.json()).then((d) => setOnline(d.booking ? { open: !!d.booking.open, fee: d.booking.fee } : null)).catch(() => setOnline(null));
   }, [slug]);
+  const bookHref = slug === "_host" ? "/book" : `/c/${slug}/book`;
 
   if (c === undefined) return <div className="min-h-screen flex items-center justify-center text-slate-400 text-sm">Loading…</div>;
   if (c === null) return (
@@ -52,10 +56,11 @@ export default function PublicClinicPage() {
         <aside className="space-y-4">
           <div className="bg-white rounded-xl border border-slate-200 p-4 text-sm space-y-2">
             <h2 className="font-semibold text-slate-900">Book an appointment</h2>
+            {online?.open && <a href={bookHref} style={{ background: color }} className="block text-center text-white font-semibold rounded-xl py-3">Book online{online.fee > 0 ? ` · ₹${online.fee.toLocaleString("en-IN")} to confirm` : ""}</a>}
             {phone ? <>
-              <a href={`tel:+${wa}`} style={{ background: color }} className="block text-center text-white font-semibold rounded-xl py-2.5">Call {c.phone}</a>
+              <a href={`tel:+${wa}`} style={online?.open ? undefined : { background: color }} className={`block text-center font-semibold rounded-xl py-2.5 ${online?.open ? "border border-slate-300 hover:bg-slate-50" : "text-white"}`}>Call {c.phone}</a>
               <a href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer" className="block text-center border border-slate-300 font-semibold rounded-xl py-2.5 hover:bg-slate-50">Message on WhatsApp</a>
-            </> : <p className="text-slate-500">Contact the clinic to book.</p>}
+            </> : !online?.open && <p className="text-slate-500">Contact the clinic to book.</p>}
           </div>
           {(c.address || c.email || c.website) && <div className="bg-white rounded-xl border border-slate-200 p-4 text-sm space-y-1.5">
             {c.address && <p>📍 {c.address}</p>}{c.email && <p>✉️ {c.email}</p>}

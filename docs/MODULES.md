@@ -70,6 +70,9 @@ Apps group tabs. Six built-in apps (Booking, Clinical, Payments, Inventory, Admi
 ### WhatsApp chat and recall (migration 015)
 `POST /api/whatsapp/webhook` receives patient messages (signature-checked, de-duplicated, rate-limited). The sender's phone decides which patient records are in play, so a patient can only see or change their own: book (asks the day, offers free slots), my appointments, reschedule, cancel (asks yes), balance, stop/start. Several clinics on one number → it asks which. `recall_candidates` lists patients with an open treatment plan and nothing booked, or no visit for N days, excluding opted-out, no-phone and anyone nudged in the last 30 days. `/recall` sends one or many (WhatsApp, or a prefilled link if not connected); admins can switch on a daily automatic send (the daily cron, up to a daily limit).
 
+### Online booking with a confirmation fee (migration 016)
+Public, no sign-in: `/c/<clinic>/book` (and `/book` on a clinic's own domain). `GET /api/public/book/{config,days,slots}` show doctors and free times; `POST .../hold` holds a slot (`online_hold`) and creates a Razorpay order; `POST .../confirm` verifies the payment signature with the clinic's own secret, then `online_confirm` books through the normal engine (`appt_book`, source `online`), records the payment, and creates a paid invoice for the fee. `POST /api/razorpay/webhook` does the same if the browser never came back, and a slot lost during payment is refunded automatically. Admins configure it in Settings; the staff see "booked online" on the appointment, and the billing screen offers the fee as a "Less:" line when the final invoice is made for that patient.
+
 ### Division of work: assistant vs Builder
 | | Assistant (`/chatbot`, everyone, within their role) | AI Builder (`/builder`, admin) |
 |---|---|---|

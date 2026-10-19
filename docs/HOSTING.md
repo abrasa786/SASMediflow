@@ -15,7 +15,7 @@ One deployment serves every clinic. Clinics are separated by `clinic_id` in the 
 ## 1. First-time setup (about 30 minutes)
 
 1. **Supabase project.** Create one in the region closest to your patients (for India choose Mumbai, `ap-south-1`; patient data then stays in India).
-2. **Run the migrations** in the SQL editor, in order: `001_schema.sql` (a brand-new project only), then `003` to `015` in order (`003` … `015`; `012` dashboard maths, `013` assistant/builder tools and flows, `014` App Manager, `015` WhatsApp chat and recall). The file `supabase/ALL_MIGRATIONS_003_015.sql` has them all in one. They are safe to run again. (There is no `002`, it is demo data only; skip it in production.)
+2. **Run the migrations** in the SQL editor, in order: `001_schema.sql` (a brand-new project only), then `003` to `016` in order (`003` … `016`; `016` online booking and the confirmation fee; `012` dashboard maths, `013` assistant/builder tools and flows, `014` App Manager, `015` WhatsApp chat and recall). The file `supabase/ALL_MIGRATIONS_003_016.sql` has them all in one. They are safe to run again. (There is no `002`, it is demo data only; skip it in production.)
 3. **Authentication → URL configuration.** Site URL = your production address (e.g. `https://app.yourdomain.com`). Add the same address, plus `http://localhost:3001`, to Redirect URLs.
 4. **Authentication → Emails → SMTP Settings.** Add your SMTP sender. Without it Supabase's built-in mailer sends only a few emails an hour and only to your own team, so real clinics cannot sign up. Keep "Confirm email" switched on.
 5. **Vercel.** Import the GitHub repo. Add the environment variables below, then deploy.
@@ -68,6 +68,16 @@ Every clinic gets, at sign-up, with no work from you:
 A domain only becomes exclusive to a clinic once ownership is verified, so nobody can block a real owner by typing their domain first. Check Vercel's current limit on domains per project for your plan before promising this to many clinics.
 
 Auth emails (confirmation, reset) always link to `NEXT_PUBLIC_APP_URL`, so a clinic's staff confirm on your main address and then sign in on either.
+
+## 2b. Online booking from Google (patients book and pay a confirmation fee)
+
+Patients never sign in. They open the clinic's public booking page (`/c/<clinic>/book`, or `/book` on the clinic's own domain), choose a doctor, a day and a free time, enter their name and mobile, and pay a small confirmation fee (for example ₹50 to ₹100). The booking then appears in Appointments and Patients as "booked online", the patient and doctor get a WhatsApp message, and the fee is taken off the final bill. Reception keeps booking by phone and WhatsApp exactly as before.
+
+1. Run migration `016`. Set `AI_DATA_KEY` (payment keys are stored encrypted, so this is required). Optionally set `NEXT_PUBLIC_APP_URL` so the sitemap and Google markup use the right address.
+2. Each clinic opens a Razorpay account (razorpay.com) so the money goes to the clinic's own bank account. In Mediflow: **Settings → Online booking & confirmation fee**: switch it on, set the fee, paste the Razorpay **Key id** and **Key secret**.
+3. Recommended: in the Razorpay dashboard add a webhook to the URL shown in that card (`/api/razorpay/webhook?c=<clinic id>`), events `payment.captured` and `order.paid`, and paste the same secret into Mediflow. Then a booking is still made if the patient pays and closes the page.
+4. **Google search:** pages carry schema.org markup (clinic details and a "Reserve" action), and `/sitemap.xml` lists every clinic's pages. To show a **Book** button in Google results, open the clinic's Google Business Profile, then Edit profile, Booking links, and set the Appointment link to the booking page address. Google decides when to display the button; it can take days.
+5. How it behaves: the chosen time is held for 10 minutes (the clinic can change this) while the patient pays; nobody else can take it. If the patient pays after the hold expired and the time has gone, the fee is refunded automatically. Up to 3 open holds and 4 upcoming online bookings per phone number; the page is also rate limited per visitor.
 
 ## 3. Before real patients
 

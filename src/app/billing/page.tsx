@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 import { getInvoices, createInvoice, updateInvoice, searchClinicPatients } from "@/lib/clinic";
 import type { Invoice, ClinicPatient, InvoiceStatus, PaymentMethod } from "@/types";
 
@@ -27,6 +28,19 @@ export default function BillingPage() {
   const [patientSearch, setPatientSearch] = useState("");
   const [patientResults, setPatientResults] = useState<ClinicPatient[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<ClinicPatient | null>(null);
+  // Booking fees this patient already paid online: taken off the bill as a "Less:" line
+  const [credits, setCredits] = useState<{ id: string; advance_paid: number; appointment_date: string }[]>([]);
+  useEffect(() => {
+    setCredits([]);
+    if (!selectedPatient) return;
+    supabase.from("appointments").select("id, advance_paid, appointment_date").eq("clinic_patient_id", selectedPatient.id)
+      .eq("source", "online").gt("advance_paid", 0).is("advance_invoice", null).neq("status", "cancelled").order("appointment_date")
+      .then(({ data }: any) => {
+        const list = data ?? []; setCredits(list);
+        if (list.length) setItems((prev) => [...prev.filter((i) => !i.name.startsWith("Less: online booking fee")),
+          ...list.map((c: any) => ({ name: `Less: online booking fee paid (${c.appointment_date})`, qty: 1, unit_price: -Number(c.advance_paid), amount: -Number(c.advance_paid) }))]);
+      });
+  }, [selectedPatient]);
   const [items, setItems] = useState<LineItem[]>([{ name: "", qty: 1, unit_price: 0, amount: 0 }]);
   const [gst, setGst] = useState(18);
   const [discount, setDiscount] = useState(0);
@@ -77,7 +91,7 @@ export default function BillingPage() {
     if (!selectedPatient) { setErr("Select a patient"); return; }
     if (items.some(i => !i.name.trim())) { setErr("Fill all item names"); return; }
     setSaving(true); setErr("");
-    const { error } = await createInvoice({
+    const { data: made, error } = await createInvoice({
       clinic_id: clinicId,
       clinic_patient_id: selectedPatient.id,
       items, subtotal, discount, gst_percent: gst, gst_amount: gstAmt, total,
@@ -86,6 +100,9 @@ export default function BillingPage() {
     });
     setSaving(false);
     if (error) { setErr(error.message); return; }
+    if (made?.id && credits.length && items.some((i) => i.name.startsWith("Less: online booking fee"))) {
+      await supabase.from("appointments").update({ advance_invoice: made.id }).in("id", credits.map((c) => c.id));
+    }
     setShowNew(false);
     resetForm();
     runFlows();

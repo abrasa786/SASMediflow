@@ -89,7 +89,8 @@ export interface Appointment {
   notes?: string;
   mode?: AppointmentMode;
   video_room?: string;
-  source?: "app" | "clinic" | "bot";
+  source?: "app" | "clinic" | "bot" | "online";
+  advance_paid?: number;
   duration_minutes?: number;
   start_time?: string | null;
   end_time?: string | null;
