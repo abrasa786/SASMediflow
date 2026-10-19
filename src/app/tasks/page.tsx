@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import AppShell from "@/components/layout/AppShell";
 import { getActiveClinicId } from "@/lib/auth";
-import { createBrowserClient } from "@/lib/supabase";
+import { supabase as supabaseClient } from "@/lib/supabase";
 
 type TaskStatus = "todo" | "in_progress" | "done";
 type Priority = "low" | "medium" | "high";
@@ -20,7 +20,7 @@ interface Task {
   clinic_id: string;
 }
 
-const supabase = createBrowserClient() as any;
+const supabase = supabaseClient as any;
 
 const COLUMNS: { key: TaskStatus; label: string; emoji: string; color: string }[] = [
   { key: "todo", label: "To Do", emoji: "📋", color: "text-gray-700" },

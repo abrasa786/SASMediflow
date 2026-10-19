@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import AppShell from "@/components/layout/AppShell";
 import { getActiveClinicId } from "@/lib/auth";
-import { createBrowserClient } from "@/lib/supabase";
+import { supabase as supabaseClient } from "@/lib/supabase";
 
 interface DoctorRevenue { name: string; revenue: number; appointments: number; }
 interface DeptStat { name: string; count: number; }
 interface MonthStat { month: string; revenue: number; appointments: number; }
 
-const supabase = createBrowserClient() as any;
+const supabase = supabaseClient as any;
 
 export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
