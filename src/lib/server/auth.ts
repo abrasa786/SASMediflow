@@ -2,8 +2,8 @@ import { NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
 import { HttpError } from "./http";
 
-export type Role = "admin" | "doctor" | "nurse" | "receptionist";
-export const ALL_ROLES: Role[] = ["admin", "doctor", "nurse", "receptionist"];
+export type Role = "admin" | "doctor" | "intern" | "nurse" | "receptionist";
+export const ALL_ROLES: Role[] = ["admin", "doctor", "intern", "nurse", "receptionist"];
 
 /**
  * Verifies the bearer token and that the caller is an active member of the clinic

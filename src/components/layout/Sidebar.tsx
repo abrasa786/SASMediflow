@@ -7,9 +7,12 @@ import type { ClinicRole } from "@/types";
 
 const NAV = [
   { href: "/dashboard",    icon: "🏠", label: "Dashboard" },
+  { href: "/setup",        icon: "🚀", label: "Setup", roles: ["admin"] as ClinicRole[] },
   { href: "/appointments", icon: "📅", label: "Appointments" },
-  { href: "/availability", icon: "🗓", label: "Availability", roles: ["admin", "doctor"] as ClinicRole[] },
+  { href: "/calendar",     icon: "🗓️", label: "Calendar" },
+  { href: "/availability", icon: "⏰", label: "Availability", roles: ["admin", "doctor"] as ClinicRole[] },
   { href: "/patients",     icon: "👥", label: "Patients" },
+  { href: "/treatments",   icon: "🦷", label: "Treatments", roles: ["admin", "doctor", "nurse", "receptionist"] as ClinicRole[] },
   { href: "/billing",      icon: "🧾", label: "Billing" },
   { href: "/stock",        icon: "💊", label: "Stock" },
   { href: "/tasks",        icon: "✅", label: "Tasks" },
@@ -23,6 +26,7 @@ const NAV = [
 const ROLE_COLORS: Record<ClinicRole, string> = {
   admin:        "bg-purple-100 text-purple-700",
   doctor:       "bg-sky-100 text-sky-700",
+  intern:       "bg-indigo-100 text-indigo-700",
   nurse:        "bg-emerald-100 text-emerald-700",
   receptionist: "bg-amber-100 text-amber-700",
 };

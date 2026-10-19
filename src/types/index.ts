@@ -1,4 +1,4 @@
-export type ClinicRole = "admin" | "doctor" | "nurse" | "receptionist";
+export type ClinicRole = "admin" | "doctor" | "intern" | "nurse" | "receptionist";
 export type AppointmentStatus = "confirmed" | "cancelled" | "completed" | "no_show";
 export type AppointmentMode = "in_clinic" | "video";
 export type InvoiceStatus = "draft" | "sent" | "paid" | "partially_paid" | "cancelled";

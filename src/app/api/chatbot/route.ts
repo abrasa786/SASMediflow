@@ -4,11 +4,12 @@ import { requireClinicMember } from "@/lib/server/auth";
 import { parseBookingText, mergeDraft, missingForBooking, todayInTz, formatDateNice, type BookingDraft } from "@/lib/booking/parse";
 import { bookAppointmentViaEngine, rescheduleViaEngine, setStatusViaEngine, suggestSlots } from "@/lib/booking/engine";
 import { notifyAppointment, type NotificationResult } from "@/lib/booking/notify";
+import { isAddDoctor, parseAddDoctor, mergeDoctor, type DoctorDraft } from "@/lib/booking/doctor-parse";
 
 export const dynamic = "force-dynamic";
 
 type Action = { label: string; url: string };
-interface Reply { reply: string; draft: BookingDraft | null; actions?: Action[]; appointmentId?: string; slots?: string[] }
+interface Reply { reply: string; draft: any; actions?: Action[]; appointmentId?: string; slots?: string[] }
 
 const ABORT = /^\s*(no|nope|nah|cancel that|never ?mind|stop|forget it|abort|start over|reset)\W*$/i;
 const drName = (n?: string | null) => (!n ? "the doctor" : /^dr\.?\s/i.test(n) ? n : `Dr. ${n}`);
@@ -197,10 +198,53 @@ async function askGemini(db: any, clinicId: string, message: string, history: an
   return j.candidates?.[0]?.content?.parts?.[0]?.text ?? "Sorry, I couldn't generate a response.";
 }
 
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const t12 = (t: string) => { const [h, m] = t.split(":").map(Number); return `${((h + 11) % 12) + 1}${m ? ":" + String(m).padStart(2, "0") : ""} ${h >= 12 ? "PM" : "AM"}`; };
+
+/** "Add a new doctor …" typed in the chat: creates the doctor and their weekly hours. Admin only. */
+async function handleAddDoctor(db: any, clinicId: string, role: string, prev: DoctorDraft | undefined, message: string, continuing: boolean): Promise<Reply> {
+  if (role !== "admin") return { reply: "Only the clinic admin can add doctors. Ask your admin, or open Staff → Invite.", draft: null };
+  let parsed = parseAddDoctor(message);
+  // while we're asking questions, a bare reply is the answer
+  if (continuing && prev) {
+    if (!prev.name && !parsed.name && /^[A-Za-z][A-Za-z.' ]{1,40}$/.test(message.trim())) parsed.name = message.trim().replace(/^dr\.?\s+/i, "");
+    if (!prev.specialty && !parsed.specialty && /^[A-Za-z ]{3,30}$/.test(message.trim()) && prev.name) parsed.specialty = message.trim().replace(/^\w/, (c) => c.toUpperCase());
+    if (/\b(default|clinic hours|same as clinic)\b/i.test(message) && !parsed.start) {
+      const { data: c } = await db.from("clinics").select("working_hours").eq("id", clinicId).maybeSingle();
+      parsed.start = (c?.working_hours?.open ?? "09:00").slice(0, 5); parsed.end = (c?.working_hours?.close ?? "18:00").slice(0, 5);
+    }
+  }
+  const d = mergeDoctor(prev, parsed);
+  const keep = { ...d, intent: "add_doctor" };
+  if (d.shiftError) return { reply: d.shiftError, draft: { ...keep, start: undefined, end: undefined, shiftError: undefined } };
+  if (!d.name) return { reply: "Sure. What is the doctor's name?", draft: keep };
+  if (!d.start || !d.end) return { reply: `Got it: Dr. ${d.name}${d.specialty ? `, ${d.specialty}` : ""}. What hours does ${d.name.split(" ")[0]} work? For example "9am-6pm" or "2-11" (say "default" to use the clinic's hours).`, draft: keep };
+
+  const { data: dup } = await db.from("doctors").select("id").eq("clinic_id", clinicId).ilike("name", d.name).limit(1);
+  if (dup?.length) return { reply: `A doctor named ${d.name} is already on your list. Use the Availability page to change their hours, or give this doctor a different name.`, draft: null };
+
+  const { data: doc, error } = await db.from("doctors").insert({
+    clinic_id: clinicId, name: /^dr\.?\s/i.test(d.name) ? d.name : `Dr. ${d.name}`, specialty: d.specialty ?? null, speciality: d.specialty ?? null,
+    experience_years: d.years ?? null, phone: d.phone ?? null, consultation_fee: d.fee ?? null, is_active: true,
+  }).select("id, name").single();
+  if (error) {
+    const hint = /experience_years/.test(error.message) ? " (run supabase/migrations/005_tenant_safety_and_treatments.sql in Supabase)" : "";
+    return { reply: `I couldn't add the doctor: ${error.message}${hint}`, draft: null };
+  }
+  const days = d.days ?? [1, 2, 3, 4, 5, 6];
+  const rows = days.map((wd) => ({ weekday: wd, start: d.start, end: d.end }));
+  const { error: se } = await db.rpc("appt_set_schedule", { p_clinic: clinicId, p_doctor: doc.id, p_rows: rows });
+  const lines = [`✅ Added ${doc.name}${d.specialty ? ` (${d.specialty})` : ""}${d.years != null ? `, ${d.years} years of experience` : ""}.`];
+  lines.push(se ? `⚠️ I couldn't save the hours (${se.message}). Set them on the Availability page.`
+                : `🗓 Works ${days.map((x) => DAY_NAMES[x]).join(", ")}, ${t12(d.start)} – ${t12(d.end)}. New bookings can be made in those hours.`);
+  if (!d.phone) lines.push("📱 No phone number yet, so the doctor won't get WhatsApp notes. Add it on the Availability page.");
+  return { reply: lines.join("\n"), draft: null, actions: [{ label: "Open Availability", url: "/availability" }] };
+}
+
 export async function POST(req: NextRequest) {
   return handle(async () => {
     const b = await req.json();
-    const { db, userId } = await requireClinicMember(req, b.clinicId);
+    const { db, userId, role } = await requireClinicMember(req, b.clinicId);
     const message = typeof b.message === "string" ? b.message.trim().slice(0, 1000) : "";
     if (!message) throw new HttpError(400, "message is required.");
     const history = Array.isArray(b.history) ? b.history : [];
@@ -210,6 +254,10 @@ export async function POST(req: NextRequest) {
     if (prev?.intent && prev.intent !== "other" && ABORT.test(message)) {
       return { reply: "No problem, I've dropped that request.", draft: null } satisfies Reply;
     }
+
+    // Adding a doctor (admin) is handled before booking, because words like "shift" would otherwise look like a reschedule.
+    const adding = (prev as any)?.intent === "add_doctor";
+    if (adding || isAddDoctor(message)) return handleAddDoctor(db, b.clinicId, role, adding ? (prev as any) : undefined, message, adding);
 
     const parsed = parseBookingText(message, today);
     const active = prev?.intent && prev.intent !== "other" ? prev.intent : undefined;

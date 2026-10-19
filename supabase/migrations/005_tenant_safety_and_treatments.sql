@@ -16,6 +16,19 @@
 
 create extension if not exists btree_gist;
 
+-- doctor profile: years of experience (set from the AI assistant or the staff page)
+alter table doctors add column if not exists experience_years smallint check (experience_years is null or experience_years between 0 and 70);
+
+-- new role: intern (read-only clinical access; cannot bill, change stock or complete treatments)
+do $$
+declare c text;
+begin
+  for c in select conname from pg_constraint where conrelid = 'clinic_staff'::regclass and contype = 'c' and pg_get_constraintdef(oid) ilike '%role%' loop
+    execute format('alter table clinic_staff drop constraint %I', c);
+  end loop;
+  alter table clinic_staff add constraint clinic_staff_role_check check (role in ('admin','doctor','intern','nurse','receptionist'));
+end $$;
+
 -- ─── 1a. helpers ─────────────────────────────────────────────
 create or replace function is_clinic_staff(p_clinic_id uuid)
 returns boolean language sql stable security definer set search_path = public, pg_temp as $$
@@ -296,6 +309,20 @@ begin
 
   return jsonb_build_object('price_items', v_items, 'templates', v_tpl, 'stock_items', v_stock);
 end $$;
+
+-- interns may read invoices and stock but not change them
+drop policy if exists "Staff can CRUD invoices" on invoices;
+drop policy if exists "Staff read invoices" on invoices;
+drop policy if exists "Staff write invoices" on invoices;
+create policy "Staff read invoices"  on invoices for select using (is_clinic_staff(clinic_id));
+create policy "Staff write invoices" on invoices for all using (is_clinic_role(clinic_id, array['admin','doctor','nurse','receptionist']))
+                                                with check (is_clinic_role(clinic_id, array['admin','doctor','nurse','receptionist']));
+drop policy if exists "Staff can CRUD stock" on stock_items;
+drop policy if exists "Staff read stock" on stock_items;
+drop policy if exists "Staff write stock" on stock_items;
+create policy "Staff read stock"  on stock_items for select using (is_clinic_staff(clinic_id));
+create policy "Staff write stock" on stock_items for all using (is_clinic_role(clinic_id, array['admin','doctor','nurse','receptionist']))
+                                              with check (is_clinic_role(clinic_id, array['admin','doctor','nurse','receptionist']));
 
 -- ─── Treatment plans ─────────────────────────────────────────
 -- p = {clinic_id, actor?, patient_id, doctor_id, template_id? | sittings?, title?, total_amount?, discount?, start_date, time}

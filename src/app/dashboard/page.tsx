@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
+import SetupBanner from "@/components/SetupBanner";
 import { getActiveClinicId } from "@/lib/auth";
 import { getDashboardStats, getAppointments, todayIso } from "@/lib/clinic";
 import type { DashboardStats, Appointment } from "@/types";
@@ -49,6 +50,8 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
           <p className="text-slate-500 text-sm mt-1">{now}</p>
         </div>
+
+        {typeof window !== "undefined" && getActiveClinicId() && <SetupBanner clinicId={getActiveClinicId()!} />}
 
         {loading ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

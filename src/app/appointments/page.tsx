@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
+import SlotPicker from "@/components/SlotPicker";
 import { supabase as supabaseClient } from "@/lib/supabase";
 import { getAppointments, getClinicDoctors, searchClinicPatients, todayIso } from "@/lib/clinic";
 import type { Appointment, Doctor, ClinicPatient } from "@/types";
@@ -25,42 +26,6 @@ const inputCls = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm 
 const labelCls = "text-xs font-medium text-slate-600 block mb-1";
 const shiftDay = (iso: string, n: number) => { const d = new Date(iso + "T00:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 const niceDate = (iso: string) => new Date(iso + "T00:00:00Z").toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
-
-/** Free-slot chips for one day, straight from the availability engine. */
-function SlotPicker({ clinicId, date, doctorId, value, onChange, reloadKey = 0 }: {
-  clinicId: string; date: string; doctorId?: string; value: string; onChange: (t: string) => void; reloadKey?: number;
-}) {
-  const [times, setTimes] = useState<string[]>([]);
-  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
-  const [err, setErr] = useState("");
-
-  useEffect(() => {
-    let live = true;
-    if (!clinicId || !date) return;
-    setState("loading");
-    const qs = new URLSearchParams({ clinicId, date, ...(doctorId ? { doctorId } : {}) });
-    authFetch(`/api/appointments/slots?${qs}`)
-      .then((r) => { if (!live) return; setTimes(doctorId ? (r.doctors?.[0]?.times ?? []) : (r.anyTimes ?? [])); setState("ready"); })
-      .catch((e) => { if (!live) return; setErr(e.message); setState("error"); });
-    return () => { live = false; };
-  }, [clinicId, date, doctorId, reloadKey]);
-
-  useEffect(() => { if (value && state === "ready" && !times.includes(value)) onChange(""); }, [times, state]); // eslint-disable-line
-
-  if (state === "loading") return <p className="text-xs text-slate-400">Checking availability…</p>;
-  if (state === "error") return <p className="text-xs text-red-600">{err}</p>;
-  if (!times.length) return <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2">No free slots on this day. The doctor may be on leave, the clinic closed, or fully booked. Try another date{doctorId ? " or choose auto-assign" : ""}.</p>;
-  return (
-    <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto">
-      {times.map((t) => (
-        <button key={t} type="button" onClick={() => onChange(t)}
-          className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors ${value === t ? "bg-sky-500 border-sky-500 text-white" : "bg-white border-slate-200 text-slate-700 hover:border-sky-300"}`}>
-          {t}
-        </button>
-      ))}
-    </div>
-  );
-}
 
 function NotificationList({ items }: { items: Notification[] }) {
   if (!items.length) return null;

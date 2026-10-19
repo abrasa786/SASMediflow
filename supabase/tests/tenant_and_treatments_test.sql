@@ -64,6 +64,10 @@ do $$ declare r jsonb; d date := current_date + 3; s1 uuid; res jsonb; n int; tp
   exception when others then if sqlerrm not like 'NOT_FOUND%' then raise; end if; end;
 end $$;
 
+-- intern role: can read invoices, cannot write them
+insert into auth.users(id,email) values ('00000000-0000-0000-0000-0000000000c1','c@x.in');
+insert into clinic_staff(clinic_id,user_id,role,name) values ('aaaaaaaa-0000-0000-0000-000000000001','00000000-0000-0000-0000-0000000000c1','intern','Intern C');
+
 -- RLS as the signed-in users
 grant usage on schema public to authenticated; grant select, insert, update, delete on all tables in schema public to authenticated;
 set local role authenticated;
@@ -81,6 +85,14 @@ do $$ begin
   assert (select count(*) from clinic_patients)=1 and (select name from clinic_patients)='Pat B', 'B sees only own patients';
   assert (select count(*) from treatment_plans)=0, 'B sees no plans of A';
   assert (select count(*) from stock_items where name='Gloves')=0 or (select quantity from stock_items where name='Gloves')=0, 'B sees only own stock';
+end $$;
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-0000000000c1',true);
+do $$ begin
+  assert (select count(*) from invoices)=3, 'intern can read invoices';
+  update invoices set notes='x'; 
+  assert (select count(*) from invoices where notes='x')=0, 'intern cannot change invoices';
+  update stock_items set quantity=999;
+  assert (select count(*) from stock_items where quantity=999)=0, 'intern cannot change stock';
 end $$;
 reset role;
 select table_name, verdict from tenant_isolation_audit() where verdict <> 'ok';

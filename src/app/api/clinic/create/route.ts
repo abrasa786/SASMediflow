@@ -81,6 +81,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: staffError.message }, { status: 500 });
     }
 
+    // Starter setup: booking rules, price list, treatment templates, empty stock shelves. No patient data.
+    const { error: provisionError } = await admin.rpc("clinic_provision", { p_clinic: clinic.id });
+    if (provisionError) console.error("clinic_provision failed (run migration 005):", provisionError.message);
+
     return NextResponse.json({ success: true, clinicId: clinic.id, needsEmailConfirmation });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || "Internal server error" }, { status: 500 });

@@ -6,6 +6,7 @@ import AppShell from "@/components/layout/AppShell";
 import { getActiveClinicId } from "@/lib/auth";
 import { getClinic, getMyRoleInClinic } from "@/lib/clinic";
 import { supabase } from "@/lib/supabase";
+import PriceListEditor from "@/components/PriceListEditor";
 import type { Clinic, ClinicRole } from "@/types";
 
 const SPECIALTIES = [
@@ -212,6 +213,8 @@ export default function SettingsPage() {
             </>
           )}
         </form>
+
+        <PriceListEditor clinicId={clinic?.id ?? null} canEdit={isAdmin} />
       </div>
     </AppShell>
   );

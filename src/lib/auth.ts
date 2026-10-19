@@ -31,3 +31,12 @@ export function setActiveClinicId(id: string) {
 export function clearActiveClinicId() {
   localStorage.removeItem("mf_active_clinic");
 }
+
+export async function sendPasswordReset(email: string) {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  return supabase.auth.resetPasswordForEmail(email, { redirectTo: `${origin}/reset-password` });
+}
+
+export async function setNewPassword(password: string) {
+  return supabase.auth.updateUser({ password });
+}

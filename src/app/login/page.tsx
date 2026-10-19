@@ -1,22 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { signInWithEmail } from "@/lib/auth";
+import { signInWithEmail, setActiveClinicId, getSession, sendPasswordReset } from "@/lib/auth";
 import { getMyClinics } from "@/lib/clinic";
-import { setActiveClinicId } from "@/lib/auth";
 import type { Clinic } from "@/types";
+
+const POINTS = [
+  { icon: "📅", t: "Appointments that never clash", d: "Doctor schedules, breaks and leave are checked for every slot." },
+  { icon: "💬", t: "WhatsApp built in", d: "Confirmations, reminders and receipts go out automatically." },
+  { icon: "🦷", t: "Made for your specialty", d: "Start with a ready-made pack, then shape it with the AI Builder." },
+  { icon: "🔒", t: "Your clinic's data stays yours", d: "Every clinic is fully separated. Nobody else can see your records." },
+];
 
 export default function LoginPage() {
   const router = useRouter();
-  const [step, setStep] = useState<"login" | "pick">("login");
+  const [step, setStep] = useState<"login" | "pick" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [unconfirmed, setUnconfirmed] = useState(false);
-  const [info, setInfo] = useState("");
+  const [justConfirmed, setJustConfirmed] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("confirmed")) setJustConfirmed(true);
+    // already signed in? go straight to the app
+    (async () => {
+      const s = await getSession();
+      if (!s) return;
+      try {
+        const mine = await getMyClinics();
+        if (mine.length === 1) { setActiveClinicId(mine[0].id); router.replace("/dashboard"); }
+        else if (mine.length > 1) { setClinics(mine); setStep("pick"); }
+      } catch { /* stay on the form */ }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function resendConfirmation() {
     setInfo("");
@@ -29,9 +52,8 @@ export default function LoginPage() {
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    setError("");
-    const { error: authErr } = await signInWithEmail(email, password);
+    setLoading(true); setError(""); setInfo("");
+    const { error: authErr } = await signInWithEmail(email.trim(), password);
     if (authErr) {
       const notConfirmed = /not confirmed/i.test(authErr.message);
       setUnconfirmed(notConfirmed);
@@ -41,126 +63,121 @@ export default function LoginPage() {
     }
     setUnconfirmed(false);
     try {
-      const myClinics = await getMyClinics();
-      if (myClinics.length === 0) {
-        setError("No clinic assigned to your account. Contact your clinic admin.");
-        setLoading(false);
-        return;
-      }
-      if (myClinics.length === 1) {
-        setActiveClinicId(myClinics[0].id);
-        router.push("/dashboard");
-        return;
-      }
-      setClinics(myClinics);
-      setStep("pick");
-    } catch {
-      setError("Failed to load clinics. Please try again.");
-    }
+      const mine = await getMyClinics();
+      if (mine.length === 0) { setError("No clinic is linked to this account. Ask your clinic admin to add you."); setLoading(false); return; }
+      if (mine.length === 1) { setActiveClinicId(mine[0].id); router.push("/dashboard"); return; }
+      setClinics(mine); setStep("pick");
+    } catch { setError("Could not load your clinic. Please try again."); }
     setLoading(false);
   }
 
-  function pickClinic(clinic: Clinic) {
-    setActiveClinicId(clinic.id);
-    router.push("/dashboard");
+  async function handleForgot(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true); setError(""); setInfo("");
+    const { error: err } = await sendPasswordReset(email.trim());
+    setLoading(false);
+    if (err) setError(err.message); else setInfo("If that email has an account, a reset link is on its way. Check your spam folder too.");
   }
 
+  const input = "w-full px-4 py-3 rounded-lg border border-slate-300 bg-white text-slate-900 text-[15px] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500";
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-violet-600 to-indigo-700 p-4">
-      <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2.5 mb-2">
-            <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-white font-bold text-xl border border-white/30">M</div>
-            <span className="text-2xl font-bold text-white" style={{ fontFamily: "Sora, Inter, sans-serif" }}>Mediflow</span>
-          </div>
-          <p className="text-blue-100 text-sm">Clinic Staff Portal</p>
+    <div className="min-h-screen grid lg:grid-cols-[1.05fr_1fr] bg-white">
+      {/* Left: why Mediflow */}
+      <aside className="hidden lg:flex flex-col justify-between bg-gradient-to-br from-sky-600 via-indigo-600 to-violet-700 text-white p-12 xl:p-16">
+        <a href="/" className="inline-flex items-center gap-2.5">
+          <span className="w-10 h-10 rounded-xl bg-white/20 border border-white/30 flex items-center justify-center font-bold text-xl">M</span>
+          <span className="text-2xl font-bold" style={{ fontFamily: "Sora, Inter, sans-serif" }}>Mediflow</span>
+        </a>
+        <div className="max-w-md">
+          <h2 className="text-3xl xl:text-4xl font-bold leading-tight" style={{ fontFamily: "Sora, Inter, sans-serif" }}>Run your whole clinic from one place.</h2>
+          <ul className="mt-8 space-y-5">
+            {POINTS.map((p) => (
+              <li key={p.t} className="flex gap-3.5">
+                <span className="text-2xl leading-none mt-0.5">{p.icon}</span>
+                <span><b className="block">{p.t}</b><span className="text-sky-100 text-sm">{p.d}</span></span>
+              </li>
+            ))}
+          </ul>
         </div>
+        <a href="/demo" className="text-sm text-sky-100 hover:text-white underline underline-offset-4">▶ Take the interactive trail first</a>
+      </aside>
 
-        <div className="bg-white rounded-3xl shadow-2xl p-7">
-          {step === "login" ? (
+      {/* Right: the form */}
+      <main className="flex items-center justify-center p-6 sm:p-10">
+        <div className="w-full max-w-md">
+          <a href="/" className="lg:hidden inline-flex items-center gap-2 mb-8">
+            <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 text-white flex items-center justify-center font-bold">M</span>
+            <span className="text-xl font-bold text-slate-900" style={{ fontFamily: "Sora, Inter, sans-serif" }}>Mediflow</span>
+          </a>
+
+          {step === "login" && (
             <>
-              <h1 className="text-xl font-bold mb-5 text-gray-900" style={{ fontFamily: "Sora, Inter, sans-serif" }}>Sign in to your clinic</h1>
+              <h1 className="text-2xl font-bold text-slate-900" style={{ fontFamily: "Sora, Inter, sans-serif" }}>Sign in to your clinic</h1>
+              <p className="text-slate-500 mt-1.5 text-sm">Admins, doctors, nurses and receptionists all sign in here. What you see depends on your role.</p>
 
-              {/* Demo hint */}
-              <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 mb-5 text-xs text-blue-700">
-                <p className="font-semibold mb-1">🦷 Demo — Bright Smile Dental</p>
-                <p>Email: <strong>demo@brightsmile.in</strong></p>
-                <p>Password: <strong>Demo@1234</strong></p>
-                <button
-                  type="button"
-                  onClick={() => { setEmail("demo@brightsmile.in"); setPassword("Demo@1234"); }}
-                  className="mt-2 text-blue-600 font-semibold underline"
-                >
-                  Fill demo credentials →
-                </button>
-              </div>
+              {justConfirmed && <div className="mt-5 text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3.5 py-2.5">✓ Email confirmed. You can sign in now.</div>}
 
-              <form onSubmit={handleLogin} className="space-y-4">
+              <form onSubmit={handleLogin} className="mt-6 space-y-4" noValidate={false}>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="you@clinic.com"
-                  />
+                  <label htmlFor="em" className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
+                  <input id="em" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required className={input} placeholder="you@yourclinic.com" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Password</label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="••••••••"
-                  />
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label htmlFor="pw" className="block text-sm font-medium text-slate-700">Password</label>
+                    <button type="button" onClick={() => { setStep("forgot"); setError(""); setInfo(""); }} className="text-sm text-sky-700 hover:underline">Forgot password?</button>
+                  </div>
+                  <div className="relative">
+                    <input id="pw" type={show ? "text" : "password"} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required className={input + " pr-16"} placeholder="Your password" />
+                    <button type="button" onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-500 hover:text-slate-800" aria-label={show ? "Hide password" : "Show password"}>{show ? "Hide" : "Show"}</button>
+                  </div>
                 </div>
-                {error && <div className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</div>}
-                {unconfirmed && (
-                  <button type="button" onClick={resendConfirmation} className="text-xs text-blue-600 hover:underline">Resend confirmation email</button>
-                )}
-                {info && <div className="text-xs text-gray-600">{info}</div>}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-3 bg-gradient-to-r from-blue-600 to-violet-600 hover:opacity-90 disabled:opacity-60 text-white rounded-xl text-sm font-semibold transition-all shadow-sm"
-                >
-                  {loading ? "Signing in…" : "Sign In"}
+                {error && <div role="alert" className="text-sm text-red-700 bg-red-50 border border-red-200 px-3.5 py-2.5 rounded-lg">{error}</div>}
+                {unconfirmed && <button type="button" onClick={resendConfirmation} className="text-sm text-sky-700 hover:underline">Resend confirmation email</button>}
+                {info && <div className="text-sm text-slate-600">{info}</div>}
+                <button type="submit" disabled={loading} className="w-full py-3 rounded-lg bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white font-semibold text-[15px] transition-colors">
+                  {loading ? "Signing in…" : "Sign in"}
                 </button>
               </form>
+
+              <div className="mt-8 pt-6 border-t border-slate-200 text-sm text-slate-600">
+                New to Mediflow? <a href="/signup" className="text-sky-700 font-semibold hover:underline">Set up your clinic in a minute →</a>
+              </div>
             </>
-          ) : (
+          )}
+
+          {step === "forgot" && (
             <>
-              <h1 className="text-xl font-bold mb-1 text-gray-900" style={{ fontFamily: "Sora, Inter, sans-serif" }}>Select clinic</h1>
-              <p className="text-sm text-gray-500 mb-5">You belong to multiple clinics</p>
-              <div className="space-y-2">
+              <h1 className="text-2xl font-bold text-slate-900" style={{ fontFamily: "Sora, Inter, sans-serif" }}>Reset your password</h1>
+              <p className="text-slate-500 mt-1.5 text-sm">Enter your work email and we&apos;ll send you a link to choose a new password.</p>
+              <form onSubmit={handleForgot} className="mt-6 space-y-4">
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className={input} placeholder="you@yourclinic.com" aria-label="Email" />
+                {error && <div role="alert" className="text-sm text-red-700 bg-red-50 border border-red-200 px-3.5 py-2.5 rounded-lg">{error}</div>}
+                {info && <div className="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3.5 py-2.5">{info}</div>}
+                <button type="submit" disabled={loading} className="w-full py-3 rounded-lg bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white font-semibold">{loading ? "Sending…" : "Send reset link"}</button>
+                <button type="button" onClick={() => { setStep("login"); setError(""); setInfo(""); }} className="w-full text-sm text-slate-600 hover:underline">← Back to sign in</button>
+              </form>
+            </>
+          )}
+
+          {step === "pick" && (
+            <>
+              <h1 className="text-2xl font-bold text-slate-900" style={{ fontFamily: "Sora, Inter, sans-serif" }}>Choose a clinic</h1>
+              <p className="text-slate-500 mt-1.5 text-sm">Your account belongs to more than one clinic. Each one is kept completely separate.</p>
+              <div className="mt-6 space-y-2.5">
                 {clinics.map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => pickClinic(c)}
-                    className="w-full text-left px-4 py-3 rounded-xl border border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-colors group"
-                  >
-                    <div className="font-medium text-gray-900 group-hover:text-blue-600">{c.brand_name ?? c.name}</div>
-                    {c.area && <div className="text-xs text-gray-500 mt-0.5">{c.area}</div>}
+                  <button key={c.id} onClick={() => { setActiveClinicId(c.id); router.push("/dashboard"); }}
+                    className="w-full text-left px-4 py-3.5 rounded-lg border border-slate-300 hover:border-sky-500 hover:bg-sky-50 transition-colors">
+                    <div className="font-semibold text-slate-900">{c.brand_name ?? c.name}</div>
+                    <div className="text-xs text-slate-500 mt-0.5 capitalize">{[c.role, (c as any).city].filter(Boolean).join(" · ")}</div>
                   </button>
                 ))}
               </div>
             </>
           )}
         </div>
-
-        <p className="text-center text-xs text-blue-100 mt-6">
-          Don&apos;t have an account?{" "}
-          <a href="/signup" className="text-white font-semibold hover:underline">Sign up →</a>
-        </p>
-        <p className="text-center mt-2">
-          <a href="/" className="text-xs text-blue-200 hover:text-white transition-colors">← Back to homepage</a>
-        </p>
-      </div>
+      </main>
     </div>
   );
 }
