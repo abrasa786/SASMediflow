@@ -216,28 +216,109 @@ pre.json{margin:0;background:var(--surface2);border:1px solid var(--line);border
 .speaking i{width:3px;background:var(--accent);border-radius:2px;animation:eq .8s infinite ease-in-out}
 .speaking i:nth-child(2){animation-delay:.15s}.speaking i:nth-child(3){animation-delay:.3s}
 @keyframes eq{0%,100%{height:3px}50%{height:12px}}
-</style>
-</head><body>
+
+/* trail */
+.trailbar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.trailbar .pts{font-weight:700;font-variant-numeric:tabular-nums}
+.badges{display:flex;gap:4px;flex:1;min-width:0;flex-wrap:wrap}
+.bdg{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:13px;background:var(--warn-soft);border:1px solid var(--warn);animation:pop .5s}
+.modes{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.mode{border:0;background:transparent;padding:4px 10px;font-size:12px;color:var(--muted)}
+.mode.on{background:var(--accent);color:var(--accent-fg);font-weight:600}
+.mapbtn{display:flex;justify-content:space-between;align-items:center;width:100%;border:0;border-bottom:1px solid var(--line);background:var(--surface2);padding:8px 14px;font-size:12.5px;font-weight:600}
+.mapbtn i{font-style:normal;transition:transform .2s}.mapbtn[aria-expanded=true] i{transform:rotate(180deg)}
+.chapters[hidden]{display:none}
+.chap .st{margin-left:auto;font-size:11px;color:var(--muted)}
+.presenter{display:flex;align-items:center;gap:12px;padding:14px 16px 4px}
+.av2{width:64px;height:64px;border-radius:18px;flex:none;box-shadow:var(--shadow)}
+.presenter .who{display:flex;flex-direction:column;flex:1;min-width:0}
+.presenter .who b{font-size:14px}.presenter .who span{font-size:12px;color:var(--muted)}
+.presenter .speaking{display:none;margin-top:3px}
+.presenter.talking .speaking{display:inline-flex}
+.eyes{transform-origin:60px 58px;animation:blink 5s infinite}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+.mouth{transform-origin:60px 73px}
+.presenter.talking .mouth{animation:talk .32s infinite alternate}
+@keyframes talk{from{transform:scaleY(.6)}to{transform:scaleY(2.6) scaleX(.92)}}
+.av2{animation:bob 4s ease-in-out infinite}.presenter.talking .av2{animation:bob 1.2s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+.say .mod{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:4px}
+.lines{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.ln{font-size:13.5px;color:var(--muted);padding:6px 10px;border-radius:10px;border-left:3px solid transparent;transition:background .2s,color .2s}
+.ln.cur{background:var(--accent-soft);color:var(--fg);border-left-color:var(--accent)}
+.ln.said{color:var(--fg)}
+.task{margin:12px 16px 0;border:2px solid var(--accent);background:var(--accent-soft);border-radius:14px;padding:10px 12px;font-size:13px}
+.task.done{border-color:var(--ok);background:var(--ok-soft)}
+.task b.k{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+.task .tr{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.task.nudge{animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.quiz .qq{font-weight:600;margin:6px 0 8px}
+.quiz .opt{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px;margin-bottom:6px;font-size:13px}
+.quiz .opt:hover{border-color:var(--accent)}
+.quiz .opt.right{border-color:var(--ok);background:var(--ok-soft)}.quiz .opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.quiz .why{font-size:12.5px;color:var(--muted);margin:4px 0 8px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ok);color:#fff;font-weight:700;border-radius:999px;padding:8px 16px;z-index:60;animation:pop .35s;box-shadow:var(--shadow)}
+.lb{display:block;font-size:12px;color:var(--muted);margin-bottom:3px;font-weight:600}
+input.inp,.chatin{width:100%;font:inherit;color:var(--fg)}
+input.inp:focus,.chatin:focus{outline:2px solid var(--accent);outline-offset:0}
+.chatin{flex:1;border:0;background:transparent;padding:4px 0;min-width:0}
+.composer .btn{flex:none}
+button.cb{width:100%;border:0;background:transparent;text-align:left}
+button.cb:hover{background:var(--surface2)}
+.kpi{cursor:pointer}.kpi:hover{border-color:var(--accent)}
+.kpi.pulse{animation:ring 1.6s infinite}
+@keyframes ring{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 55%,transparent)}100%{box-shadow:0 0 0 10px transparent}}
+.end2{text-align:center;padding:26px 10px}
+.end2 .big{font-size:44px}
+.hidden-dash{display:none}
+@media (prefers-reduced-motion:reduce){.av2,.eyes,.mouth,.kpi.pulse{animation:none!important}}
+</style></head><body>
 
 <div class="wrap">
   <div class="top">
-    <div class="brand"><span class="logo">M</span> Mediflow <span class="pill">Guided demo · no login needed</span></div>
+    <div class="brand"><span class="logo">M</span> Mediflow <span class="pill">Interactive trail · no login needed</span></div>
     <div class="top-r">
       <button class="pill btn" data-act="voice" id="voiceBtn">🔇 Voice off</button>
-      <button class="pill btn" data-act="restart">↺ Restart tour</button>
+      <button class="pill btn" data-act="restart">↺ Restart trail</button>
       <button class="pill btn" data-act="theme" id="themeBtn">◐ Theme</button>
     </div>
   </div>
   <div class="layout">
-    <aside class="rail" aria-label="Tour guide">
-      <nav class="chapters" id="chapters"></nav>
+    <aside class="rail" aria-label="Trail guide">
+      <div class="trailbar">
+        <span class="pts" title="Points">⭐ <b id="pts">0</b></span>
+        <span id="badges" class="badges" aria-label="Badges earned"></span>
+        <span class="modes" role="group" aria-label="Mode"><button class="mode on" data-act="mode" data-v="hands" id="mHands">Hands-on</button><button class="mode" data-act="mode" data-v="watch" id="mWatch">Watch</button></span>
+      </div>
+      <button class="mapbtn" data-act="map" id="mapBtn" aria-expanded="false"><span id="mapLbl">Trail map</span><i>▾</i></button>
+      <nav class="chapters" id="chapters" hidden></nav>
+      <div class="presenter" id="presenter">
+        <svg class="av2" viewBox="0 0 120 120" role="img" aria-label="Aria, your presenter">
+          <defs><linearGradient id="bgA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#2563eb"/></linearGradient></defs>
+          <rect width="120" height="120" rx="26" fill="url(#bgA)"/>
+          <path d="M18 120c2-24 20-34 42-34s40 10 42 34z" fill="#f8fafc"/>
+          <path d="M46 88l14 14 14-14" fill="none" stroke="#2563eb" stroke-width="4" stroke-linejoin="round"/>
+          <rect x="52" y="72" width="16" height="16" rx="6" fill="#e0a98c"/>
+          <path d="M28 62c-4-30 14-44 32-44s36 14 32 44c-2 10-6 18-10 22V50H38v34c-4-4-8-12-10-22z" fill="#2b1b17"/>
+          <ellipse cx="60" cy="58" rx="22" ry="25" fill="#f0b99b"/>
+          <path d="M37 52c4-18 18-22 30-18 8 3 15 10 16 18-8-8-16-10-24-9-8 1-16 3-22 9z" fill="#2b1b17"/>
+          <g class="eyes"><ellipse cx="51" cy="58" rx="2.6" ry="3.2" fill="#1f2937"/><ellipse cx="69" cy="58" rx="2.6" ry="3.2" fill="#1f2937"/></g>
+          <path d="M46 51c3-2 6-2 8 0M66 51c2-2 5-2 8 0" stroke="#2b1b17" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+          <ellipse cx="45" cy="67" rx="4" ry="2.4" fill="#f4978e" opacity=".5"/><ellipse cx="75" cy="67" rx="4" ry="2.4" fill="#f4978e" opacity=".5"/>
+          <path class="mouth" d="M52 71q8 5 16 0q-8 2-16 0z" fill="#9b2c3a" stroke="#9b2c3a" stroke-width="1.6" stroke-linejoin="round"/>
+        </svg>
+        <div class="who"><b>Aria</b><span>Your Mediflow guide</span><span class="speaking" aria-hidden="true"><i></i><i></i><i></i></span></div>
+        <button class="btn sm" data-act="voice" id="voiceBtn2" title="Voice on/off">🔇</button>
+      </div>
       <div class="say" id="say"></div>
+      <div class="task" id="task" hidden></div>
       <div class="how" id="how" hidden></div>
       <div class="ctl">
-        <button class="btn" data-act="back" id="bBack">←</button>
+        <button class="btn" data-act="back" id="bBack" aria-label="Back">←</button>
         <button class="btn primary" data-act="next" id="bNext">Next →</button>
-        <div class="grow" title="Tour progress"><i id="prog" style="width:0"></i></div>
-        <button class="btn" data-act="play" id="bPlay" title="Auto-play">▶ Auto</button>
+        <div class="grow" title="Trail progress"><i id="prog" style="width:0"></i></div>
+        <button class="btn" data-act="play" id="bPlay" title="Presenter plays on its own">▶ Auto</button>
       </div>
     </aside>
     <section class="stage">
@@ -246,15 +327,16 @@ pre.json{margin:0;background:var(--surface2);border:1px solid var(--line);border
     </section>
   </div>
 </div>
-<div class="intro" id="intro" role="dialog" aria-label="Start the guided demo">
+<div class="intro" id="intro" role="dialog" aria-label="Start the Mediflow trail">
   <div class="box">
     <div class="logo" style="margin:0 auto;width:46px;height:46px;font-size:22px;border-radius:14px">M</div>
-    <h1>Mediflow guided demo</h1>
-    <p id="introTxt">Aria will talk you through every module, from building a custom app to booking, doctor assignment, three-sitting treatments and WhatsApp. About 6 minutes. Turn your sound on.</p>
+    <h1>Mediflow Trail</h1>
+    <p id="introTxt">Join Dr. Priya Sharma as she opens her dental clinic. Aria presents each module like a story, then you try it yourself, answer a quick check and earn a badge. Start with <b>Sign up &amp; Login</b>. Turn your sound on.</p>
     <div class="row">
-      <button class="btn primary" data-act="startvoice" id="introVoice">🔊 Start with voice</button>
-      <button class="btn" data-act="startquiet">Read it instead</button>
+      <button class="btn primary" data-act="startvoice" id="introVoice">🔊 Start with Aria's voice</button>
+      <button class="btn" data-act="startquiet">Read along instead</button>
     </div>
+    <p class="note" style="margin:14px 0 0">Prefer to just watch? Pick <b>Watch</b> mode after starting and Aria does everything herself.</p>
   </div>
 </div>
 <script>
@@ -380,14 +462,16 @@ function kpis(){
   return{a,done,left,billed,collected,avail,booked,newPts,outstanding,low,pm,
     rate:pct(collected,billed),util:pct(booked,avail),ns:{c:112,n:9,rate:pct(9,121)}};
 }
-
 /* ───────────── shared UI pieces ───────────── */
+const q=v=>String(v==null?"":v).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+const CLINIC=()=>(UI.su.clinic||"").trim()||"Bright Smile Dental";
+const taskIs=id=>{const st=CH[pos.c]&&CH[pos.c].steps[pos.s];return !!(st&&st.task&&st.task.id===id)};
 const NAV=[["dash","🏠","Dashboard"],["chat","🤖","Assistant"],["cal","🗓","Calendar"],["treat","🦷","Treatments"],["wa","💬","WhatsApp"],["bld","🛠","AI Builder"]];
 const GOTO={dash:"dash",chat:"chat",cal:"cal",treat:"treat",wa:"wa",bld:"bld",al:"bld"};
 function shell(active,inner,url){
   const items=NAV.slice(); if(S.bld.applied)items.splice(items.length-1,0,["al","📎","Aligners"]);
   $("#url").textContent="app.mediflow.in/"+url;
-  return '<div class="app"><div class="side"><div class="cl">Bright Smile Dental<small>Dental pack · Bengaluru</small></div>'+
+  return '<div class="app"><div class="side"><div class="cl">'+q(CLINIC())+'<small>Dental pack · '+q(UI.su.city||"Bengaluru")+'</small></div>'+
     items.map(i=>'<button class="nav'+(i[0]===active?" on":"")+(i[0]==="al"&&S.bld.fresh?" new":"")+'" data-act="goto" data-ch="'+GOTO[i[0]]+'">'+i[1]+" "+i[2]+"</button>").join("")+
     '<span class="nav" style="opacity:.5">👥 Patients</span><span class="nav" style="opacity:.5">🧾 Billing</span><span class="nav" style="opacity:.5">📦 Stock</span></div><div class="main">'+inner+"</div></div>";
 }
@@ -400,14 +484,14 @@ function phone(name,num,bubbles){
     bubbles.map(b=>'<div class="wb'+(b.me?" me":"")+'">'+b.t.replace(/\*([^*]+)\*/g,"<b>$1</b>")+"<time>"+(b.time||"10:31 AM")+(b.me?" ✓✓":"")+"</time></div>").join("")+"</div></div>";
 }
 const trace=items=>'<ul class="trace">'+items.map(i=>'<li class="'+(i.no?"no":i.go?"go":"")+'"><i>'+(i.no?"✕":i.go?"→":"✓")+"</i><div>"+i.t+(i.s?"<small>"+i.s+"</small>":"")+"</div></li>").join("")+"</ul>";
-const cb=(on,t,em)=>'<div class="cb'+(on?" on":"")+'"><i>'+(on?"✓":"")+"</i>"+t+(em?"<em>"+em+"</em>":"")+"</div>";
+const cb=(on,t,em,act)=>(act?'<button class="cb':'<div class="cb')+(on?" on":"")+'"'+(act?' data-act="rec" data-v="'+act+'"':"")+'><i>'+(on?"✓":"")+"</i>"+t+(em?"<em>"+em+"</em>":"")+(act?"</button>":"</div>");
 
 function waText(kind,a,extra){
   const p=patient(a.pid)||{name:"Patient"},d=docById(a.doc),when=nice(a.date)+" at "+fmt(a.start),f=first(p.name);
   const foot="\nFor any change please call +91 80 4000 1234.";
   switch(kind){
-    case"confirm":return "✅ *Appointment confirmed*\n\nHi "+f+", your appointment at *Bright Smile Dental* is booked.\n\n📅 "+when+"\n👨‍⚕️ "+d.name+"\n🏥 In-clinic visit\n💰 Fee: "+inr(a.fee)+"\n📍 MG Road, Bengaluru\n\nPlease arrive 10 minutes early."+foot;
-    case"remind":return "⏰ *Appointment reminder*\n\nHi "+f+", this is a reminder of your appointment at *Bright Smile Dental*.\n\n📅 "+when+"\n👨‍⚕️ "+d.name+"\n\nReply CANCEL if you cannot make it."+foot;
+    case"confirm":return "✅ *Appointment confirmed*\n\nHi "+f+", your appointment at *"+CLINIC()+"* is booked.\n\n📅 "+when+"\n👨‍⚕️ "+d.name+"\n🏥 In-clinic visit\n💰 Fee: "+inr(a.fee)+"\n📍 MG Road, Bengaluru\n\nPlease arrive 10 minutes early."+foot;
+    case"remind":return "⏰ *Appointment reminder*\n\nHi "+f+", this is a reminder of your appointment at *"+CLINIC()+"*.\n\n📅 "+when+"\n👨‍⚕️ "+d.name+"\n\nReply CANCEL if you cannot make it."+foot;
     case"resched":return "🔁 *Appointment rescheduled*\n\nHi "+f+", your appointment has moved.\n\n❌ Was: "+extra+"\n✅ Now: "+when+"\n👨‍⚕️ "+d.name+foot;
     case"cancel":return "❌ *Appointment cancelled*\n\nHi "+f+", your appointment on "+when+" has been cancelled.\nReason: "+(extra||"Doctor unavailable")+"\n\nReply here to book a new time."+foot;
     case"sitting":return "🦷 *Next sitting reminder*\n\nHi "+f+", sitting "+extra+" of your treatment is on\n📅 "+when+"\n👨‍⚕️ "+d.name+"\n\nPlease eat before you come. See you soon!"+foot;
@@ -416,34 +500,52 @@ function waText(kind,a,extra){
   }
 }
 
-/* ───────────── 1 · sign-up ───────────── */
-function scrSignup(s){
-  const SP=[["🦷","Dental","Chair, tooth chart, sittings",1],["🧴","Dermatology","Skin, lasers, follow-ups",0],["🦴","Orthopaedics","Fractures, physio, implants",0],["🩺","General practice","OPD, vitals, prescriptions",0],["✨","Build your own","Describe it, AI builds it",0]];
-  if(s>=3){
-    const L=[["Patients & tooth chart","FDI notation, allergy alerts, history"],["Appointments & calendar","Doctor schedules, leave, auto-assign"],["Multi-sitting treatment plans","Per-sitting amount, date and payment"],["Billing & invoices","Printable, part-payments, discounts"],["Stock that deducts itself","Consumables used per procedure"],["WhatsApp templates","Confirmation, reminder, reschedule, cancel"],["Dental price list","Editable procedure fees"]];
-    return '<div class="main"><div style="max-width:560px;margin:10px auto"><h3 class="pg">Dental pack installed ✓</h3><p class="sub">Everything below is already set up in your clinic. All of it can be changed later by chatting with the AI Builder.</p><div class="card">'+
-      L.map(x=>cb(1,"<b>"+x[0]+"</b>",x[1])).join("")+'</div><p class="note" style="margin-top:12px">Other packs (dermatology, orthopaedics, general practice…) install the same way, each with its own objects, fields and templates.</p></div></div>';
-  }
-  const dots=[0,1,2].map(i=>'<span class="tag '+(i===s?"acc":i<s?"ok":"")+'">'+(i+1)+" · "+["Clinic","Specialty","Account"][i]+"</span>").join(" ");
-  let body="";
-  if(s===0)body='<div class="form"><div class="row"><div><label class="lb">Clinic name</label><div class="inp fill">Bright Smile Dental</div></div><div><label class="lb">Brand name (shown to patients)</label><div class="inp fill">Bright Smile</div></div></div><div class="row"><div><label class="lb">City</label><div class="inp fill">Bengaluru</div></div><div><label class="lb">Clinic phone</label><div class="inp fill">+91 80 4000 1234</div></div></div></div>';
-  if(s===1)body='<p class="note" style="margin-bottom:10px">Pick the pack that matches your practice. It decides which tables, fields and templates are pre-built.</p><div class="specs">'+SP.map(x=>'<div class="spec'+(x[3]?" on":"")+'"><div class="e">'+x[0]+"</div><b>"+x[1]+"</b><small>"+x[2]+"</small></div>").join("")+"</div>";
-  if(s===2)body='<div class="form"><div class="row"><div><label class="lb">Your name</label><div class="inp fill">Dr. Priya Sharma</div></div><div><label class="lb">Work email</label><div class="inp fill">priya@brightsmile.in</div></div></div><div class="row"><div><label class="lb">Password</label><div class="inp fill">••••••••••</div></div><div><label class="lb">Confirm password</label><div class="inp fill">••••••••••</div></div></div></div><div class="callout" style="margin-top:6px">📧 After launch we email a confirmation link to <b>priya@brightsmile.in</b>. Click it, then sign in.</div>';
-  return '<div class="main"><div style="max-width:640px;margin:10px auto"><h3 class="pg">Create your clinic</h3><p class="sub">Takes about a minute. No credit card.</p><div style="margin-bottom:14px;display:flex;gap:6px;flex-wrap:wrap">'+dots+'</div><div class="card">'+body+'<div style="display:flex;justify-content:flex-end;margin-top:12px"><span class="btn primary">'+(s===2?"Launch my clinic 🚀":"Continue →")+"</span></div></div></div></div>";
+/* ───────────── 1 · sign-up & log-in ───────────── */
+function pwScore(p){return (p.length>=8)+(p.length>=12)+/[A-Z]/.test(p)+/[0-9]/.test(p)+/[^A-Za-z0-9]/.test(p)}
+function pwMeter(p){const n=pwScore(p),L=["Too short","Weak","Okay","Good","Strong","Excellent"][n];return '<div style="display:flex;gap:4px;align-items:center;margin-top:6px">'+[1,2,3,4,5].map(i=>'<i style="flex:1;height:5px;border-radius:9px;background:'+(i<=n?(n<3?"var(--warn)":"var(--ok)"):"var(--line)")+'"></i>').join("")+'<small class="note" style="min-width:64px;text-align:right">'+L+"</small></div>"}
+function suValid(stage){
+  const U=UI.su;
+  if(stage==="clinic")return U.clinic.trim().length<3?"Give your clinic a name (at least 3 letters).":!U.city.trim()?"Add the city.":"";
+  if(stage==="spec")return U.spec?"":"Pick a specialty card first.";
+  if(stage==="acct")return U.name.trim().length<2?"Enter your name.":!/^\S+@\S+\.\S+$/.test(U.email)?"Enter a valid email address.":U.pw.length<8?"Password needs at least 8 characters.":U.pw!==U.pw2?"The two passwords don't match.":"";
+  if(stage==="login")return !U.lpw?"Type your password.":U.lpw!==U.pw?"Invalid login credentials":"";
+  return "";
+}
+function scrSignup(stage){
+  const U=UI.su,SP=[["🦷","Dental","dental","Chair, tooth chart, sittings"],["🧴","Dermatology","derm","Skin, lasers, follow-ups"],["🦴","Orthopaedics","ortho","Fractures, physio, implants"],["🩺","General practice","gp","OPD, vitals, prescriptions"],["✨","Build your own","custom","Describe it, AI builds it"]];
+  const wrap=(inner,w)=>'<div class="main"><div style="max-width:'+(w||640)+'px;margin:10px auto">'+inner+"</div></div>";
+  const err='<p id="suErr" class="note" style="color:var(--bad);min-height:20px;margin-top:6px"></p>';
+  const go=(v,txt)=>'<div style="display:flex;justify-content:flex-end;margin-top:6px"><button class="btn primary" data-act="su-go" data-v="'+v+'">'+txt+"</button></div>";
+  const inp=(k,l,o)=>'<div><label class="lb">'+l+'</label><input class="inp" data-su="'+k+'" value="'+q(U[k])+'"'+(o&&o.type?' type="'+o.type+'"':"")+(o&&o.ro?" readonly":"")+(o&&o.ph?' placeholder="'+o.ph+'"':"")+"></div>";
+  const dots=i=>'<div style="margin-bottom:14px;display:flex;gap:6px;flex-wrap:wrap">'+["Clinic","Specialty","Account"].map((n,j)=>'<span class="tag '+(j===i?"acc":j<i?"ok":"")+'">'+(j+1)+" · "+n+"</span>").join("")+"</div>";
+  if(stage==="clinic"){$("#url").textContent="mediflow.in/signup";return wrap('<h3 class="pg">Create your clinic</h3><p class="sub">Takes about a minute. No credit card.</p>'+dots(0)+'<div class="card"><div class="form"><div class="row">'+inp("clinic","Clinic name")+inp("city","City")+'</div><div class="row">'+inp("phone","Clinic phone")+"<div></div></div></div>"+err+go("clinic","Continue →")+"</div>")}
+  if(stage==="spec"){$("#url").textContent="mediflow.in/signup";
+    const note=!U.spec?"":U.spec==="dental"?'<div class="callout ok" style="margin-top:12px"><b>Dental pack</b> will install: patients and tooth chart, appointments, multi-sitting treatment plans, billing, stock and WhatsApp templates.</div>':'<div class="callout" style="margin-top:12px">Every pack installs its own tables, fields and templates. For this demo we continue with the <b>Dental</b> pack because it is fully loaded with patients and treatments.</div>';
+    return wrap('<h3 class="pg">Choose your specialty</h3><p class="sub">This decides which tables, fields and templates are pre-built. You can reshape any of it later.</p>'+dots(1)+'<div class="card"><div class="specs">'+SP.map(x=>'<button class="spec'+(U.spec===x[2]?" on":"")+'" data-act="su-spec" data-v="'+x[2]+'"><div class="e">'+x[0]+"</div><b>"+x[1]+"</b><small>"+x[3]+"</small></button>").join("")+"</div>"+note+err+"</div>")}
+  if(stage==="acct"){$("#url").textContent="mediflow.in/signup";return wrap('<h3 class="pg">Create your admin account</h3><p class="sub">The admin owns the clinic and manages everyone else.</p>'+dots(2)+'<div class="card"><div class="form"><div class="row">'+inp("name","Your name")+inp("email","Work email")+'</div><div class="row">'+'<div><label class="lb">Password</label><input class="inp" type="password" data-su="pw" value="'+q(U.pw)+'"><div id="pwMeter">'+pwMeter(U.pw)+'</div></div><div><label class="lb">Confirm password</label><input class="inp" type="password" data-su="pw2" value="'+q(U.pw2)+'"></div></div></div><div class="callout" style="margin-top:6px">📧 After launch we email a confirmation link to <b>'+q(U.email)+"</b>.</div>"+err+go("acct","Launch my clinic 🚀")+"</div>")}
+  if(stage==="verify"){$("#url").textContent="mail.example.com/inbox";
+    return wrap('<h3 class="pg">Your inbox</h3><p class="sub">This is what '+q(first(U.name.replace(/^Dr\.?\s*/i,""))||"you")+' sees a few seconds after launching.</p><div class="card" style="padding:0;overflow:hidden"><div style="padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--line)"><b>Confirm your Mediflow email</b><div class="note">From: Mediflow &lt;no-reply@mediflow.in&gt; · to '+q(U.email)+'</div></div><div style="padding:18px 16px"><p>Hi '+q(first(U.name.replace(/^Dr\.?\s*/i,""))||"there")+',</p><p style="margin:8px 0 14px">Welcome to Mediflow! Confirm your email to activate <b>'+q(CLINIC())+'</b>.</p>'+
+      (U.verified?'<div class="callout ok">✓ Email confirmed. You can sign in now.</div>':'<button class="btn primary" data-act="su-confirm">Confirm my email</button>')+'<p class="note" style="margin-top:14px">Link not here? Check spam. On the sign-in page you can press <b>Resend confirmation email</b>.</p></div></div>',600)}
+  if(stage==="login"){$("#url").textContent="mediflow.in/login";
+    return wrap('<h3 class="pg" style="text-align:center">Sign in to your clinic</h3><p class="sub" style="text-align:center">Everyone has their own login. Roles decide what each person can see.</p><div class="card" style="max-width:420px;margin:0 auto"><div class="form" style="margin-bottom:0"><div style="margin-bottom:10px"><label class="lb">Email</label><input class="inp" value="'+q(U.email)+'" readonly></div><div><label class="lb">Password</label><input class="inp" type="password" data-su="lpw" value="'+q(U.lpw)+'"></div></div>'+err+'<button class="btn primary" style="width:100%" data-act="su-login">Sign in</button><p class="note" style="text-align:center;margin-top:10px">Forgot password? · Resend confirmation email</p></div><div style="max-width:420px;margin:14px auto 0"><p class="note" style="margin-bottom:6px">Four roles</p><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag acc">Admin · everything</span><span class="tag">Doctor · own patients & schedule</span><span class="tag">Nurse · clinical tasks</span><span class="tag">Receptionist · bookings & billing</span></div></div>')}
+  // welcome
+  $("#url").textContent="app.mediflow.in/welcome";
+  const L=[["Patients & tooth chart","FDI notation, allergy alerts, history"],["Appointments & calendar","Doctor schedules, leave, auto-assign"],["Multi-sitting treatment plans","Per-sitting amount, date and payment"],["Billing & invoices","Printable, part-payments, discounts"],["Stock that deducts itself","Consumables used per procedure"],["WhatsApp templates","Confirmation, reminder, reschedule, cancel"],["Dental price list","Editable procedure fees"]];
+  return wrap('<h3 class="pg">'+q(CLINIC())+' is ready ✓</h3><p class="sub">Signed in as '+q(U.name)+' (Admin). The Dental pack is installed. Everything below can be changed later by chatting with the AI Builder.</p><div class="card">'+L.map(x=>cb(1,"<b>"+x[0]+"</b>",x[1])).join("")+"</div>",560);
 }
 
 /* ───────────── 2 / 8 · dashboard ───────────── */
 function delta(cur,old,f){const d=cur-old;if(!d)return"";return' <span class="'+(d>0?"up":"dn")+'">'+(d>0?"▲ +":"▼ ")+(f?f(Math.abs(d)):Math.abs(d))+" since this morning</span>"}
 function scrDash(hl,cmp){
   const k=kpis(),b=BASE;
-  const tile=(key,l,v,d,f)=>'<div class="card kpi'+(hl===key?" hl":"")+'"><div class="l">'+l+'</div><div class="v">'+v+'</div><div class="d">'+d+"</div>"+(hl===key?'<div class="f">'+f+"</div>":"")+"</div>";
+  const tile=(key,l,v,d,f)=>'<div class="card kpi'+(hl===key?" hl":"")+(UI.target===key&&hl!==key?" pulse":"")+'" data-act="kpi" data-v="'+key+'" tabindex="0"><div class="l">'+l+'</div><div class="v">'+v+'</div><div class="d">'+d+"</div>"+(hl===key&&f?'<div class="f">'+f+"</div>":"")+"</div>";
   const days=[];let dd=D0;for(let i=0;i<4;i++){dd=addD(dd,-1);if(wd(dd)===0)dd=addD(dd,-1);days.unshift(dd)}
   const vals=[21400,18900,26100,15300],mx=Math.max(k.collected,...vals,1000);
   const bars=days.map((x,i)=>'<div class="b"><em>'+(vals[i]/1000).toFixed(1)+'k</em><i style="height:'+Math.round(vals[i]/mx*92)+'px"></i>'+DN[wd(x)]+"</div>").join("")+
     '<div class="b today"><em>'+(k.collected/1000).toFixed(1)+'k</em><i style="height:'+Math.max(3,Math.round(k.collected/mx*92))+'px"></i>Today</div>';
   const perDoc=DOCS.map(d=>{const n=k.a.filter(x=>x.doc===d.id);return"<tr><td>"+d.name+"</td><td class='mono'>"+n.length+"</td><td class='mono'>"+(n.length*DUR/60).toFixed(1)+" h</td><td class='mono'>"+inr(n.reduce((s,x)=>s+(x.kind==="sitting"?0:x.fee),0))+"</td></tr>"}).join("");
   const nm=k.low.map(x=>x.n+" ("+x.q+" "+x.u+")").join(", ")||"All stocked";
-  return '<h3 class="pg">Good morning, Dr. Sharma</h3><p class="sub">'+nice(D0)+" · clinic clock 10:30 AM"+(cmp?" · compared with this morning":"")+'</p>'+
+  return '<h3 class="pg">Good morning, Dr. '+q(first(UI.su.name.replace(/^Dr\.?\s*/i,""))||"Sharma")+'</h3><p class="sub">'+nice(D0)+" · clinic clock 10:30 AM"+(cmp?" · compared with this morning":"")+'</p>'+
   '<div class="grid g4">'+
    tile("appts","Appointments today",k.a.length,k.done.length+" done · "+k.left+" to come"+(cmp?delta(k.a.length,b.a.length):""),k.done.length+" completed + "+k.left+" confirmed = <b>"+k.a.length+"</b> <span class='note'>(cancelled ones are not counted)</span>")+
    tile("rev","Collected today",inr(k.collected),"of "+inr(k.billed)+" billed · "+k.rate+"%"+(cmp?delta(k.collected,b.collected,inr):""),"Collected <b>"+inr(k.collected)+"</b> ÷ Billed <b>"+inr(k.billed)+"</b> = <b>"+k.rate+"%</b> collection rate")+
@@ -457,7 +559,8 @@ function scrDash(hl,cmp){
 }
 
 /* ───────────── 3 · AI builder ───────────── */
-function scrBuilder(s){
+function scrBuilder(s0){
+  const s=(s0===7&&!UI.undone)?6.5:s0;
   const recs=UI.recs;
   const um=t=>({w:"u",h:t}),am=(t,c)=>({w:"a",h:t,chips:c});
   const m=[am("Hi! Tell me what you want to track or change. I plan it, show you a preview, and only apply it after you approve.")];
@@ -472,29 +575,30 @@ function scrBuilder(s){
   if(s>=6)m.push(am("Drafted a profile, a permission set and a record-level rule. Review them on the right."));
   if(s>=7)m.push(um("Undo the last change."));
   if(s>=7)m.push(am("Rolled back <code>cs_0413</code>: the “Refinement needed” field is removed. Rows are untouched because rollback never deletes data."));
-  const left='<div class="card">'+chat(m)+'<div class="composer"><span>'+(s===0?"We run an aligner clinic. I need to track each patient's aligner trays…":"Message the AI Builder…")+'</span><span class="btn sm primary">Send</span></div></div>';
+  const sendBtn=taskIs("b_send")?'<button class="btn sm primary" data-act="bsend">Send</button>':'<span class="btn sm primary">Send</span>';
+  const undoBtn=taskIs("b_undo")?'<button class="btn sm primary" data-act="bundo">↶ Undo last change</button>':'<span class="btn sm">↶ Undo last change</span>';
+  const left='<div class="card">'+chat(m)+'<div class="composer"><span>'+(s===0?"We run an aligner clinic. I need to track each patient\'s aligner trays…":s===6.5?"Undo the last change.":"Message the AI Builder…")+'</span>'+(s===6.5?undoBtn:sendBtn)+'</div></div>';
 
   const fields=[["Patient","lookup",1,1],["Tray number","number",1,1],["Arch (upper / lower / both)","picklist",1,1],["Wear start date","date",1,1],["Change due date","date",1,1],["Status","picklist",1,1],["Notes","text",1,1],["IPR done","checkbox",recs.ipr,0],["Attachments needed","checkbox",recs.attach,0]];
   let right="";
   if(s===0)right='<div class="card"><b>What the AI Builder can do</b><div style="margin-top:8px">'+["Create apps, tabs and tables","Recommend fields; add or hide more later","Dashboards and reports on any object","Profiles, permission sets, record-level access","Undo any change safely","Teach admins as you go"].map(x=>cb(1,x)).join("")+'</div></div>';
   if(s===1||s===2){
     right='<div class="card"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>Preview: nothing is saved yet</b><span class="tag warn">awaiting approval</span></div><p class="note" style="margin:6px 0 10px">Object <b>Aligner Tray</b> in app <b>Aligners</b>, with tabs Trays and Reviews</p><div class="card" style="padding:8px 12px">'+
-      fields.map(f=>cb(f[2],f[0],f[1]+(f[3]?"":" · suggested"))).join("")+'</div>'+
+      fields.map(f=>cb(f[2],f[0],f[1]+(f[3]?"":" · suggested"),f[3]?null:(f[0]==="IPR done"?"ipr":"attach"))).join("")+'</div>'+
       (s===2?'<p class="note" style="margin:10px 0 4px">Under the hood, the AI only emits a JSON plan using a short whitelist of safe tools. It cannot run free-form SQL.</p><pre class="json">[{"tool":"create_object","name":"Aligner Tray","app":"Aligners"},\n {"tool":"add_field","object":"Aligner Tray","name":"Tray number","type":"number"},\n {"tool":"add_field","object":"Aligner Tray","name":"Arch","type":"picklist"},\n {"tool":"create_app","name":"Aligners","tabs":["Trays","Reviews"]}]</pre><p class="note" style="margin-top:8px">✓ Plan validated twice (in the app and in the database) · ✓ no destructive steps</p>':"")+
-      '<div style="margin-top:10px;display:flex;gap:8px"><span class="btn primary sm">Approve & apply</span><span class="btn sm">Edit plan</span></div></div>';
+      '<div style="margin-top:10px;display:flex;gap:8px">'+(taskIs("b_approve")?'<button class="btn primary sm" data-act="bapprove">Approve & apply</button>':'<span class="btn primary sm">Approve & apply</span>')+'<span class="btn sm">Edit plan</span></div></div>';
   }
-  if(s===3||s===4||s===7){
+  if(s===3||s===4||s===6.5||s===7){
     
-    const cols=["Patient","Tray","Arch","Wear start","Change due","Status"].concat(s===4?["Refinement needed"]:[]).concat(s===4?[]:["Notes"]);
+    const cols=["Patient","Tray","Arch","Wear start","Change due","Status"].concat((s===4||s===6.5)?["Refinement needed"]:[]).concat((s===4||s===6.5)?[]:["Notes"]);
     const rows=[["Rahul Gupta","7 / 24","Upper",nice(addD(D0,-12)),nice(addD(D0,2)),"Wearing"],["Deepa Nair","3 / 18","Both",nice(addD(D0,-14)),nice(D0),"Change due"],["Kiran Patel","12 / 12","Lower",nice(addD(D0,-30)),"—","Completed"]];
-    right='<div class="card"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>Aligners › Trays</b><span class="tag ok">live table · tenant_data.aligner_tray</span></div><div class="scroll" style="margin-top:8px"><table class="t"><tr>'+cols.map(c=>"<th>"+c+"</th>").join("")+"</tr>"+rows.map((r,i)=>"<tr>"+r.map(c=>"<td>"+(c==="Change due"||c==="Completed"||c==="Wearing"?'<span class="tag '+(c==="Change due"?"warn":c==="Completed"?"ok":"acc")+'">'+c+"</span>":c)+"</td>").join("")+(s===4?"<td>☐</td>":"<td class='note'>—</td>")+"</tr>").join("")+"</table></div>"+
-      (s===3?'<div class="callout ok" style="margin-top:10px">A real database table was created for this clinic only. Other clinics can never see it.</div>':'<div class="callout" style="margin-top:10px">'+(s===4?"Field added, Notes hidden. Existing rows keep their data.":"Rollback restores the earlier layout. It never drops rows that already hold data.")+"</div>")+"</div>";
+    right='<div class="card"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>Aligners › Trays</b><span class="tag ok">live table · tenant_data.aligner_tray</span></div><div class="scroll" style="margin-top:8px"><table class="t"><tr>'+cols.map(c=>"<th>"+c+"</th>").join("")+"</tr>"+rows.map((r,i)=>"<tr>"+r.map(c=>"<td>"+(c==="Change due"||c==="Completed"||c==="Wearing"?'<span class="tag '+(c==="Change due"?"warn":c==="Completed"?"ok":"acc")+'">'+c+"</span>":c)+"</td>").join("")+((s===4||s===6.5)?"<td>☐</td>":"<td class='note'>—</td>")+"</tr>").join("")+"</table></div>"+
+      (s===3?'<div class="callout ok" style="margin-top:10px">A real database table was created for this clinic only. Other clinics can never see it.</div>':'<div class="callout" style="margin-top:10px">'+((s===4||s===6.5)?"Field added, Notes hidden. Existing rows keep their data.":"Rollback restores the earlier layout. It never drops rows that already hold data.")+"</div>")+"</div>";
   }
   if(s===5)right='<div class="card"><b>Aligners dashboard</b><p class="note">Trays due for change this week, by doctor</p><div class="bars"><div class="b"><em>5</em><i style="height:80px"></i>Dr. Sharma</div><div class="b"><em>2</em><i style="height:32px"></i>Dr. Mehta</div><div class="b"><em>1</em><i style="height:16px"></i>Unassigned</div></div><div class="callout" style="margin-top:10px">Pinned. It refreshes live as trays are added, no extra setup.</div></div>';
   if(s===6)right='<div class="grid"><div class="card"><b>Profile · Receptionist</b><p class="note" style="margin-top:4px">Aligner Tray: <span class="tag ok">read</span> <span class="tag">create ✕</span> <span class="tag">edit ✕</span> <span class="tag">delete ✕</span></p></div><div class="card"><b>Permission set · Aligner Editor</b><p class="note" style="margin-top:4px">Adds create + edit on Aligner Tray. Assigned to Dr. Sharma and Dr. Mehta. Add or remove it any time without changing profiles.</p></div><div class="card"><b>Record-level rule</b><p class="note" style="margin-top:4px">A doctor sees a tray only when the tray’s patient is assigned to them. Admins see everything.</p></div></div>';
   return '<h3 class="pg">AI Builder</h3><p class="sub">Run your whole system by chatting. Create, change, report, secure and undo.</p><div class="grid g2" style="align-items:start">'+left+(right?"<div>"+right+"</div>":"")+"</div>";
 }
-
 /* ───────────── 4 · chat booking ───────────── */
 function withoutTag(tag,fn){const keep=S.appts.filter(a=>a.tag===tag);S.appts=S.appts.filter(a=>a.tag!==tag);try{return fn()}finally{S.appts=S.appts.concat(keep)}}
 function morningChips(){
@@ -504,7 +608,7 @@ function ensureMeera(){
   unbook("meera");S.patients=S.patients.filter(p=>p.id!=="p6");
   const chips=morningChips(); if(!chips.length)return;
   if(!chips.some(c=>c.start===UI.pick))UI.pick=(chips.find(c=>c.start===630)||chips[0]).start;
-  const p={id:"p6",name:"Meera Iyer",phone:"98450 12345",usual:null,created:true};S.patients.push(p);
+  const p={id:"p6",name:"Meera Iyer",phone:UI.phone,usual:null,created:true};S.patients.push(p);
   const r=withoutTag("meera",()=>resolveDoctor("p6",D1,UI.pick)); if(!r.doc)return;
   p.usual=r.doc.id;
   book({date:D1,start:UI.pick,doc:r.doc.id,pid:"p6",reason:"Tooth pain",fee:FEE[r.doc.id],tag:"meera",how:r.how,trace:r.trace,isNew:true});
@@ -519,18 +623,24 @@ function scrChat(s){
   const meera=S.appts.find(a=>a.tag==="meera"),rah=S.appts.find(a=>a.tag==="rahulb");
   const m=[{w:"a",h:"Hi! I'm Aria. I can book, move or cancel appointments, and I'll message the patient on WhatsApp. Just type it like you'd say it."}];
   if(s>=1){m.push({w:"u",h:"Book Meera Iyer for tooth pain, tomorrow morning"});m.push({w:"a",h:"Happy to. What's Meera's <b>WhatsApp number</b>? I'll use it to send her the confirmation and to find her record next time."})}
-  if(s>=2){m.push({w:"u",h:"98450 12345"});m.push({w:"a",h:"Thanks. I don't have a patient with that number, so I'll create <b>Meera Iyer</b> when we book. Free times "+nice(D1)+" morning:",chips:chipHtml})}
+  if(s>=2){m.push({w:"u",h:q(UI.phone)});m.push({w:"a",h:"Thanks. I don't have a patient with that number, so I'll create <b>Meera Iyer</b> when we book. Free times "+nice(D1)+" morning:",chips:chipHtml})}
   if(s>=3&&meera){const d=docById(meera.doc);m.push({w:"u",h:fmt(meera.start)+" please"});m.push({w:"a",h:"✅ Booked <b>Meera Iyer</b> (new patient record created) with <b>"+d.name+"</b> (first free doctor)<br>📅 "+nice(D1)+" at "+fmt(meera.start)+"<br>📝 Tooth pain<br>💬 WhatsApp confirmation sent to 98450 12345, and "+d.short+" has been notified."})}
   if(s>=4&&rah){const d=docById(rah.doc);m.push({w:"u",h:"Also move Rahul to tomorrow 11:30 for a braces check"});m.push({w:"a",h:"Found <b>Rahul Gupta</b> by name, and his saved number is on file so I didn't need to ask. ✅ Booked with <b>"+d.name+"</b> because she's his usual doctor and she's free.<br>📅 "+nice(D1)+" at 11:30 AM. No duplicate patient was created."})}
-  const left='<div class="card">'+chat(m)+'<div class="composer"><span>'+(s===0?"Book Meera Iyer for tooth pain, tomorrow morning":"Type a request…")+'</span><span class="btn sm primary">Send</span></div></div>';
+  const sendA=(act,on)=>on?'<button class="btn sm primary" data-act="'+act+'">Send</button>':'<span class="btn sm primary">Send</span>';
+  let comp;
+  if(s===1)comp='<input class="chatin" data-in="phone" value="'+q(UI.phone)+'" inputmode="tel" aria-label="WhatsApp number" placeholder="WhatsApp number">'+sendA("csend",taskIs("c_phone"));
+  else if(s===3)comp='<input class="chatin" readonly value="Also move Rahul to tomorrow 11:30 for a braces check">'+sendA("csend",taskIs("c_msg2"));
+  else if(s===0)comp='<input class="chatin" readonly value="Book Meera Iyer for tooth pain, tomorrow morning">'+sendA("csend",taskIs("c_msg1"));
+  else comp='<span class="note" style="flex:1">'+(s===2?"Pick a time above ↑":"Type a request…")+"</span>"+sendA("",false);
+  const left='<div class="card">'+chat(m)+'<div class="composer">'+comp+'</div><p id="cErr" class="note" style="color:var(--bad);min-height:18px"></p></div>';
   let tr=[],ph="";
   if(s===0)tr=[{go:1,t:"Waiting for a request",s:"Aria understands names, dates (“tomorrow”, “Friday”), times and reasons in plain language."}];
   if(s===1)tr=[{t:"Understood: <b>book</b> · Meera Iyer · "+nice(D1)+" · morning · tooth pain"},{go:1,t:"No phone number given → asked for it",s:"The number is the patient's identity, so duplicates are impossible."}];
-  if(s===2)tr=[{t:"Number cleaned to the last 10 digits: <b>9845012345</b>"},{t:"Looked up patients by that number → <b>no match</b>"},{go:1,t:"Will create the patient when the booking is confirmed"},{t:"Checked "+DOCS.length+" doctors' schedules, leave, breaks and existing bookings → <b>"+chips.length+" free times</b> shown",s:"Only genuinely free slots are offered."}];
+  if(s===2)tr=[{t:"Number cleaned to the last 10 digits: <b>"+UI.phone.replace(/\D/g,"").slice(-10)+"</b>"},{t:"Looked up patients by that number → <b>no match</b>"},{go:1,t:"Will create the patient when the booking is confirmed"},{t:"Checked "+DOCS.length+" doctors' schedules, leave, breaks and existing bookings → <b>"+chips.length+" free times</b> shown",s:"Only genuinely free slots are offered."}];
   if(s===3&&meera){tr=meera.trace.concat([{t:"Patient record <b>created</b> (upsert on phone number)"},{t:"Appointment saved. The database blocks any overlap for the same doctor",s:"Two people booking the same slot at once can't both succeed."},{t:"Meera added to "+docById(meera.doc).short+"'s patients (primary doctor)"},{t:"WhatsApp confirmation to patient + alert to doctor logged"}]);
-    ph=phone("Bright Smile Dental","+91 98450 12345",[{t:waText("confirm",meera)}])}
+    ph=phone(CLINIC(),"+91 "+UI.phone,[{t:waText("confirm",meera)}])}
   if(s===4&&rah){const r=resolveDoctor("p1",D1,690);r.trace=r.trace.slice();tr=[{t:"Matched <b>Rahul Gupta</b> by name → saved number reused"}].concat(r.trace.map(x=>x),[{t:"Upsert on phone → <b>existing record updated, none duplicated</b>"},{t:"WhatsApp confirmation sent"}]);
-    ph=phone("Bright Smile Dental","+91 98100 11111",[{t:waText("confirm",rah)}])}
+    ph=phone(CLINIC(),"+91 98100 11111",[{t:waText("confirm",rah)}])}
   const right='<div><div class="card"><b>Behind the scenes</b><div style="margin-top:8px">'+trace(tr)+"</div></div>"+(ph?'<div style="margin-top:12px">'+ph+"</div>":"")+"</div>";
   return '<h3 class="pg">Assistant</h3><p class="sub">Book, move and cancel by chatting. The patient record is created automatically.</p><div class="grid g2" style="align-items:start">'+left+right+"</div>";
 }
@@ -608,6 +718,7 @@ function setPlanStage(n){
   if(n===5){completeSit(1);completeSit(2);paySit(1);paySit(2)}
 }
 function scrTreat(s){
+  const hl=s===2;
   const pl=S.plan;
   if(!pl)return '<h3 class="pg">Treatment plans</h3><p class="sub">Multi-sitting procedures with a date, an amount and a payment for every sitting.</p><div class="card"><div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap"><div style="flex:1;min-width:220px"><b>Anita Sharma</b> · 34 · F · penicillin allergy<p style="margin-top:6px">🩺 <i>Dr. Mehta’s note:</i> irreversible pulpitis in tooth 46. Needs a root canal, then a crown. A molar root canal normally takes <b>3 sittings</b>.</p></div></div><div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" data-act="mkplan" data-v="rct">Create plan: Root canal (3 sittings)</button><button class="btn" data-act="mkplan" data-v="implant">Plan: Dental implant (3 stages)</button></div></div>';
   const m=planMoney(pl),pr=pl.sit.map((x,i)=>{
@@ -624,7 +735,7 @@ function scrTreat(s){
   return '<h3 class="pg">Treatment plan · Anita Sharma</h3><p class="sub">'+pl.title+" · "+docById(pl.doc).name+"</p>"+
    '<div class="grid g2" style="align-items:start"><div style="display:flex;flex-direction:column;gap:10px">'+pr+
    '<div class="card"><div class="note" style="margin-bottom:4px">Treatment progress · '+done+" of "+pl.sit.length+' sittings</div><div class="prog"><i style="width:'+Math.round(done/pl.sit.length*100)+'%;background:var(--accent)"></i></div><div class="note" style="margin:10px 0 4px">Payment progress · '+inr(m.paid)+" of "+inr(m.net)+'</div><div class="prog"><i style="width:'+(m.net?Math.round(m.paid/m.net*100):0)+'%;background:var(--ok)"></i></div></div></div>'+
-   '<div style="display:flex;flex-direction:column;gap:10px"><div class="card'+(s===2?" hl":"")+'"><b>How the amount is calculated</b><div class="calc" style="margin-top:8px"><span>'+pl.sit.map(x=>inr(x.amt)).join(" + ")+'</span><span class="r">'+inr(m.sub)+'</span><span>Discount <span class="tabs" style="display:inline-flex;margin:0 0 0 6px">'+[0,5,10].map(v=>'<button class="btn sm'+(pl.disc===v?" on":"")+'" data-act="disc" data-v="'+v+'">'+v+"%</button>").join("")+'</span></span><span class="r">− '+inr(m.disc)+'</span><span class="tot">Plan total</span><span class="r tot">'+inr(m.net)+"</span><span>Paid so far</span><span class='r'>"+inr(m.paid)+"</span><span class='tot'>Balance</span><span class='r tot' style='color:"+(m.bal?"var(--warn)":"var(--ok)")+"'>"+inr(m.bal)+'</span></div><p class="note" style="margin-top:8px">Each sitting is billed at its share of the discounted total (sitting × '+(m.f).toFixed(2)+"). Part-payments are fine; the balance follows the patient.</p></div>"+
+   '<div style="display:flex;flex-direction:column;gap:10px"><div class="card'+(hl?" hl":"")+'"><b>How the amount is calculated</b><div class="calc" style="margin-top:8px"><span>'+pl.sit.map(x=>inr(x.amt)).join(" + ")+'</span><span class="r">'+inr(m.sub)+'</span><span>Discount <span class="tabs" style="display:inline-flex;margin:0 0 0 6px">'+[0,5,10].map(v=>'<button class="btn sm'+(pl.disc===v?" on":"")+'" data-act="disc" data-v="'+v+'">'+v+"%</button>").join("")+'</span></span><span class="r">− '+inr(m.disc)+'</span><span class="tot">Plan total</span><span class="r tot">'+inr(m.net)+"</span><span>Paid so far</span><span class='r'>"+inr(m.paid)+"</span><span class='tot'>Balance</span><span class='r tot' style='color:"+(m.bal?"var(--warn)":"var(--ok)")+"'>"+inr(m.bal)+'</span></div><p class="note" style="margin-top:8px">Each sitting is billed at its share of the discounted total (sitting × '+(m.f).toFixed(2)+"). Part-payments are fine; the balance follows the patient.</p></div>"+
    '<div class="card"><b>What happened automatically</b><div style="margin-top:8px">'+trace(log)+"</div>"+(low.length?'<p class="note" style="margin-top:8px">⚠ Low stock now: '+low.map(x=>x.n+" ("+x.q+")").join(", ")+"</p>":"")+"</div></div></div>";
 }
 
@@ -650,9 +761,9 @@ function scrEnd(s){
   if(s===0)return '<h3 class="pg">Everything is connected</h3><p class="sub">Same dashboard as the start of the tour, after everything we just did.</p>'+scrDash(null,true);
   return '<div class="end"><div class="logo" style="margin:0 auto 12px;width:46px;height:46px;font-size:22px;border-radius:14px">M</div><h3>Your clinic, your way</h3><p style="max-width:520px;margin:0 auto 16px;color:var(--muted)">Pick a specialty pack, let the AI Builder shape it to how you work, and let Mediflow run bookings, sittings, billing and WhatsApp in the background.</p><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><button class="btn primary" data-act="restart">↺ Watch again</button><button class="btn" data-act="goto" data-ch="bld">Explore the AI Builder</button><button class="btn" data-act="goto" data-ch="cal">Try auto-assign yourself</button></div></div>';
 }
-
-/* ───────────── tour definition ───────────── */
-const UI={pick:630,day:D0,asg:{pid:"p1",date:D0,time:660},wa:{kind:"confirm",mode:"api"},recs:{ipr:true,attach:false}};
+/* ───────────── trail definition ───────────── */
+const UI={pick:630,day:D0,asg:{pid:"p1",date:D0,time:660},wa:{kind:"confirm",mode:"api"},recs:{ipr:true,attach:false},phone:"98450 12345",undone:false,target:null,
+  su:{clinic:"",city:"",phone:"",name:"",email:"",pw:"",pw2:"",lpw:"",spec:"",verified:false}};
 let BASE;
 function world(o){
   o=o||{};seed();
@@ -661,8 +772,7 @@ function world(o){
   if(o.meera)ensureMeera();if(o.rahul)ensureRahul();
   if(o.plan!=null)setPlanStage(o.plan);
 }
-const SC=(c,s)=>c.screen(s);
-const CH=[
+const CH0=[
  {id:"signup",title:"Sign up & pick a specialty",url:"mediflow.in/signup",screen:scrSignup,steps:[
   {t:"Start with your clinic",say:"<p>Every clinic starts the same way: about a minute of sign-up. First the basics: clinic name, city and phone.</p><p>No credit card, and this tour needs no login either.</p>",how:"Sign-up creates your login, your clinic and your admin staff record in one go. A confirmation email goes out so only real addresses get in.",apply:()=>world()},
   {t:"Choose a specialty pack",say:"<p>Mediflow isn't only a dental app. Each specialty is a <b>pack</b>: dental, dermatology, orthopaedics, general practice, or <b>Build your own</b> and describe your practice to the AI.</p><p>We'll use <b>Dental</b>, the pack this demo is fully loaded with.</p>",how:"A pack is <b>data, not code</b>: tables, fields, price lists and message templates installed into your clinic. That is why the AI Builder can reshape any pack later.",apply:()=>world()},
@@ -734,83 +844,346 @@ function speak(text,done){
     if(my!==tok)return;
     if(i>=parts.length){clearTimeout(safety);finish();return}
     const u=new SpeechSynthesisUtterance(parts[i++]);if(voice){u.voice=voice;u.lang=voice.lang}else u.lang="en-IN";
-    u.rate=1;u.pitch=1;u.onend=nextPart;u.onerror=nextPart;
+    u.rate=1;u.pitch=1.05;u.onend=nextPart;u.onerror=nextPart;
     try{speechSynthesis.speak(u)}catch(e){clearTimeout(safety);finish()}
   };
   nextPart();
 }
-function narrate(){
-  if(!voiceOn||!TTS)return;
-  const st=CH[pos.c].steps[pos.s];
-  speak(st.t+". "+plain(st.say),()=>{if(playing){clearTimeout(timer);timer=setTimeout(next,1100)}});
-}
-function setVoice(on){voiceOn=on&&TTS;if(!voiceOn)cancelSpeech();const b=$("#voiceBtn");if(b)b.textContent=voiceOn?"🔊 Voice on":"🔇 Voice off";render()}
+const setTalk=on=>{const p=$("#presenter");if(p)p.classList.toggle("talking",!!on)};
 
-/* ───────────── controller ───────────── */
-const pos={c:0,s:0};let timer=null,playing=false;
+/* ───────────── story scripts, tasks, quizzes ───────────── */
+const STORY={
+ dash:[
+  "Day one. Dr. Sharma opens Mediflow with her first coffee, and instead of a register she sees her whole clinic on one screen.",
+  "She taps the first tile, because she wants to know how busy today really is.",
+  "Money next. A clinic can be full and still be short on cash, so this tile shows what has come in against what has been billed.",
+  "Her second doctor, Dr. Mehta, keeps asking whether the chairs are being used well. This is the tile that settles the argument.",
+  "Last month three patients simply did not turn up. Priya wants to know how often that really happens.",
+  "Every owner worries about money still owed. This tile adds it all up for her, without a spreadsheet.",
+  "Finally, the pulse of the week, and a quiet warning that gloves are running low."],
+ bld:[
+  "Now the part Priya is most excited about. Her clinic also sells clear aligners, and no off-the-shelf software has a place for them.",
+  "So she does something unusual. She doesn't open a settings maze, she just types what she needs.",
+  "The assistant shows its plan before touching anything. Priya stays in control.",
+  "She approves, and a whole new section appears in her menu, ready for patients' trays.",
+  "A month later she wants one more field. She asks again, and it's done in seconds.",
+  "She also wants to see which trays are due this week, so she asks for a report.",
+  "Her receptionist should not see everything, so Priya sets up who can see and do what, again by chatting.",
+  "And if she ever regrets a change, there is a safety net."],
+ chat:[
+  "It is Monday morning and the phone is already ringing. Meera Iyer has a toothache, and she wants to be seen tomorrow.",
+  "Kavya at the front desk types the request exactly as Meera said it.",
+  "Meera is new, so Aria offers only the times the clinic can truly honour.",
+  "One tap, and four things happen together. No forms, no copying between apps.",
+  "A little later Rahul Gupta, an existing patient, wants to come in for a braces check."],
+ cal:[
+  "By now the day is filling up. Priya switches to the calendar to see who is where.",
+  "She notices grey stripes, and asks why those times can't be chosen.",
+  "Dr. Mehta has a family function tomorrow. Priya marks him on leave, and watch what happens.",
+  "Rahul's usual doctor is busy at eleven. Instead of making him wait, Mediflow thinks it through.",
+  "Half an hour later the picture is different, and Rahul gets the doctor he trusts."],
+ treat:[
+  "Anita arrives with a painful molar. It needs a root canal, and a root canal never fits in one visit.",
+  "Priya creates one plan, and Mediflow lays out all three dates for her.",
+  "Anita asks what the whole thing will cost, and whether there's a discount. Let's look at the arithmetic.",
+  "Sitting one goes well. When Priya marks it done, a lot happens without her lifting a finger.",
+  "Anita pays for today's visit only. She doesn't want to pay everything up front.",
+  "A week later Anita is back for the second sitting, and then the third.",
+  "Not every treatment is quick. An implant is a longer journey, and Mediflow plans for that too."],
+ wa:[
+  "Priya's patients live on WhatsApp, so Mediflow does too. Let's look at what each person receives.",
+  "The moment Meera's booking was saved, two messages left the system.",
+  "Remember the three patients who didn't turn up? A simple reminder is the cure.",
+  "Plans change, and patients hate surprises. Here is how Mediflow handles them.",
+  "Anita's treatment has its own messages, and they work without anyone remembering.",
+  "Finally, what if Priya hasn't connected a business number yet?"],
+ end:[
+  "Let's go back to where we started. Priya's morning dashboard is not the same one she opened at the start.",
+  "And that is Priya's story. A clinic that runs itself, shaped the way she wanted."]
+};
+const SIGN_LINES={0:[
+  "Hi, I'm Aria, and I'll be your guide on this trail.",
+  "Our story begins on a quiet Sunday evening. Dr. Priya Sharma has just seen her last patient, and her clinic still runs on a paper register and a WhatsApp group.",
+  "Tomorrow she wants a proper system: one that books patients, tracks treatments and doesn't need an IT person.",
+  "In this first module you'll do exactly what Priya does. You'll create a clinic, pick a specialty, confirm your email and sign in. Everything on the right is live, so follow the blue task box and try it yourself."]};
+const QUIZ={
+ signup:[
+  {q:"What does the specialty you pick at sign-up decide?",o:["Your monthly price","Which tables, fields and templates are pre-built for you","Which doctors are allowed to log in"],a:1,why:"The specialty pack installs the right tables, fields and message templates. You can reshape any of it later with the AI Builder."},
+  {q:"You mistype your password. What does the sign-in page tell you?",o:["Exactly which character is wrong","“Invalid login credentials”, without saying which part was wrong","Nothing, it signs you in as a guest"],a:1,why:"A generic message protects accounts: an attacker can't learn whether the email or the password was right."},
+  {q:"Who can see everything and manage the clinic's staff?",o:["Receptionist","Nurse","Admin"],a:2,why:"The admin owns the clinic. Doctors, nurses and receptionists see only what their role allows."}],
+ dash:[
+  {q:"How is “Appointments today” counted?",o:["Everything ever booked","Completed plus confirmed, excluding cancelled","Only the completed ones"],a:1,why:"Cancelled bookings are left out, so the figure is what the clinic will really handle."},
+  {q:"Why does a lunch break not make chairs look empty?",o:["Breaks are subtracted from the available minutes","Doctors never take breaks","Utilisation ignores doctors"],a:0,why:"Utilisation is booked minutes divided by available minutes, and available time is working hours minus breaks."},
+  {q:"Where do the dashboard numbers come from?",o:["Typed in by hand every morning","Computed from live appointments, invoices and treatments","Uploaded weekly from a spreadsheet"],a:1,why:"Each tile is a query over your live records, so it can never go stale."}],
+ bld:[
+  {q:"What does the AI Builder produce before it changes anything?",o:["A free-form SQL script","A short plan of safe, whitelisted actions you can preview","Nothing; it applies changes straight away"],a:1,why:"The AI never writes free-form SQL. It produces a plan of safe actions, checked twice, that you approve."},
+  {q:"You hide a field. What happens to the data already in it?",o:["It is deleted","It is kept; hiding only removes it from view","It moves to another table"],a:1,why:"Hiding keeps the data, so nothing is ever lost by accident."},
+  {q:"Which control limits which individual records a user can see?",o:["Record-level rules","The colour theme","Slot length"],a:0,why:"Profiles set the base, permission sets add rights, and record-level rules limit which records."}],
+ chat:[
+  {q:"Why does Aria ask for the WhatsApp number?",o:["To send adverts","It identifies the patient and is where the confirmation goes","The doctor asked for it"],a:1,why:"The last ten digits are the patient's identity, so duplicates can't happen, and the confirmation goes to that number."},
+  {q:"A returning patient is booked by name. What is created?",o:["A duplicate patient record","No new record; the saved number is reused","A new doctor"],a:1,why:"The record is matched and updated (an upsert), so nobody is asked twice."},
+  {q:"Which times does the assistant offer?",o:["Every time of day","Only times that are free after schedules, breaks, leave and bookings","Only mornings"],a:1,why:"Slots are checked against everything that could block them, so a double booking is not possible."}],
+ cal:[
+  {q:"Rahul's usual doctor is busy at 11:00. What happens?",o:["The booking fails","He moves to the first doctor who is free","He waits for the usual doctor"],a:1,why:"The rule is usual doctor first, otherwise the first free doctor, and the reasoning is shown."},
+  {q:"A doctor is marked on leave for tomorrow. What changes?",o:["Nothing until tomorrow","The whole column is blocked, in the app and in chat","Only the afternoon is blocked"],a:1,why:"Leave blocks the day everywhere, because the calendar and the assistant read the same schedule."},
+  {q:"Where does each doctor set hours, breaks and slot length?",o:["Availability page","Billing page","WhatsApp page"],a:0,why:"Weekly hours, breaks, slot length and leave all live on the Availability page."}],
+ treat:[
+  {q:"How is a plan's total worked out?",o:["The largest sitting","Sum of the sittings minus the discount","The average sitting"],a:1,why:"Plan total = sum of sittings − discount, and each sitting is billed at its fair share."},
+  {q:"What happens automatically when sitting 1 is marked complete?",o:["Nothing","An invoice for that sitting, stock deducted, and the next reminder queued","The whole plan closes"],a:1,why:"Invoice, stock deduction and the next WhatsApp reminder all follow from one click."},
+  {q:"A patient pays for sitting 1 only. What moves?",o:["The balance drops and the rest stays on the plan","The plan is deleted","Nothing"],a:0,why:"Treatment progress and payment progress are tracked separately, so the balance always adds up."}],
+ wa:[
+  {q:"WhatsApp Business isn't connected. What does Mediflow do?",o:["Sends nothing","Prepares the message and opens WhatsApp with it filled in","Switches to email"],a:1,why:"A one-tap wa.me link is also the automatic fallback if sending ever fails."},
+  {q:"After a reschedule, the patient sees…",o:["Only the new time","What it was and what it is now","No message"],a:1,why:"Showing the old and the new time removes confusion."},
+  {q:"What does the doctor receive when a booking is saved?",o:["Nothing","A short note, including whether it is a new patient","The full invoice"],a:1,why:"Doctors get a short heads-up so they know who is coming and whether it's a new patient."}]
+};
+const BADGE={signup:["🏥","Clinic Founder"],dash:["📊","Dashboard Navigator"],bld:["🛠️","Builder Apprentice"],chat:["💬","Booking Pro"],cal:["📅","Calendar Commander"],treat:["🦷","Treatment Planner"],wa:["📲","WhatsApp Wizard"]};
+const ensureSu=()=>{const U=UI.su,d={clinic:"Bright Smile Dental",city:"Bengaluru",phone:"98450 00000",name:"Priya Sharma",email:"priya@brightsmile.in",pw:"Smile#2026!"};Object.keys(d).forEach(k=>{if(!U[k].trim())U[k]=d[k]});U.pw2=U.pw;U.spec=U.spec||"dental"};
+const T=(id,text,advance,auto,after)=>({id,text,advance,auto,after});
+const TASKS={
+ "dash:0":T("d_kpi","Click any tile below to open the maths behind it. Try <b>Collected today</b>.",false,()=>doAct("kpi","rev")),
+ "bld:0":T("b_send","Press <b>Send</b> to ask for aligner tracking in plain words.",true,()=>doAct("bsend")),
+ "bld:1":T("b_field","Tick or untick one of the <b>suggested</b> fields in the list (for example IPR done).",false,()=>doAct("rec","ipr"),"Good. Recommended fields are optional, so you decide what your clinic keeps."),
+ "bld:2":T("b_approve","Read the plan, then press <b>Approve &amp; apply</b>.",true,()=>doAct("bapprove")),
+ "bld:7":T("b_undo","Press <b>Undo last change</b> and watch the field list.",false,()=>doAct("bundo"),"That is the safety net: the field is gone from the view, and no data row was deleted."),
+ "chat:0":T("c_msg1","Press <b>Send</b> to send Kavya's message.",true,()=>doAct("csend")),
+ "chat:1":T("c_phone","Type a 10-digit WhatsApp number (or keep Meera's) and press <b>Send</b>.",true,()=>doAct("csend")),
+ "chat:2":T("c_pick","Pick one of the free times.",true,()=>doAct("pick",morningChips()[0].start)),
+ "chat:3":T("c_msg2","Press <b>Send</b> to move Rahul.",true,()=>doAct("csend")),
+ "cal:2":T("cal_leave","Press <b>Mark on leave</b> for Dr. Sharma too and look at her column.",false,()=>doAct("leave","priya"),"See how the whole column is blocked. Press it again to undo."),
+ "cal:4":T("cal_book","Press <b>Book it</b> and find Rahul on the calendar.",false,()=>doAct("bookit"),"There he is, with the doctor he trusts."),
+ "treat:0":T("t_plan","Press the button to create the root canal plan.",true,()=>doAct("mkplan","rct")),
+ "treat:2":T("t_complete","Try the <b>5%</b> and <b>10%</b> discount buttons, then press <b>Complete</b> on sitting 1.",true,()=>doAct("complete",0)),
+ "treat:3":T("t_pay","Record Anita's payment for sitting 1.",true,()=>doAct("pay",0)),
+ "wa:0":T("wa_kind","Click a different message type on the left to see what the patient receives.",false,()=>doAct("wak","remind"),"Every template can be reworded without touching code.")
+};
+const stepKeyOf=(c,i)=>CH0[c].id+":"+i;
+const paras=h=>(h||"").split(/<\/p>\s*<p>/).map(x=>x.replace(/^<p>|<\/p>$/g,"").trim()).filter(Boolean);
+
+/* signup module (all new, interactive) */
+const SIGN=[
+ {t:"Meet Dr. Sharma",lines:SIGN_LINES[0],how:"Sign-up creates three things at once: your login, your clinic, and your first admin membership.",apply:()=>{}},
+ {t:"Name your clinic",lines:["Priya opens Mediflow and starts with the basics: the clinic's name and the city.","Type anything you like. Not sure what? Press Do it for me and I'll use Priya's clinic.","Try leaving the name empty and pressing Continue first. The form tells you what's missing instead of failing silently."],
+  task:T("su_clinic","Enter a clinic name and city, then press <b>Continue</b>.",true,()=>{Object.assign(UI.su,{clinic:"Bright Smile Dental",city:"Bengaluru",phone:"98450 00000"});renderScreen();setTimeout(()=>doAct("su-go","clinic"),450)}),
+  how:"The clinic name appears everywhere afterwards: the sidebar, invoices and every WhatsApp message.",apply:()=>{}},
+ {t:"Choose a specialty",lines:["Here is what makes Mediflow different. A clinic is not just “a dental app”.","Each specialty is a pack: dental, dermatology, orthopaedics, general practice, or Build your own, where you describe your practice and the AI builds it.","Priya is a dentist, so pick the Dental card. It comes fully loaded."],
+  task:T("su_spec","Click the <b>Dental</b> card.",true,()=>doAct("su-spec","dental")),
+  how:"A pack is a set of tables, fields, templates and price lists copied into your own private space.",apply:()=>{}},
+ {t:"Create the admin account",lines:["Now the person behind the clinic: your name, work email and a password.","Watch the strength bar as you type. Eight characters is the minimum, and a mix of capitals, numbers and symbols is stronger.","If the two passwords differ, the form will say so before anything is sent."],
+  task:T("su_acct","Fill in your details, then press <b>Launch my clinic</b>.",true,()=>{Object.assign(UI.su,{name:"Priya Sharma",email:"priya@brightsmile.in",pw:"Smile#2026!",pw2:"Smile#2026!"});renderScreen();setTimeout(()=>doAct("su-go","acct"),450)}),
+  how:"Passwords are never stored by Mediflow. Sign-in is handled by the authentication service.",apply:()=>{}},
+ {t:"Confirm your email",lines:["One safety step. Mediflow emails a confirmation link, so nobody can open a clinic with someone else's address.","Here is Priya's inbox. In real life this lands within seconds. If it doesn't, check spam, and use Resend confirmation email on the sign-in page.","Open the message and confirm."],
+  task:T("su_verify","Press <b>Confirm my email</b> in the message.",true,()=>doAct("su-confirm")),
+  how:"Until the address is confirmed, sign-in says “Email not confirmed” and offers a resend.",apply:()=>{}},
+ {t:"Sign in",lines:["Priya can now sign in. Everyone on her team gets their own login, never a shared one.","Here is a tip. Type a wrong password first and press Sign in, so you can see the message, then type the right one.","Notice the message is deliberately vague. It doesn't say which part was wrong."],
+  task:T("su_login","Sign in with the password you chose. <span class='note'>(Forgot it? Do it for me fills it in.)</span>",true,()=>{ensureSu();UI.su.lpw=UI.su.pw;renderScreen();setTimeout(()=>doAct("su-login"),450)}),
+  how:"Four roles: Admin sees everything; Doctor sees own patients and schedule; Nurse handles clinical tasks; Receptionist handles bookings and billing.",apply:()=>{ensureSu();UI.su.verified=true}},
+ {t:"Welcome to your clinic",lines:["And there it is. Bright Smile is live, with the Dental pack installed.","Patients, appointments, multi-sitting treatment plans, billing, stock and WhatsApp templates are all ready.","Nothing here is locked. If Priya wants something different she will simply chat with the AI Builder, and you'll meet it in module three."],
+  apply:()=>{ensureSu();UI.su.verified=true}}
+];
+
+/* build CH */
+const SIGSTAGE=["clinic","clinic","spec","acct","verify","login","welcome","welcome"];
+const CH=[{id:"signup",title:"Sign up & Login",url:"mediflow.in/signup",screen:s=>scrSignup(SIGSTAGE[Math.min(s,7)]),steps:SIGN,quiz:QUIZ.signup}];
+CH0.slice(1).forEach((c,ci)=>{
+  const id=c.id,n=ci+1;
+  c.steps.forEach((st,i)=>{
+    const story=(STORY[id]||[])[i];
+    st.lines=(story?[story]:[]).concat(paras(st.say));
+    const tk=TASKS[id+":"+i];if(tk)st.task=tk;
+  });
+  if(id==="end"){c.steps[1].lines=()=>["That's the whole trail. You finished with <b>"+ST.pts+" points</b> and <b>"+ST.badges.length+" of 7 badges</b>.","Priya went from a paper register to a clinic with a dashboard, an AI Builder, a chat assistant, a calendar that assigns doctors, treatment plans and WhatsApp, in one evening.","When you're ready, create your own clinic for real. It takes about a minute."].concat(ST.badges.length<7?["Missing badges? Open the trail map and revisit those modules in hands-on mode."]:["Seven out of seven. You're a Mediflow expert."])}
+  else{c.quiz=QUIZ[id]}
+  CH.push(c);
+});
+CH.forEach(c=>{
+  const last=c.steps[c.steps.length-1];
+  if(c.quiz){c.steps.push({t:"Knowledge check",lines:["Quick check before your badge. Three questions, and you can retry any you miss."],quiz:true,scr:c.steps.length-1,apply:last.apply,how:null});}
+});
+const ST={pts:0,done:{},badges:[],q:{},mode:"hands",seen:{}};
+const pos={c:0,s:0};let timer=null,runTok=0,curLine=-1,toastT=null;
 const total=CH.reduce((n,c)=>n+c.steps.length,0);
 const flat=()=>{let n=0;for(let i=0;i<pos.c;i++)n+=CH[i].steps.length;return n+pos.s};
-function applyStep(){CH[pos.c].steps[pos.s].apply()}
-function renderScreen(){const c=CH[pos.c];$("#screen").innerHTML=c.screen(pos.s);document.querySelectorAll(".chatscroll").forEach(e=>{e.scrollTop=e.scrollHeight})}
-function render(){
-  const c=CH[pos.c],st=c.steps[pos.s];
-  $("#chapters").innerHTML=CH.map((x,i)=>'<button class="chap'+(i===pos.c?" on":i<pos.c?" done":"")+'" data-act="chap" data-v="'+i+'"><span class="n">'+(i<pos.c?"✓":i+1)+"</span>"+x.title+"</button>").join("");
-  $("#say").innerHTML='<div class="aria"><span class="av">✦</span><div><b>Aria</b> <span>· chapter '+(pos.c+1)+" of "+CH.length+" · step "+(pos.s+1)+"/"+c.steps.length+'</span></div></div><h2>'+st.t+'</h2><div class="txt">'+st.say+"</div>";
+const stepOf=()=>CH[pos.c].steps[pos.s];
+const key=()=>CH[pos.c].id+":"+pos.s;
+const linesOf=st=>typeof st.lines==="function"?st.lines():st.lines;
+const chIdx=id=>CH.findIndex(c=>c.id===id);
+
+/* ───────────── rendering ───────────── */
+function toast(t){const e=document.createElement("div");e.className="toast";e.setAttribute("role","status");e.textContent=t;document.body.appendChild(e);clearTimeout(toastT);setTimeout(()=>e.remove(),1700)}
+function renderScreen(){const c=CH[pos.c],st=stepOf();$("#screen").innerHTML=c.screen(st.scr!=null?st.scr:pos.s);document.querySelectorAll(".chatscroll").forEach(e=>{e.scrollTop=e.scrollHeight})}
+function chapDone(c){return c.id==="end"?!!ST.seen.end:!!(ST.q[c.id]&&ST.q[c.id].finished)}
+function renderTop(){
+  $("#pts").textContent=ST.pts;
+  $("#badges").innerHTML=ST.badges.map(id=>'<span class="bdg" title="'+BADGE[id][1]+'">'+BADGE[id][0]+"</span>").join("");
+  $("#mHands").classList.toggle("on",ST.mode==="hands");$("#mWatch").classList.toggle("on",ST.mode==="watch");
+  $("#chapters").innerHTML=CH.map((x,i)=>'<button class="chap'+(i===pos.c?" on":chapDone(x)?" done":"")+'" data-act="chap" data-v="'+i+'"><span class="n">'+(chapDone(x)?"✓":i+1)+"</span>"+x.title+(BADGE[x.id]?'<span class="st">'+BADGE[x.id][0]+"</span>":"")+"</button>").join("");
+  $("#mapLbl").textContent="Module "+(pos.c+1)+" of "+CH.length+" · "+CH[pos.c].title;
+}
+function showLine(i){
+  curLine=i;
+  document.querySelectorAll("#lines .ln").forEach((e,j)=>{e.classList.toggle("cur",j===i);e.classList.toggle("said",j<i)});
+}
+function renderQuiz(){
+  const c=CH[pos.c],qz=c.quiz,Q=ST.q[c.id]||(ST.q[c.id]={i:0,tries:0,wrong:[],ok:false,finished:false,score:0}),el=$("#task");
+  el.hidden=false;el.className="task quiz"+(Q.finished?" done":"");
+  if(Q.finished){const b=BADGE[c.id];el.innerHTML='<b class="k">Module complete</b><div class="qq">'+b[0]+" "+b[1]+' badge earned</div><div class="why">'+Q.score+" of "+qz.length+" right first time. Nicely done.</div>"+(pos.c<CH.length-1?'<button class="btn primary sm" data-act="next">Next module →</button>':"");return}
+  const q=qz[Q.i];
+  el.innerHTML='<b class="k">Knowledge check '+(Q.i+1)+" of "+qz.length+'</b><div class="qq">'+q.q+"</div>"+q.o.map((o,j)=>'<button class="opt'+(Q.ok&&j===q.a?" right":Q.wrong.includes(j)?" wrong":"")+'" data-act="qa" data-v="'+j+'"'+(Q.ok?" disabled":"")+">"+o+"</button>").join("")+
+   (Q.ok?'<div class="why">✓ '+q.why+'</div><button class="btn primary sm" data-act="qn">'+(Q.i<qz.length-1?"Next question →":"Finish module")+"</button>":Q.wrong.length?'<div class="why">Not quite. Try another answer.</div>':"");
+}
+function renderTask(){
+  const st=stepOf(),el=$("#task");
+  if(st.quiz){renderQuiz();return}
+  if(!st.task){el.hidden=true;return}
+  const d=ST.done[key()];el.hidden=false;el.className="task"+(d?" done":"");
+  el.innerHTML=d?'<b class="k">✓ Task complete</b>'+(st.task.after||"Well done."):'<b class="k">Your turn</b>'+st.task.text+'<div class="tr"><button class="btn sm" data-act="doit">Do it for me</button></div>';
+}
+function renderRail(){
+  const c=CH[pos.c],st=stepOf(),L=linesOf(st);
+  renderTop();
+  $("#say").innerHTML='<div class="mod">Unit '+(pos.s+1)+" of "+c.steps.length+'</div><h2>'+st.t+'</h2><div class="lines" id="lines">'+L.map((l,i)=>'<div class="ln">'+l+"</div>").join("")+"</div>";
+  if(curLine>=0)showLine(Math.min(curLine,L.length-1));
   const how=$("#how");how.hidden=!st.how;how.innerHTML=st.how?"<b>Under the hood</b>"+st.how:"";
+  renderTask();
   $("#prog").style.width=Math.round((flat()+1)/total*100)+"%";
   $("#bBack").disabled=flat()===0;
-  const last=flat()===total-1;$("#bNext").textContent=last?"Done ✓":"Next →";$("#bNext").disabled=last;
-  $("#bPlay").textContent=playing?"⏸ Pause":"▶ Auto";
-  if(voiceOn)$("#say .aria b").insertAdjacentHTML("afterend",'<span class="speaking" aria-hidden="true"><i></i><i></i><i></i></span>');
-  renderScreen();
-  const act=document.querySelector(".chap.on");if(act&&act.scrollIntoView&&window.innerWidth<=980)act.scrollIntoView({block:"nearest",inline:"center"});
+  const last=flat()===total-1;
+  const open=(st.task&&!ST.done[key()])||(st.quiz&&!(ST.q[c.id]&&ST.q[c.id].finished));
+  $("#bNext").textContent=last?"Done ✓":open?"Skip →":"Next →";$("#bNext").disabled=last;
+  $("#bPlay").textContent=ST.mode==="watch"?"⏸ Pause":"▶ Watch";
+  const vb=$("#voiceBtn2");if(vb)vb.textContent=voiceOn?"🔊":"🔇";
 }
-function go(c,s){pos.c=c;pos.s=s;applyStep();render();if(voiceOn){clearTimeout(timer);narrate()}else schedule()}
-function next(){const c=CH[pos.c];if(pos.s<c.steps.length-1)go(pos.c,pos.s+1);else if(pos.c<CH.length-1)go(pos.c+1,0);else stop()}
-function back(){if(pos.s>0)go(pos.c,pos.s-1);else if(pos.c>0)go(pos.c-1,CH[pos.c-1].steps.length-1)}
-function stop(){playing=false;clearTimeout(timer);$("#bPlay").textContent="▶ Auto"}
-function startPlay(){playing=true;$("#bPlay").textContent="⏸ Pause";if(flat()>=total-1){go(0,0)}else if(voiceOn){if(!speaking)narrate()}else schedule()}
-function schedule(){clearTimeout(timer);if(!playing)return;if(flat()>=total-1){stop();return}const len=(CH[pos.c].steps[pos.s].say||"").length;timer=setTimeout(next,Math.min(14000,5500+len*28))}
-function jumpChapter(id){const i=CH.findIndex(c=>c.id===id);if(i>=0)go(i,0)}
+function render(){renderRail();renderScreen()}
 
-document.addEventListener("click",e=>{
-  const el=e.target.closest("[data-act]");if(!el)return;
-  const a=el.dataset.act,v=el.dataset.v;
+/* ───────────── the presenter: reads the script line by line ───────────── */
+function startScript(){
+  clearTimeout(timer);const my=++runTok;cancelSpeech();setTalk(false);
+  const L=linesOf(stepOf());let i=0;curLine=-1;
+  const step=()=>{
+    if(my!==runTok)return;
+    if(i>=L.length){setTalk(false);scriptEnd(my);return}
+    showLine(i);const txt=plain(L[i]);i++;
+    if(voiceOn){setTalk(true);speak(txt,()=>{if(my!==runTok)return;setTalk(false);timer=setTimeout(step,260)})}
+    else timer=setTimeout(step,Math.min(6500,1200+txt.length*34));
+  };
+  step();
+}
+function scriptEnd(my){if(ST.mode==="watch")watchAdvance(my)}
+function watchAdvance(my){
+  if(my!==runTok||ST.mode!=="watch")return;
+  const st=stepOf(),doNext=()=>{if(my!==runTok||ST.mode!=="watch")return;if(flat()>=total-1){setMode("hands");return}next()};
+  if(st.task&&!ST.done[key()]){
+    timer=setTimeout(()=>{if(my!==runTok||ST.mode!=="watch")return;st.task.auto();if(!st.task.advance)timer=setTimeout(doNext,2200)},900);return;
+  }
+  timer=setTimeout(doNext,st.quiz?500:1300);
+}
+function say(html){
+  const l=$("#lines");if(!l)return;const d=document.createElement("div");d.className="ln cur";d.innerHTML=html;
+  l.querySelectorAll(".ln").forEach(e=>{e.classList.remove("cur");e.classList.add("said")});l.appendChild(d);
+  if(voiceOn){setTalk(true);const my=runTok;speak(plain(html),()=>{if(my===runTok)setTalk(false)})}
+}
+function awardTask(){const k=key();if(ST.done[k])return false;ST.done[k]=1;ST.pts+=10;toast("+10 points");renderTop();renderTask();return true}
+function completeTask(){
+  const st=stepOf(),first=awardTask(),my=runTok;
+  if(st.task.advance){clearTimeout(timer);setTimeout(()=>{if(my===runTok)next()},first?800:250)}
+  else if(first&&st.task.after)say(st.task.after);
+  renderRail_btn();
+}
+function renderRail_btn(){const st=stepOf();const open=(st.task&&!ST.done[key()]);$("#bNext").textContent=flat()===total-1?"Done ✓":open?"Skip →":"Next →"}
+function taskEvent(id){const st=stepOf();if(st.task&&st.task.id===id){completeTask();return true}return false}
+function nudge(){const t=$("#task");t.classList.remove("nudge");void t.offsetWidth;t.classList.add("nudge")}
+
+/* ───────────── controller ───────────── */
+function applyStep(){const a=stepOf().apply;if(a)a()}
+function go(c,s){
+  pos.c=c;pos.s=s;UI.undone=false;UI.target=null;
+  if(c>0||s>=3)ensureSu();
+  if(c===chIdx("end"))ST.seen.end=1;
+  applyStep();render();startScript();
+}
+function next(){const c=CH[pos.c];if(pos.s<c.steps.length-1)go(pos.c,pos.s+1);else if(pos.c<CH.length-1)go(pos.c+1,0);else setMode("hands")}
+function back(){if(pos.s>0)go(pos.c,pos.s-1);else if(pos.c>0)go(pos.c-1,CH[pos.c-1].steps.length-1)}
+function setMode(m){
+  ST.mode=m;clearTimeout(timer);renderTop();$("#bPlay").textContent=m==="watch"?"⏸ Pause":"▶ Watch";
+  if(m==="watch"){const my=runTok;if(!speaking)watchAdvance(my)}
+}
+function setVoice(on){voiceOn=on&&TTS;if(!voiceOn){cancelSpeech();setTalk(false)}const b=$("#voiceBtn");if(b)b.textContent=voiceOn?"🔊 Voice on":"🔇 Voice off";const b2=$("#voiceBtn2");if(b2)b2.textContent=voiceOn?"🔊":"🔇"}
+function showErr(id,m){const e=$(id);if(e)e.textContent=m;nudge()}
+const KPISTEP={appts:1,newp:1,rev:2,util:3,ns:4,out:5,stock:6};
+
+function doAct(a,v,el){
   switch(a){
-    case"next":stop();next();break;
-    case"back":stop();back();break;
-    case"play":if(playing){stop()}else{startPlay()}break;
-    case"voice":setVoice(!voiceOn);if(voiceOn)narrate();break;
-    case"startvoice":$("#intro").hidden=true;setVoice(true);go(0,0);startPlay();break;
+    case"next":if(ST.mode==="watch")setMode("hands");next();break;
+    case"back":if(ST.mode==="watch")setMode("hands");back();break;
+    case"play":setMode(ST.mode==="watch"?"hands":"watch");if(ST.mode==="watch"&&!voiceOn&&TTS){}break;
+    case"mode":setMode(v);break;
+    case"voice":setVoice(!voiceOn);if(voiceOn)startScript();break;
+    case"startvoice":$("#intro").hidden=true;setVoice(true);go(0,0);break;
     case"startquiet":$("#intro").hidden=true;go(0,0);break;
-    case"restart":stop();go(0,0);break;
-    case"chap":stop();go(+v,0);break;
-    case"goto":stop();jumpChapter(el.dataset.ch);break;
+    case"restart":ST.pts=0;ST.done={};ST.badges=[];ST.q={};ST.seen={};UI.su={clinic:"",city:"",phone:"",name:"",email:"",pw:"",pw2:"",lpw:"",spec:"",verified:false};UI.phone="98450 12345";UI.recs={ipr:true,attach:false};setMode("hands");go(0,0);break;
+    case"chap":if(ST.mode==="watch")setMode("hands");go(+v,0);$("#chapters").hidden=true;$("#mapBtn").setAttribute("aria-expanded","false");break;
+    case"map":{const h=$("#chapters").hidden;$("#chapters").hidden=!h;$("#mapBtn").setAttribute("aria-expanded",h?"true":"false");break}
+    case"goto":go(chIdx(el.dataset.ch),0);break;
     case"theme":{const r=document.documentElement,dark=r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;r.dataset.theme=dark?"light":"dark";break}
-    case"pick":stop();UI.pick=+v;if(pos.c===3&&pos.s<3){go(3,3)}else{applyStep();render()}break;
+    case"doit":{const st=stepOf();if(st.task&&!ST.done[key()])st.task.auto();break}
+    /* quiz */
+    case"qa":{const c=CH[pos.c],Q=ST.q[c.id],q=c.quiz[Q.i],j=+v;if(Q.ok)break;
+      if(j===q.a){Q.ok=true;if(Q.tries===0){Q.score++;ST.pts+=10;toast("+10 points");renderTop()}}else{Q.tries++;Q.wrong.push(j)}renderQuiz();break}
+    case"qn":{const c=CH[pos.c],Q=ST.q[c.id];Q.i++;Q.tries=0;Q.wrong=[];Q.ok=false;
+      if(Q.i>=c.quiz.length){Q.finished=true;if(!ST.badges.includes(c.id)){ST.badges.push(c.id);ST.pts+=50;toast("Badge earned: "+BADGE[c.id][1]+"  +50")}renderTop();$("#prog").style.width=Math.round((flat()+1)/total*100)+"%";renderTask();renderRail_btn();say("Badge earned: <b>"+BADGE[c.id][0]+" "+BADGE[c.id][1]+"</b>. On to the next module whenever you're ready.")}else renderQuiz();break}
+    /* sign-up & login */
+    case"su-go":{const m=suValid(v);if(m){showErr("#suErr",m);break}if(!taskEvent("su_"+v))next();break}
+    case"su-spec":UI.su.spec=v;renderScreen();if(v==="dental")taskEvent("su_spec");break;
+    case"su-confirm":UI.su.verified=true;renderScreen();if(!taskEvent("su_verify")){}break;
+    case"su-login":{const m=suValid("login");if(m){showErr("#suErr",m);break}if(!taskEvent("su_login"))next();break}
+    /* dashboard */
+    case"kpi":{if(KPISTEP[v]==null)break;if(taskIs("d_kpi"))awardTask();if(CH[pos.c].id==="dash")go(pos.c,KPISTEP[v]);break}
+    /* builder */
+    case"bsend":taskEvent("b_send");break;
+    case"bapprove":taskEvent("b_approve");break;
+    case"bundo":UI.undone=true;renderScreen();taskEvent("b_undo");break;
+    case"rec":UI.recs[v]=!UI.recs[v];renderScreen();taskEvent("b_field");break;
+    /* chat */
+    case"csend":{const st=stepOf();if(!st.task||!/^c_/.test(st.task.id))break;
+      if(st.task.id==="c_phone"&&UI.phone.replace(/\D/g,"").length<10){showErr("#cErr","That doesn't look like a 10-digit number. Try again.");break}
+      completeTask();break}
+    case"pick":{UI.pick=+v;const ci=chIdx("chat");if(taskIs("c_pick")){completeTask()}else if(pos.c===ci&&pos.s<3){go(ci,3)}else{applyStep();render()}break}
+    /* calendar */
     case"day":UI.day=v;renderScreen();break;
-    case"leave":{const k=v+"|"+UI.day;S.leaves.has(k)?S.leaves.delete(k):S.leaves.add(k);renderScreen();break}
-    case"bookit":{unbook("asg");const r=resolveDoctor(UI.asg.pid,UI.asg.date,UI.asg.time);if(r.doc){book({date:UI.asg.date,start:UI.asg.time,doc:r.doc.id,pid:UI.asg.pid,reason:"Check-up",fee:FEE[r.doc.id],tag:"asg"});UI.day=UI.asg.date}renderScreen();break}
-    case"mkplan":createPlan(v,0);renderScreen();break;
-    case"complete":completeSit(+v);renderScreen();break;
-    case"pay":paySit(+v);renderScreen();break;
+    case"leave":{const k=v+"|"+UI.day;S.leaves.has(k)?S.leaves.delete(k):S.leaves.add(k);renderScreen();taskEvent("cal_leave");break}
+    case"bookit":{unbook("asg");const r=resolveDoctor(UI.asg.pid,UI.asg.date,UI.asg.time);if(r.doc){book({date:UI.asg.date,start:UI.asg.time,doc:r.doc.id,pid:UI.asg.pid,reason:"Check-up",fee:FEE[r.doc.id],tag:"asg"});UI.day=UI.asg.date}renderScreen();taskEvent("cal_book");break}
+    /* treatment */
+    case"mkplan":createPlan(v,0);renderScreen();taskEvent("t_plan");break;
+    case"complete":completeSit(+v);renderScreen();taskEvent("t_complete");break;
+    case"pay":paySit(+v);renderScreen();taskEvent("t_pay");break;
     case"disc":S.plan.disc=+v;renderScreen();break;
-    case"wak":UI.wa.kind=v;renderScreen();break;
+    /* whatsapp */
+    case"wak":UI.wa.kind=v;renderScreen();taskEvent("wa_kind");break;
     case"wam":UI.wa.mode=v;renderScreen();break;
   }
+}
+document.addEventListener("click",e=>{const el=e.target.closest("[data-act]");if(el&&!el.disabled)doAct(el.dataset.act,el.dataset.v,el)});
+document.addEventListener("input",e=>{
+  const t=e.target;
+  if(t.dataset.su){UI.su[t.dataset.su]=t.value;if(t.dataset.su==="pw"){const m=$("#pwMeter");if(m)m.innerHTML=pwMeter(t.value)}}
+  else if(t.dataset.in==="phone")UI.phone=t.value;
 });
 document.addEventListener("change",e=>{
   const el=e.target.closest("[data-bind]");if(!el)return;
   const k=el.dataset.bind;UI.asg[k]=(k==="time")?+el.value:el.value;unbook("asg");renderScreen();
 });
 document.addEventListener("keydown",e=>{
+  if(e.key==="Enter"&&e.target.matches("input")){
+    const go2=document.querySelector('#screen [data-act="su-go"],#screen [data-act="su-login"],#screen [data-act="csend"]');
+    if(go2){e.preventDefault();go2.click()}return}
   if(/INPUT|SELECT|TEXTAREA/.test(e.target.tagName))return;
-  if(e.key==="ArrowRight"){stop();next()}else if(e.key==="ArrowLeft"){stop();back()}
+  if(e.key==="ArrowRight")doAct("next");else if(e.key==="ArrowLeft")doAct("back");
+  if((e.key==="Enter"||e.key===" ")&&e.target.classList&&e.target.classList.contains("kpi")){e.preventDefault();e.target.click()}
 });
 
 seed();BASE=kpis();
-if(!TTS){$("#voiceBtn").hidden=true;$("#introVoice").hidden=true;$("#introTxt").textContent="This browser cannot speak, so Aria's narration is shown as text. Use Next, or Auto to advance by itself."}
-go(0,0);
+if(!TTS){$("#voiceBtn").hidden=true;$("#voiceBtn2").hidden=true;$("#introVoice").hidden=true;$("#introTxt").textContent="Join Dr. Priya Sharma as she opens her dental clinic. Aria presents each module as a story, then you try it yourself. This browser cannot speak, so her script is shown as text."}
+render();
 })();
 
 </script>
