@@ -27,6 +27,7 @@ export default function SignupPage() {
   const [logo, setLogo] = useState<string | null>(null);
   const [color, setColor] = useState("#2563eb");
   const [tagline, setTagline] = useState("");
+  const [aiName, setAiName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
   const [domain, setDomain] = useState("");
@@ -60,7 +61,7 @@ export default function SignupPage() {
       const res = await fetch("/api/clinic/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clinicName, brandName, specialty, city, adminName, email, password, logoDataUrl: logo, primaryColor: color, tagline, slug: shownSlug.length >= 3 ? shownSlug : undefined, customDomain: domain.trim() || undefined }),
+        body: JSON.stringify({ clinicName, brandName, specialty, city, adminName, email, password, logoDataUrl: logo, primaryColor: color, tagline, aiName: aiName.trim() || undefined, slug: shownSlug.length >= 3 ? shownSlug : undefined, customDomain: domain.trim() || undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create clinic");
@@ -160,6 +161,10 @@ export default function SignupPage() {
                 <div className="pt-2 border-t border-gray-100">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Your brand (optional, change anytime in Settings)</p>
                   <LogoPicker value={logo} onChange={setLogo} />
+                  <div className="mt-4">
+                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Name your AI assistant</label>
+                    <input type="text" value={aiName} maxLength={24} onChange={(e) => setAiName(e.target.value)} placeholder="e.g. Mira" className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  </div>
                   <div className="grid grid-cols-[1fr_auto] gap-3 mt-4 items-end">
                     <div>
                       <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Tagline</label>

@@ -79,6 +79,13 @@ export async function saveLogo(db: any, clinicId: string, dataUrl: string): Prom
   return db.storage.from("clinic-logos").getPublicUrl(path).data.publicUrl;
 }
 
+export function checkAiName(raw: unknown): string | null {
+  if (raw == null || String(raw).trim() === "") return null;
+  const v = String(raw).trim();
+  if (!/^[A-Za-z0-9][A-Za-z0-9 ._-]{1,23}$/.test(v)) throw new HttpError(400, "The assistant's name can use letters, numbers, spaces, dots and dashes (2 to 24 characters).");
+  return v;
+}
+
 export function checkColor(raw: unknown): string | null {
   if (raw == null || raw === "") return null;
   if (!/^#[0-9a-fA-F]{6}$/.test(String(raw))) throw new HttpError(400, "Choose a colour like #0ea5e9.");

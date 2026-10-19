@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase";
-import { addDomainToVercel, checkColor, checkDomain, checkSlug, newDomainToken, saveLogo } from "@/lib/server/branding";
+import { addDomainToVercel, checkAiName, checkColor, checkDomain, checkSlug, newDomainToken, saveLogo } from "@/lib/server/branding";
 
 /**
  * Creates the admin's login, the clinic, and the admin's staff record.
@@ -12,7 +12,7 @@ import { addDomainToVercel, checkColor, checkDomain, checkSlug, newDomainToken, 
  */
 export async function POST(req: NextRequest) {
   try {
-    const { clinicName, brandName, specialty, city, adminName, email, password, logoDataUrl, primaryColor, tagline, slug, customDomain } = await req.json();
+    const { clinicName, brandName, specialty, city, adminName, email, password, logoDataUrl, primaryColor, tagline, slug, customDomain, aiName } = await req.json();
 
     if (!clinicName || !specialty || !adminName || !email || !password) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
@@ -25,9 +25,10 @@ export async function POST(req: NextRequest) {
     }
 
     // validate branding first so a bad logo/domain never leaves a half-created account
-    let colour: string | null, domainClean: string | null = null, slugClean: string | null = null;
+    let colour: string | null, aiNameClean: string | null = null, domainClean: string | null = null, slugClean: string | null = null;
     try {
       colour = checkColor(primaryColor);
+      aiNameClean = checkAiName(aiName);
       if (customDomain) domainClean = checkDomain(customDomain);
       if (slug) slugClean = checkSlug(slug);
       if (logoDataUrl && !/^data:image\/(png|jpeg|webp);base64,/.test(logoDataUrl)) throw Object.assign(new Error("The logo must be a PNG, JPG or WebP image."), { status: 400 });
@@ -79,7 +80,7 @@ export async function POST(req: NextRequest) {
 
     const { data: clinic, error: clinicError } = await admin
       .from("clinics")
-      .insert({ name: clinicName, brand_name: brandName || clinicName, specialty, city: city || null, is_active: true, ...(colour ? { primary_color: colour } : {}), ...(tagline ? { tagline: String(tagline).slice(0, 120) } : {}), ...(slugClean ? { slug: slugClean } : {}), ...(domainClean ? { custom_domain: domainClean, domain_verified: false, domain_token: newDomainToken() } : {}) })
+      .insert({ name: clinicName, brand_name: brandName || clinicName, specialty, city: city || null, is_active: true, ...(colour ? { primary_color: colour } : {}), ...(aiNameClean ? { ai_name: aiNameClean } : {}), ...(tagline ? { tagline: String(tagline).slice(0, 120) } : {}), ...(slugClean ? { slug: slugClean } : {}), ...(domainClean ? { custom_domain: domainClean, domain_verified: false, domain_token: newDomainToken() } : {}) })
       .select()
       .single();
     if (clinicError) {

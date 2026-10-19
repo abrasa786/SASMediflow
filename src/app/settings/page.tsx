@@ -8,6 +8,7 @@ import { getClinic, getMyRoleInClinic } from "@/lib/clinic";
 import { supabase } from "@/lib/supabase";
 import PriceListEditor from "@/components/PriceListEditor";
 import BrandingCard from "@/components/BrandingCard";
+import AiPrivacyCard from "@/components/AiPrivacyCard";
 import type { Clinic, ClinicRole } from "@/types";
 
 const SPECIALTIES = [
@@ -216,6 +217,7 @@ export default function SettingsPage() {
         </form>
 
         {isAdmin && clinic?.id && <BrandingCard clinicId={clinic.id} />}
+        {isAdmin && clinic?.id && <AiPrivacyCard clinicId={clinic.id} />}
         <PriceListEditor clinicId={clinic?.id ?? null} canEdit={isAdmin} />
       </div>
     </AppShell>

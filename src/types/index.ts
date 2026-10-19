@@ -17,6 +17,7 @@ export interface Clinic {
   logo_url?: string;
   primary_color?: string;
   tagline?: string;
+  ai_name?: string;
   custom_domain?: string;
   domain_verified?: boolean;
   about?: string;

@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import AppShell from "@/components/layout/AppShell";
 import BuilderTabs from "@/components/BuilderTabs";
 import { getActiveClinicId, getSession } from "@/lib/auth";
+import { getClinic } from "@/lib/clinic";
+import AiHistoryPanel from "@/components/AiHistoryPanel";
 import type { Plan, Schema } from "@/lib/builder/types";
 
 interface Msg {
@@ -51,6 +53,9 @@ export default function BuilderPage() {
   const [tab, setTab] = useState<"schema" | "history">("schema");
   const endRef = useRef<HTMLDivElement>(null);
   const nextId = useRef(1);
+  const [botName, setBotName] = useState("Assistant");
+  const sessionRef = useRef<string | undefined>(undefined);
+  const [turns, setTurns] = useState(0);
 
   const refresh = useCallback(async (cid: string) => {
     try {
@@ -62,7 +67,13 @@ export default function BuilderPage() {
   useEffect(() => {
     const cid = getActiveClinicId();
     setClinicId(cid);
-    if (cid) refresh(cid);
+    if (cid) {
+      refresh(cid);
+      getClinic(cid).then((c) => {
+        const n = c?.ai_name || "Assistant"; setBotName(n);
+        setMsgs((m) => m.length === 1 && m[0].id === 0 ? [{ ...m[0], text: `Hi, I'm ${n}. ` + m[0].text.replace(/^Hi! /, "") }] : m);
+      }).catch(() => null);
+    }
   }, [refresh]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs, busy]);
 
@@ -76,7 +87,8 @@ export default function BuilderPage() {
     push({ role: "user", text: prompt });
     setBusy(true);
     try {
-      const r = await api("/api/builder/plan", { clinicId, prompt, history });
+      const r = await api("/api/builder/plan", { clinicId, prompt, history, sessionId: sessionRef.current });
+      sessionRef.current = r.sessionId ?? sessionRef.current; setTurns((n) => n + 1);
       push({ role: "assistant", text: r.message, plan: r.plan, lines: r.lines, prompt, state: r.plan ? "pending" : undefined, source: r.source });
     } catch (e: any) {
       push({ role: "assistant", text: e.message });
@@ -116,7 +128,7 @@ export default function BuilderPage() {
     <AppShell>
       <div className="p-4 sm:p-6 max-w-6xl mx-auto">
         <div className="mb-4">
-          <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: "Sora, Inter, sans-serif" }}>AI Builder</h1>
+          <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: "Sora, Inter, sans-serif" }}>{botName === "Assistant" ? "AI Builder" : `${botName} · AI Builder`}</h1>
           <p className="text-sm text-gray-500">Describe an app, table or field in plain words. You approve every change before it runs.</p>
         </div>
 
@@ -164,6 +176,7 @@ export default function BuilderPage() {
                 ))}
               </div>
             )}
+            {clinicId && <AiHistoryPanel clinicId={clinicId} module="builder" botName={botName} refreshKey={turns} />}
             <form onSubmit={(e) => { e.preventDefault(); send(); }} className="p-3 border-t border-gray-100 flex gap-2">
               <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="e.g. Create a Pharmacy app with Medicine and Supplier"
                 className="flex-1 min-w-0 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />

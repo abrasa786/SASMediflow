@@ -1,5 +1,6 @@
 "use client";
 
+import { applyBrand, applyIdentity } from "@/lib/theme";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signInWithEmail, setActiveClinicId, getSession, sendPasswordReset } from "@/lib/auth";
@@ -32,7 +33,7 @@ export default function LoginPage() {
     const q = new URLSearchParams(window.location.search);
     const slug = q.get("clinic");
     const url = slug ? `/api/public/clinic?slug=${encodeURIComponent(slug)}` : `/api/public/clinic?host=${encodeURIComponent(window.location.host)}`;
-    fetch(url).then((r) => r.json()).then((d) => d.clinic && setBrand(d.clinic)).catch(() => null);
+    fetch(url).then((r) => r.json()).then((d) => { if (d.clinic) { setBrand(d.clinic); applyBrand(d.clinic.primary_color); applyIdentity(d.clinic.name, d.clinic.logo_url); } }).catch(() => null);
     if (typeof window !== "undefined" && q.get("confirmed")) setJustConfirmed(true);
     // already signed in? go straight to the app
     (async () => {

@@ -1,12 +1,12 @@
 import { NextRequest } from "next/server";
 import { handle, HttpError } from "@/lib/server/http";
 import { requireClinicMember } from "@/lib/server/auth";
-import { addDomainToVercel, checkColor, checkDomain, checkSlug, newDomainToken, saveLogo, verifyDomainDns } from "@/lib/server/branding";
+import { addDomainToVercel, checkAiName, checkColor, checkDomain, checkSlug, newDomainToken, saveLogo, verifyDomainDns } from "@/lib/server/branding";
 
 export const dynamic = "force-dynamic";
 
-const view = (c: any) => ({ slug: c.slug, logo_url: c.logo_url, primary_color: c.primary_color, tagline: c.tagline, website: c.website, custom_domain: c.custom_domain, domain_verified: c.domain_verified, domain_token: c.custom_domain && !c.domain_verified ? c.domain_token : null });
-const COLS = "slug, logo_url, primary_color, tagline, website, custom_domain, domain_verified, domain_token";
+const view = (c: any) => ({ slug: c.slug, logo_url: c.logo_url, primary_color: c.primary_color, tagline: c.tagline, ai_name: c.ai_name, website: c.website, custom_domain: c.custom_domain, domain_verified: c.domain_verified, domain_token: c.custom_domain && !c.domain_verified ? c.domain_token : null });
+const COLS = "slug, logo_url, primary_color, tagline, ai_name, website, custom_domain, domain_verified, domain_token";
 
 /** Current branding + domain status. Any staff member (the sidebar uses it). */
 export async function GET(req: NextRequest) {
@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
     if (b.action === "save") {
       const patch: Record<string, unknown> = {};
       if ("tagline" in b) patch.tagline = b.tagline ? String(b.tagline).trim().slice(0, 120) : null;
+      if ("aiName" in b) patch.ai_name = checkAiName(b.aiName);
       if ("website" in b) { const w = String(b.website ?? "").trim(); if (w && !/^https?:\/\/\S+\.\S+$/.test(w)) throw new HttpError(400, "Website must start with https://"); patch.website = w || null; }
       if ("primaryColor" in b) patch.primary_color = checkColor(b.primaryColor);
       if (b.slug && b.slug !== cur.slug) patch.slug = checkSlug(b.slug);

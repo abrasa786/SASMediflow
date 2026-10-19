@@ -10,14 +10,14 @@ export default function BrandingCard({ clinicId }: { clinicId: string }) {
   const [b, setB] = useState<any>(null);
   const [logo, setLogo] = useState<string | null>(null);
   const [logoChanged, setLogoChanged] = useState(false);
-  const [f, setF] = useState({ tagline: "", website: "", primaryColor: "#2563eb", slug: "" });
+  const [f, setF] = useState({ tagline: "", website: "", primaryColor: "#2563eb", slug: "", aiName: "" });
   const [domain, setDomain] = useState("");
   const [err, setErr] = useState(""); const [msg, setMsg] = useState(""); const [busy, setBusy] = useState(false);
   const [help, setHelp] = useState<any>(null);
 
   const apply = useCallback((br: any) => {
     setB(br); setLogo(br.logo_url ?? null); setLogoChanged(false);
-    setF({ tagline: br.tagline ?? "", website: br.website ?? "", primaryColor: br.primary_color ?? "#2563eb", slug: br.slug ?? "" });
+    setF({ tagline: br.tagline ?? "", website: br.website ?? "", primaryColor: br.primary_color ?? "#2563eb", slug: br.slug ?? "", aiName: br.ai_name ?? "" });
     setDomain(br.custom_domain ?? "");
   }, []);
   useEffect(() => { authFetch(`/api/clinic/branding?clinicId=${clinicId}`).then((r) => apply(r.branding)).catch((e) => setErr(e.message)); }, [clinicId, apply]);
@@ -37,6 +37,7 @@ export default function BrandingCard({ clinicId }: { clinicId: string }) {
       <div className="grid md:grid-cols-2 gap-6">
         <div className="space-y-4">
           <LogoPicker value={logo} onChange={(v) => { setLogo(v); setLogoChanged(true); }} />
+          <div><label className={lbl}>AI assistant name</label><input className={inp} maxLength={24} placeholder="e.g. Mira" value={f.aiName} onChange={(e) => setF({ ...f, aiName: e.target.value })} /><p className="text-xs text-slate-400 mt-1">Shown on the assistant, the builder and your public page.</p></div>
           <div><label className={lbl}>Tagline</label><input className={inp} maxLength={120} value={f.tagline} onChange={(e) => setF({ ...f, tagline: e.target.value })} /></div>
           <div className="grid grid-cols-[1fr_auto] gap-3 items-end">
             <div><label className={lbl}>Website</label><input className={inp} placeholder="https://" value={f.website} onChange={(e) => setF({ ...f, website: e.target.value })} /></div>
@@ -46,7 +47,7 @@ export default function BrandingCard({ clinicId }: { clinicId: string }) {
             <div className="flex items-center rounded-xl border border-slate-200 focus-within:ring-2 focus-within:ring-sky-500"><span className="pl-3 text-xs text-slate-400 whitespace-nowrap">{origin.replace(/^https?:\/\//, "")}/c/</span>
               <input className="flex-1 min-w-0 px-1.5 py-2.5 text-sm bg-transparent focus:outline-none" value={f.slug} onChange={(e) => setF({ ...f, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") })} aria-label="Web address" /></div>
             {b.slug && <a className="text-xs text-sky-700 hover:underline" href={`/c/${b.slug}`} target="_blank" rel="noreferrer">Open your public page ↗</a>}</div>
-          <button disabled={busy} onClick={() => call({ action: "save", tagline: f.tagline, website: f.website, primaryColor: f.primaryColor, slug: f.slug, ...(logoChanged ? (logo ? { logoDataUrl: logo } : { removeLogo: true }) : {}) }, "Saved.")}
+          <button disabled={busy} onClick={() => call({ action: "save", tagline: f.tagline, aiName: f.aiName, website: f.website, primaryColor: f.primaryColor, slug: f.slug, ...(logoChanged ? (logo ? { logoDataUrl: logo } : { removeLogo: true }) : {}) }, "Saved.")}
             className="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold disabled:opacity-60">Save branding</button>
         </div>
 

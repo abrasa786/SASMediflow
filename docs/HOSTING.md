@@ -15,7 +15,7 @@ One deployment serves every clinic. Clinics are separated by `clinic_id` in the 
 ## 1. First-time setup (about 30 minutes)
 
 1. **Supabase project.** Create one in the region closest to your patients (for India choose Mumbai, `ap-south-1`; patient data then stays in India).
-2. **Run the migrations** in the SQL editor, in order: `001_schema.sql` (a brand-new project only), then `003`, `004`, `005`, `006`, `007`, `008`. They are safe to run again. (There is no `002`, it is demo data only; skip it in production.)
+2. **Run the migrations** in the SQL editor, in order: `001_schema.sql` (a brand-new project only), then `003` to `011` in order (`003, 004, 005, 006, 007, 008, 009, 010, 011`). They are safe to run again. (There is no `002`, it is demo data only; skip it in production.)
 3. **Authentication → URL configuration.** Site URL = your production address (e.g. `https://app.yourdomain.com`). Add the same address, plus `http://localhost:3001`, to Redirect URLs.
 4. **Authentication → Emails → SMTP Settings.** Add your SMTP sender. Without it Supabase's built-in mailer sends only a few emails an hour and only to your own team, so real clinics cannot sign up. Keep "Confirm email" switched on.
 5. **Vercel.** Import the GitHub repo. Add the environment variables below, then deploy.
@@ -27,6 +27,8 @@ One deployment serves every clinic. Clinics are separated by `clinic_id` in the 
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | yes | Supabase → Project settings → API |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | same page |
+| `AI_DATA_KEY` | recommended | 32+ random characters. Encrypts stored AI questions and answers. |
+| `CRON_SECRET` | recommended | Random string. Lets the daily cron call `/api/ai/purge`. |
 | `SUPABASE_SERVICE_ROLE_KEY` | yes | same page. **Secret.** Server only. Never put it in client code or chat. |
 | `NEXT_PUBLIC_APP_URL` | yes | Your production address. Used in email links. |
 | `AUTO_CONFIRM_EMAILS` | no | Leave unset/`false` in production. |

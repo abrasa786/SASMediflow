@@ -38,3 +38,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 ## Hosting
 See [docs/HOSTING.md](docs/HOSTING.md) for deployment, custom domains and the go-live checklist.
+
+## Documentation
+
+`docs/ARCHITECTURE.md` · `docs/HLD.md` · `docs/MODULES.md` (per-module design and flows) · `docs/SECURITY.md` (protection layers, AI trust layer) · `docs/TESTING.md` · `docs/HOSTING.md` · `docs/MARKETING.md` · `docs/VIDEO.md`

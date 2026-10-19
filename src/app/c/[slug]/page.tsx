@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { applyBrand, applyIdentity } from "@/lib/theme";
 
-interface PublicClinic { slug: string; name: string; tagline?: string; logo_url?: string; primary_color?: string; address?: string; city?: string; phone?: string; email?: string; website?: string; specialty?: string; doctors: { name: string; specialty?: string; experience_years?: number }[] }
+interface PublicClinic { slug: string; name: string; tagline?: string; ai_name?: string; logo_url?: string; primary_color?: string; address?: string; city?: string; phone?: string; email?: string; website?: string; specialty?: string; doctors: { name: string; specialty?: string; experience_years?: number }[] }
 
 /** Public page for a clinic. On a clinic's own domain the slug is "_host" and the clinic is found from the domain. */
 export default function PublicClinicPage() {
@@ -11,7 +12,7 @@ export default function PublicClinicPage() {
   const [c, setC] = useState<PublicClinic | null | undefined>(undefined);
   useEffect(() => {
     const url = slug === "_host" ? `/api/public/clinic?host=${encodeURIComponent(window.location.host)}` : `/api/public/clinic?slug=${encodeURIComponent(slug)}`;
-    fetch(url).then((r) => r.json()).then((d) => setC(d.clinic)).catch(() => setC(null));
+    fetch(url).then((r) => r.json()).then((d) => { setC(d.clinic); if (d.clinic) { applyBrand(d.clinic.primary_color); applyIdentity(d.clinic.name, d.clinic.logo_url); } }).catch(() => setC(null));
   }, [slug]);
 
   if (c === undefined) return <div className="min-h-screen flex items-center justify-center text-slate-400 text-sm">Loading…</div>;

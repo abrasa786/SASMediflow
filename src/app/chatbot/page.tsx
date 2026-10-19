@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
+import { getClinic } from "@/lib/clinic";
+import AiHistoryPanel from "@/components/AiHistoryPanel";
 
 interface Action { label: string; url: string }
 interface Message { role: "user" | "assistant"; content: string; ts: Date; actions?: Action[]; slots?: string[] }
@@ -23,12 +25,20 @@ export default function ChatbotPage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [botName, setBotName] = useState("Assistant");
+  const [turns, setTurns] = useState(0);
+  const sessionRef = useRef<string | undefined>(undefined);
   const draftRef = useRef<any>(null); // the booking/cancel request being filled in across messages
 
   useEffect(() => {
     const id = getActiveClinicId();
     if (!id) { router.push("/login"); return; }
     setClinicId(id);
+    getClinic(id).then((c) => {
+      const n = c?.ai_name || "Assistant";
+      setBotName(n);
+      setMessages((m) => m.length === 1 && m[0].content.startsWith("Hi!") ? [{ ...m[0], content: m[0].content.replace("Hi! I can", `Hi! I'm ${n}. I can`) }] : m);
+    }).catch(() => null);
     setMessages([{
       role: "assistant",
       content: "Hi! I can book, cancel and reschedule appointments for you. I check doctor availability, create the patient record if they're new, and prepare WhatsApp confirmations.\nTry: Book Anita Rao 9876543210 tomorrow 4pm\nI can also answer questions about today's appointments, revenue and stock.",
@@ -49,7 +59,9 @@ export default function ChatbotPage() {
     setLoading(true);
     try {
       const history = messages.slice(-10).map(m => ({ role: m.role, content: m.content }));
-      const data = await authFetch("/api/chatbot", { body: { clinicId, message: msg, history, draft: draftRef.current } });
+      const data = await authFetch("/api/chatbot", { body: { clinicId, message: msg, history, draft: draftRef.current, sessionId: sessionRef.current } });
+      sessionRef.current = data.sessionId ?? sessionRef.current;
+      setTurns((n) => n + 1);
       draftRef.current = data.draft ?? null;
       setMessages(prev => [...prev, { role: "assistant", content: data.reply, ts: new Date(), actions: data.actions, slots: data.slots }]);
     } catch (e: any) {
@@ -87,7 +99,7 @@ export default function ChatbotPage() {
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-sky-400 to-sky-700 rounded-xl flex items-center justify-center text-white text-lg">🤖</div>
             <div>
-              <h1 className="font-bold text-slate-900">Clinic AI Assistant</h1>
+              <h1 className="font-bold text-slate-900">{botName}</h1>
               <p className="text-xs text-emerald-600 font-medium">● Books appointments · Live clinic data</p>
             </div>
           </div>
@@ -144,6 +156,8 @@ export default function ChatbotPage() {
             </div>
           </div>
         )}
+
+        {clinicId && <AiHistoryPanel clinicId={clinicId} module="assistant" botName={botName} refreshKey={turns} />}
 
         {/* Input */}
         <div className="px-6 py-4 bg-white border-t border-slate-100 shrink-0">

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Sidebar from "./Sidebar";
 import { getSession, getActiveClinicId } from "@/lib/auth";
 import { getClinic, getMyRoleInClinic } from "@/lib/clinic";
+import { applyBrand, applyIdentity } from "@/lib/theme";
 import type { Clinic, ClinicRole } from "@/types";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -20,7 +21,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     const clinicId = getActiveClinicId();
     try {
       const raw = clinicId ? sessionStorage.getItem("mf_shell_" + clinicId) : null;
-      if (raw) { const c = JSON.parse(raw); setClinic(c.clinic); setRole(c.role); setEmail(c.email); setReady(true); }
+      if (raw) { const c = JSON.parse(raw); applyBrand(c.clinic?.primary_color); setClinic(c.clinic); setRole(c.role); setEmail(c.email); setReady(true); }
     } catch { /* cache is optional */ }
 
     async function init() {
@@ -34,6 +35,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       ]);
       if (!c || !r) { try { sessionStorage.removeItem("mf_shell_" + clinicId); } catch { /* ignore */ } router.push("/login"); return; }
 
+      applyBrand(c.primary_color); applyIdentity(c.brand_name ?? c.name, c.logo_url);
       setClinic(c);
       setRole(r as ClinicRole);
       setEmail(session.user.email ?? "");

@@ -21,6 +21,7 @@ const NAV = [
   { href: "/tasks",        icon: "✅", label: "Tasks" },
   { href: "/analytics",   icon: "📊", label: "Analytics" },
   { href: "/staff",        icon: "👤", label: "Staff",    roles: ["admin"] as ClinicRole[] },
+  { href: "/users",        icon: "🔐", label: "Users" },
   { href: "/chatbot",      icon: "🤖", label: "AI Assistant" },
   { href: "/builder",      icon: "🛠", label: "AI Builder", roles: ["admin"] as ClinicRole[] },
   { href: "/builder/reports", icon: "📈", label: "Reports" },
