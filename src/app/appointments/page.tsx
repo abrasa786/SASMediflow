@@ -49,7 +49,7 @@ function NotificationList({ items }: { items: Notification[] }) {
 export default function AppointmentsPage() {
   const router = useRouter();
   const [clinicId, setClinicId] = useState("");
-  const [date, setDate] = useState(todayIso());
+  const [date, setDate] = useState(() => { try { const d = new URLSearchParams(window.location.search).get("date"); return d && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : todayIso(); } catch { return todayIso(); } });
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,7 +86,8 @@ export default function AppointmentsPage() {
     } finally { setBusyId(""); }
   }
 
-  const complete = (a: Appointment) => run(a, "/api/appointments/status", { status: "completed" }, () => `${a.patient?.name ?? "Appointment"} marked completed`);
+  // Done: go straight to this visit's invoice. The appointment is closed when the payment is received.
+  const complete = async (a: Appointment) => { router.push(`/billing?appointment=${a.id}`); };
   const noShow = (a: Appointment) => run(a, "/api/appointments/status", { status: "no_show" }, () => `${a.patient?.name ?? "Appointment"} marked no-show`);
   const reopen = (a: Appointment) => run(a, "/api/appointments/status", { status: "confirmed" }, () => `${a.patient?.name ?? "Appointment"} is confirmed again`);
   const remind = (a: Appointment) => run(a, "/api/appointments/notify", { kind: "reminder" }, () => `Reminder prepared for ${a.patient?.name ?? "patient"}`);
@@ -168,7 +169,7 @@ export default function AppointmentsPage() {
                       <span className={`text-xs font-semibold px-2.5 py-1 rounded-lg ${STATUS_COLORS[a.status] ?? "bg-gray-100 text-gray-500"}`}>{a.status.replace("_", " ")}</span>
                       {a.status === "confirmed" && (
                         <>
-                          <button disabled={busy} onClick={() => complete(a)} className="text-xs px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-medium">Complete</button>
+                          <button disabled={busy} onClick={() => complete(a)} className="text-xs px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-medium">Done · bill</button>
                           <button disabled={busy} onClick={() => { setActionErr(""); setMoveAppt(a); }} className="text-xs px-2.5 py-1.5 rounded-lg bg-sky-50 text-sky-700 hover:bg-sky-100 font-medium">Reschedule</button>
                           <button disabled={busy} onClick={() => remind(a)} className="text-xs px-2.5 py-1.5 rounded-lg bg-slate-50 text-slate-700 hover:bg-slate-100 font-medium">Remind</button>
                           <button disabled={busy} onClick={() => noShow(a)} className="text-xs px-2.5 py-1.5 rounded-lg bg-slate-50 text-slate-600 hover:bg-slate-100 font-medium">No-show</button>

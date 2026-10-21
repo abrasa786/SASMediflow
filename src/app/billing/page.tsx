@@ -6,7 +6,7 @@ import AppShell from "@/components/layout/AppShell";
 import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
-import { getInvoices, createInvoice, updateInvoice, searchClinicPatients } from "@/lib/clinic";
+import { getInvoices, createInvoice, searchClinicPatients } from "@/lib/clinic";
 import type { Invoice, ClinicPatient, InvoiceStatus, PaymentMethod } from "@/types";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -43,9 +43,15 @@ export default function BillingPage() {
   }, [selectedPatient]);
   const [items, setItems] = useState<LineItem[]>([{ name: "", qty: 1, unit_price: 0, amount: 0 }]);
   const [gst, setGst] = useState(18);
-  const [discount, setDiscount] = useState(0);
-  const [payMethod, setPayMethod] = useState<PaymentMethod>("cash");
-  const [status, setStatus] = useState<InvoiceStatus>("paid");
+  const [discountVal, setDiscountVal] = useState(0);
+  const [discMode, setDiscMode] = useState<"amount" | "percent">("amount");
+  const [payMethod, setPayMethod] = useState<PaymentMethod>("physical");
+  const [status, setStatus] = useState<InvoiceStatus>("sent");
+  const [fromAppt, setFromAppt] = useState<{ id: string; date: string; doctor: string } | null>(null);
+  const [created, setCreated] = useState<{ id: string; number: string; total: number; whatsapp?: { status: string; error?: string; link?: string } } | null>(null);
+  const [busyAct, setBusyAct] = useState("");
+  const [catalog, setCatalog] = useState<{ name: string; price: number; kind: string }[]>([]);
+  const [activeRow, setActiveRow] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
   const [filter, setFilter] = useState(() => { try { const f = new URLSearchParams(window.location.search).get("filter"); return f && ["pending", "paid", "draft", "sent", "partially_paid", "cancelled"].includes(f) ? f : "all"; } catch { return "all"; } });
@@ -55,7 +61,47 @@ export default function BillingPage() {
     if (!id) { router.push("/login"); return; }
     setClinicId(id);
     load(id);
+    // Coming from "Complete" on an appointment: open the invoice for that visit, patient and fee filled in
+    try {
+      const apptId = new URLSearchParams(window.location.search).get("appointment");
+      if (apptId) openForAppointment(id, apptId);
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
+
+  async function openForAppointment(cid: string, apptId: string) {
+    const { data: a } = await supabase.from("appointments").select("id, appointment_date, consultation_fee, advance_paid, clinic_patient_id, clinic_patients(id, name, phone), doctors(name)").eq("id", apptId).eq("clinic_id", cid).maybeSingle();
+    if (!a) return;
+    const { data: existing } = await supabase.from("invoices").select("id, invoice_number, total, status").eq("clinic_id", cid).eq("appointment_id", apptId).neq("status", "cancelled").limit(1);
+    const doctor = (a as any).doctors?.name ?? "";
+    setFromAppt({ id: a.id, date: a.appointment_date, doctor });
+    if (existing?.length) { setCreated({ id: existing[0].id, number: existing[0].invoice_number ?? "", total: Number(existing[0].total) }); setShowNew(true); return; }
+    const p = (a as any).clinic_patients;
+    if (p) setSelectedPatient(p as ClinicPatient);
+    const fee = Number(a.consultation_fee || 0);
+    setItems([{ name: `Consultation${doctor ? ` — ${/^dr\.?\s/i.test(doctor) ? doctor : "Dr. " + doctor}` : ""}`, qty: 1, unit_price: fee, amount: fee }]);
+    setShowNew(true);
+  }
+
+  // item suggestions while typing: the clinic's price list and its stock
+  useEffect(() => {
+    if (!showNew || !clinicId) return;
+    (async () => {
+      const [pl, st] = await Promise.all([
+        supabase.from("price_list").select("name, price").eq("clinic_id", clinicId).eq("is_active", true).limit(500),
+        supabase.from("stock_items").select("name, unit_price").eq("clinic_id", clinicId).limit(500),
+      ]);
+      setCatalog([
+        ...((pl.data ?? []) as any[]).map((r) => ({ name: r.name, price: Number(r.price || 0), kind: "Service" })),
+        ...((st.data ?? []) as any[]).map((r) => ({ name: r.name, price: Number(r.unit_price || 0), kind: "Stock" })),
+      ]);
+    })();
+  }, [showNew, clinicId]);
+  const suggestions = (q: string) => { const t = q.trim().toLowerCase(); if (!t) return []; return catalog.filter((c) => c.name.toLowerCase().includes(t) && c.name.toLowerCase() !== t).slice(0, 6); };
+  function pickItem(i: number, c: { name: string; price: number }) {
+    setItems((prev) => prev.map((it, idx) => idx === i ? { ...it, name: c.name, unit_price: c.price, amount: Number(it.qty) * c.price } : it));
+    setActiveRow(null);
+  }
 
   async function load(id: string) {
     setLoading(true);
@@ -83,10 +129,16 @@ export default function BillingPage() {
   }
 
   const subtotal = items.reduce((s, i) => s + i.amount, 0);
+  const discount = Math.max(0, Math.min(Math.max(subtotal, 0), discMode === "percent" ? Math.round(subtotal * Math.min(discountVal, 100) / 100) : discountVal));
   const gstAmt = Math.round(subtotal * gst / 100);
   const total = subtotal - discount + gstAmt;
 
-  async function handleCreate(e: React.FormEvent) {
+  async function sendOnWhatsApp(invoiceId: string): Promise<{ status: string; error?: string; link?: string }> {
+    try { return await authFetch<{ status: string; error?: string; link?: string }>("/api/invoices/send", { body: { clinicId, invoiceId } }); }
+    catch (e: any) { return { status: "failed", error: e.message }; }
+  }
+
+  async function handleCreate(e: React.FormEvent, alsoSend = false) {
     e.preventDefault();
     if (!selectedPatient) { setErr("Select a patient"); return; }
     if (items.some(i => !i.name.trim())) { setErr("Fill all item names"); return; }
@@ -94,30 +146,44 @@ export default function BillingPage() {
     const { data: made, error } = await createInvoice({
       clinic_id: clinicId,
       clinic_patient_id: selectedPatient.id,
+      ...(fromAppt ? { appointment_id: fromAppt.id } : {}),
       items, subtotal, discount, gst_percent: gst, gst_amount: gstAmt, total,
-      status, paid_amount: status === "paid" ? total : status === "partially_paid" ? Math.round(total / 2) : 0,
+      status, paid_amount: status === "paid" ? total : 0,
       payment_method: payMethod,
     });
-    setSaving(false);
-    if (error) { setErr(error.message); return; }
-    if (made?.id && credits.length && items.some((i) => i.name.startsWith("Less: online booking fee"))) {
+    if (error || !made) { setSaving(false); setErr(error?.message ?? "Could not create the invoice."); return; }
+    if (credits.length && items.some((i) => i.name.startsWith("Less: online booking fee"))) {
       await supabase.from("appointments").update({ advance_invoice: made.id }).in("id", credits.map((c) => c.id));
     }
-    setShowNew(false);
-    resetForm();
     runFlows();
-    load(clinicId);
+    let whatsapp: { status: string; error?: string; link?: string } | undefined;
+    if (alsoSend) whatsapp = await sendOnWhatsApp(made.id);
+    // paid on the spot: close the visit and go back to the appointments straight away
+    if (status === "paid") { await finishPayment(made.id); return; }
+    setSaving(false);
+    await load(clinicId);
+    setCreated({ id: made.id, number: made.invoice_number ?? "", total, whatsapp });
+  }
+
+  /** Payment received: invoice -> paid, appointment -> completed, then back to the appointment. */
+  async function finishPayment(invoiceId: string) {
+    setBusyAct("pay"); setErr("");
+    try {
+      const r = await authFetch<{ appointmentId: string | null; appointmentDate: string | null }>("/api/payments/complete", { body: { clinicId, invoiceId, method: "physical" } });
+      if (r.appointmentId) { router.push(`/appointments?date=${r.appointmentDate ?? ""}`); return; }
+      setShowNew(false); setCreated(null); resetForm(); await load(clinicId);
+    } catch (e: any) { setErr(e.message); }
+    finally { setBusyAct(""); setSaving(false); }
   }
 
   function resetForm() {
     setSelectedPatient(null); setPatientSearch(""); setPatientResults([]);
     setItems([{ name: "", qty: 1, unit_price: 0, amount: 0 }]);
-    setGst(18); setDiscount(0); setPayMethod("cash"); setStatus("paid"); setErr("");
+    setGst(18); setDiscountVal(0); setDiscMode("amount"); setPayMethod("physical"); setStatus("sent"); setErr(""); setFromAppt(null); setCreated(null); setActiveRow(null);
   }
 
   async function markPaid(inv: Invoice) {
-    await updateInvoice(inv.id, { status: "paid", paid_amount: inv.total });
-    runFlows();
+    try { await authFetch("/api/payments/complete", { body: { clinicId, invoiceId: inv.id, method: "physical" } }); } catch (e: any) { alert(e.message); }
     load(clinicId);
   }
 
@@ -192,8 +258,9 @@ export default function BillingPage() {
                       <td className="px-5 py-3 text-slate-500 text-xs hidden md:table-cell capitalize">{inv.payment_method ?? "—"}</td>
                       <td className="px-5 py-3">
                         <a href={`/billing/print?id=${inv.id}`} target="_blank" rel="noreferrer" className="text-xs text-sky-700 hover:underline font-medium mr-3">Print</a>
+                        <button onClick={async () => { const r = await sendOnWhatsApp(inv.id); if (r.status === "sent") alert("Invoice sent on WhatsApp."); else if (r.link && confirm(`${r.error ?? "Could not send automatically."}\n\nOpen WhatsApp to send it yourself?`)) window.open(r.link, "_blank"); else alert(r.error ?? "Could not send."); }} className="text-xs text-emerald-700 hover:underline font-medium mr-3">Send</button>
                         {inv.status !== "paid" && inv.status !== "cancelled" && (
-                          <button onClick={() => markPaid(inv)} className="text-xs text-emerald-600 hover:text-emerald-800 font-medium">Mark paid</button>
+                          <button onClick={() => markPaid(inv)} className="text-xs text-emerald-600 hover:text-emerald-800 font-medium">Payment received</button>
                         )}
                       </td>
                     </tr>
@@ -213,6 +280,24 @@ export default function BillingPage() {
               <h2 className="font-bold text-slate-900">New Invoice</h2>
               <button onClick={() => { setShowNew(false); resetForm(); }} className="text-slate-400 text-xl">×</button>
             </div>
+            {created ? (
+              <div className="space-y-4">
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+                  <p className="font-semibold text-emerald-800">Invoice {created.number} ready · ₹{created.total.toLocaleString("en-IN")}</p>
+                  {created.whatsapp?.status === "sent" && <p className="text-xs text-emerald-700 mt-1">✅ Sent to the patient on WhatsApp.</p>}
+                  {created.whatsapp && created.whatsapp.status !== "sent" && (
+                    <p className="text-xs text-amber-700 mt-1">⚠️ {created.whatsapp.error ?? "Could not send on WhatsApp."} {created.whatsapp.link && <a href={created.whatsapp.link} target="_blank" rel="noreferrer" className="underline font-medium">Send it from my WhatsApp</a>}</p>
+                  )}
+                </div>
+                {err && <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{err}</p>}
+                <div className="grid grid-cols-1 gap-2">
+                  <button type="button" disabled={busyAct !== ""} onClick={async () => { setBusyAct("send"); const w = await sendOnWhatsApp(created.id); setCreated({ ...created, whatsapp: w }); setBusyAct(""); }} className="py-3 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white rounded-xl text-sm font-semibold">{busyAct === "send" ? "Sending…" : created.whatsapp?.status === "sent" ? "Send again on WhatsApp" : "Send invoice on WhatsApp"}</button>
+                  <button type="button" disabled={busyAct !== ""} onClick={() => finishPayment(created.id)} className="py-3 bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white rounded-xl text-sm font-semibold">{busyAct === "pay" ? "Saving…" : "Payment received (physical)"}</button>
+                  <a href={`/billing/print?id=${created.id}`} target="_blank" rel="noreferrer" className="text-center py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 hover:bg-slate-50">Print invoice</a>
+                  <button type="button" onClick={() => { setShowNew(false); resetForm(); }} className="text-xs text-slate-500 hover:underline">Pay later: close</button>
+                </div>
+              </div>
+            ) : (
             <form onSubmit={handleCreate} className="space-y-4">
               {/* Patient */}
               <div className="relative">
@@ -244,7 +329,18 @@ export default function BillingPage() {
                 <div className="space-y-2">
                   {items.map((item, i) => (
                     <div key={i} className="grid grid-cols-12 gap-1.5">
-                      <input value={item.name} onChange={e => updateItem(i, "name", e.target.value)} placeholder="Description" className="col-span-5 px-2 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-sky-500" />
+                      <div className="col-span-5 relative">
+                        <input value={item.name} onChange={e => { updateItem(i, "name", e.target.value); setActiveRow(i); }} onFocus={() => setActiveRow(i)} onBlur={() => setTimeout(() => setActiveRow((r) => (r === i ? null : r)), 150)} placeholder="Type to search services & stock" autoComplete="off" className="w-full px-2 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-sky-500" />
+                        {activeRow === i && suggestions(item.name).length > 0 && (
+                          <div className="absolute z-20 top-full left-0 right-[-120px] mt-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+                            {suggestions(item.name).map((c) => (
+                              <button key={c.kind + c.name} type="button" onMouseDown={(e) => { e.preventDefault(); pickItem(i, c); }} className="w-full text-left px-3 py-2 text-xs hover:bg-sky-50 border-b border-slate-50 last:border-0 flex justify-between gap-3">
+                                <span className="truncate">{c.name} <span className="text-slate-400">· {c.kind}</span></span><span className="text-slate-500 shrink-0">₹{c.price}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                       <input type="number" value={item.qty} onChange={e => updateItem(i, "qty", Number(e.target.value))} min={1} className="col-span-2 px-2 py-2 rounded-lg border border-slate-200 text-xs text-center focus:outline-none focus:ring-1 focus:ring-sky-500" />
                       <input type="number" value={item.unit_price} onChange={e => updateItem(i, "unit_price", Number(e.target.value))} placeholder="Price" className="col-span-3 px-2 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-sky-500" />
                       <div className="col-span-1 flex items-center justify-center text-xs text-slate-500 font-medium">₹{item.amount}</div>
@@ -255,32 +351,53 @@ export default function BillingPage() {
                 <button type="button" onClick={() => setItems(p => [...p, { name: "", qty: 1, unit_price: 0, amount: 0 }])} className="mt-2 text-xs text-sky-600 hover:text-sky-800 font-medium">+ Add item</button>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div><label className="text-xs font-medium text-slate-600 block mb-1">GST %</label><input type="number" value={gst} onChange={e => setGst(Number(e.target.value))} min={0} max={28} className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" /></div>
-                <div><label className="text-xs font-medium text-slate-600 block mb-1">Discount ₹</label><input type="number" value={discount} onChange={e => setDiscount(Number(e.target.value))} min={0} className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" /></div>
-                <div className="flex flex-col justify-end"><div className="bg-slate-50 rounded-xl px-3 py-2 text-right"><p className="text-xs text-slate-500">Total</p><p className="font-bold text-slate-900">₹{total.toLocaleString("en-IN")}</p></div></div>
+                <div>
+                  <label className="text-xs font-medium text-slate-600 block mb-1">Discount</label>
+                  <div className="flex gap-1.5">
+                    <input type="number" value={discountVal} onChange={e => setDiscountVal(Number(e.target.value))} min={0} className="w-full min-w-0 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
+                    <select value={discMode} onChange={e => setDiscMode(e.target.value as "amount" | "percent")} aria-label="Discount type" className="px-2 rounded-xl border border-slate-200 text-sm bg-white"><option value="amount">₹</option><option value="percent">%</option></select>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-slate-50 rounded-xl px-4 py-3 text-sm space-y-1">
+                <div className="flex justify-between text-slate-500"><span>Subtotal</span><span>₹{subtotal.toLocaleString("en-IN")}</span></div>
+                {discount > 0 && <div className="flex justify-between text-emerald-700"><span>Discount{discMode === "percent" ? ` (${discountVal}%)` : ""}</span><span>−₹{discount.toLocaleString("en-IN")}</span></div>}
+                <div className="flex justify-between text-slate-500"><span>GST ({gst}%)</span><span>₹{gstAmt.toLocaleString("en-IN")}</span></div>
+                <div className="flex justify-between font-bold text-slate-900 pt-1 border-t border-slate-200"><span>Total</span><span>₹{total.toLocaleString("en-IN")}</span></div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-medium text-slate-600 block mb-1">Status</label>
+                  <label className="text-xs font-medium text-slate-600 block mb-1">Payment</label>
                   <select value={status} onChange={e => setStatus(e.target.value as InvoiceStatus)} className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
-                    <option value="paid">Paid</option><option value="draft">Draft</option><option value="sent">Sent</option><option value="partially_paid">Partially Paid</option>
+                    <option value="sent">Not paid yet</option><option value="paid">Paid now</option><option value="draft">Draft</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-slate-600 block mb-1">Payment Method</label>
+                  <label className="text-xs font-medium text-slate-600 block mb-1">Method of payment</label>
                   <select value={payMethod} onChange={e => setPayMethod(e.target.value as PaymentMethod)} className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
-                    <option value="cash">Cash</option><option value="upi">UPI</option><option value="card">Card</option><option value="insurance">Insurance</option><option value="other">Other</option>
+                    <option value="physical">Physical (at the desk)</option>
+                    <option value="qr" disabled>QR code (coming soon)</option>
+                    <option value="upi" disabled>UPI (coming soon)</option>
+                    <option value="online" disabled>Online payment link (coming soon)</option>
                   </select>
                 </div>
               </div>
 
               {err && <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{err}</p>}
-              <button type="submit" disabled={saving} className="w-full py-3 bg-sky-500 hover:bg-sky-600 disabled:opacity-60 text-white rounded-xl text-sm font-semibold">
-                {saving ? "Creating…" : `Create Invoice — ₹${total.toLocaleString("en-IN")}`}
-              </button>
+              <div className="grid grid-cols-2 gap-2">
+                <button type="submit" disabled={saving} className="py-3 bg-sky-500 hover:bg-sky-600 disabled:opacity-60 text-white rounded-xl text-sm font-semibold">
+                  {saving ? "Creating…" : "Create invoice"}
+                </button>
+                <button type="button" disabled={saving} onClick={(e) => handleCreate(e as unknown as React.FormEvent, true)} className="py-3 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white rounded-xl text-sm font-semibold">
+                  Create &amp; send on WhatsApp
+                </button>
+              </div>
+              {fromAppt && <button type="button" disabled={saving} onClick={async () => { await authFetch("/api/appointments/status", { body: { clinicId, appointmentId: fromAppt.id, status: "completed" } }).catch(() => null); router.push(`/appointments?date=${fromAppt.date}`); }} className="w-full text-xs text-slate-500 hover:underline">No bill needed: just mark the appointment done</button>}
             </form>
+            )}
           </div>
         </div>
       )}

@@ -2,7 +2,7 @@ export type ClinicRole = "admin" | "doctor" | "intern" | "nurse" | "receptionist
 export type AppointmentStatus = "confirmed" | "cancelled" | "completed" | "no_show";
 export type AppointmentMode = "in_clinic" | "video";
 export type InvoiceStatus = "draft" | "sent" | "paid" | "partially_paid" | "cancelled";
-export type PaymentMethod = "cash" | "upi" | "card" | "insurance" | "other";
+export type PaymentMethod = "cash" | "upi" | "card" | "insurance" | "other" | "physical" | "qr" | "online";
 export type StockCategory = "medicine" | "consumable" | "equipment" | "lab_supply" | "other";
 
 export interface Clinic {
