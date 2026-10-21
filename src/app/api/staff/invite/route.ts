@@ -58,11 +58,11 @@ export async function POST(req: NextRequest) {
     if (email) {
       userId = await findUserByEmail(db, email);
       if (!userId) {
-        const { data, error } = await (db as any).auth.admin.inviteUserByEmail(email, {
-          redirectTo: `${(process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin).replace(/\/$/, "")}/login?invited=1`,
-          data: { name, role },
-        });
-        if (error) throw new HttpError(400, /rate limit/i.test(error.message) ? "Too many emails were sent. Wait a little, or add your own SMTP in Supabase." : error.message);
+        // No invitation email: the admin sets a temporary password and gives it to the person, who can change it after signing in.
+        const pw = typeof b.password === "string" ? b.password : "";
+        if (pw.length < 8) throw new HttpError(400, "Set a temporary password of at least 8 characters for this person.");
+        const { data, error } = await (db as any).auth.admin.createUser({ email, password: pw, email_confirm: true, user_metadata: { name, role } });
+        if (error) throw new HttpError(400, /already|registered/i.test(error.message) ? "That email already has a login. Try again, it will be linked." : error.message);
         userId = data.user.id; invited = true;
       }
       // Never change the role of someone who is already an admin (this used to turn the owner into a doctor

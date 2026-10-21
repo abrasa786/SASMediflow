@@ -56,6 +56,7 @@ export default function StaffPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<ClinicRole>("receptionist");
   const [inviteName, setInviteName] = useState("");
+  const [invitePw, setInvitePw] = useState("");
   const [inviteSpecialty, setInviteSpecialty] = useState("");
   const [exp, setExp] = useState("");
   const [phone, setPhone] = useState("");
@@ -96,13 +97,13 @@ export default function StaffPage() {
     setSending(true); setInviteErr(""); setInviteMsg("");
     try {
       const data = await authFetch("/api/staff/invite", { body: {
-        clinicId, email: inviteEmail, role: inviteRole, name: inviteName, specialty: inviteSpecialty,
+        clinicId, email: inviteEmail, password: invitePw, role: inviteRole, name: inviteName, specialty: inviteSpecialty,
         ...(isDoc ? { experienceYears: exp, phone, fee, shiftStart, shiftEnd, breakStart, breakEnd, days } : {}),
       } });
       setInviteMsg(isDoc
-        ? `✅ ${inviteName} added${data.hoursSaved ? " with their weekly hours" : ""}.${inviteEmail ? (data.invited ? ` Invitation sent to ${inviteEmail}.` : " Linked to the existing login.") : " No login created (they can still be booked)."}`
-        : `✅ ${data.invited ? "Invitation sent to" : "Added"} ${inviteEmail}`);
-      setInviteEmail(""); setInviteName(""); setInviteSpecialty(""); setExp(""); setPhone(""); setFee(""); setBreakStart(""); setBreakEnd("");
+        ? `✅ ${inviteName} added${data.hoursSaved ? " with their weekly hours" : ""}.${inviteEmail ? (data.invited ? ` Login created for ${inviteEmail}. Give them the password you set.` : " Linked to the existing login.") : " No login created (they can still be booked)."}`
+        : `✅ ${data.invited ? "Login created for" : "Added"} ${inviteEmail}${data.invited ? ". Give them the password you set." : ""}`);
+      setInvitePw(""); setInviteEmail(""); setInviteName(""); setInviteSpecialty(""); setExp(""); setPhone(""); setFee(""); setBreakStart(""); setBreakEnd("");
       await reload(clinicId);
     } catch (e: any) {
       setInviteErr(e.message);
@@ -185,6 +186,16 @@ export default function StaffPage() {
                 <label className="text-xs font-medium text-slate-600 block mb-1">Email {inviteRole === "doctor" ? "(optional, only if they need a login)" : "*"}</label>
                 <input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" required={inviteRole !== "doctor"} />
               </div>
+              {inviteEmail.trim() && (
+                <div>
+                  <label className="text-xs font-medium text-slate-600 block mb-1">Temporary password * <span className="text-slate-400">(no email is sent, tell them this)</span></label>
+                  <div className="flex gap-2">
+                    <input value={invitePw} onChange={e => setInvitePw(e.target.value)} minLength={8} autoComplete="off" className="w-full min-w-0 px-3 py-2.5 rounded-xl border border-slate-200 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-sky-500" placeholder="At least 8 characters" />
+                    <button type="button" onClick={() => setInvitePw(Array.from(crypto.getRandomValues(new Uint8Array(9)), (n) => "abcdefghjkmnpqrstuvwxyz23456789"[n % 31]).join("") + "7A")} className="px-3 rounded-xl border border-slate-200 text-xs text-slate-600 hover:bg-slate-50 shrink-0">Generate</button>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">If this email already has a login, it is linked and this password is ignored.</p>
+                </div>
+              )}
               {inviteRole === "intern" && (
                 <div>
                   <label className="text-xs font-medium text-slate-600 block mb-1">Department / rotation</label>
@@ -233,10 +244,10 @@ export default function StaffPage() {
               {inviteMsg && <p className="text-xs text-emerald-700 bg-emerald-50 px-3 py-2 rounded-lg">{inviteMsg}</p>}
               {inviteErr && <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{inviteErr}</p>}
               <button type="submit" disabled={sending} className="w-full py-3 bg-sky-500 hover:bg-sky-600 disabled:opacity-60 text-white rounded-xl text-sm font-semibold">
-                {sending ? "Saving…" : inviteRole === "doctor" ? "Add doctor" : "Send invitation"}
+                {sending ? "Saving…" : inviteRole === "doctor" ? "Add doctor" : "Add staff member"}
               </button>
             </form>
-            <p className="text-xs text-slate-400 mt-3 text-center">With an email, they get a link to set up their login and join this clinic.</p>
+            <p className="text-xs text-slate-400 mt-3 text-center">With an email and a temporary password they can sign in straight away. No invitation email is sent.</p>
           </div>
         </div>
       )}
