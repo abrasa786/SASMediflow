@@ -24,6 +24,18 @@ export default function SignupPage() {
   const [brandName, setBrandName] = useState("");
   const [specialty, setSpecialty] = useState("");
   const [city, setCity] = useState("");
+  const [address, setAddress] = useState("");
+  const [clinicPhone, setClinicPhone] = useState("");
+  const [pin, setPin] = useState<{ lat: number; lng: number } | null>(null);
+  const [pinMsg, setPinMsg] = useState("");
+  function pinHere() {
+    setPinMsg("");
+    if (!navigator.geolocation) return setPinMsg("This browser can't share your location. You can add it later in Settings.");
+    navigator.geolocation.getCurrentPosition(
+      (p) => { setPin({ lat: Number(p.coords.latitude.toFixed(6)), lng: Number(p.coords.longitude.toFixed(6)) }); setPinMsg("Location saved. Do this at the clinic for the best accuracy."); },
+      () => setPinMsg("Couldn't get your location. Allow location access, or add it later in Settings."),
+      { enableHighAccuracy: true, timeout: 10000 });
+  }
   const [logo, setLogo] = useState<string | null>(null);
   const [color, setColor] = useState("#2563eb");
   const [tagline, setTagline] = useState("");
@@ -61,7 +73,7 @@ export default function SignupPage() {
       const res = await fetch("/api/clinic/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clinicName, brandName, specialty, city, adminName, email, password, logoDataUrl: logo, primaryColor: color, tagline, aiName: aiName.trim() || undefined, slug: shownSlug.length >= 3 ? shownSlug : undefined, customDomain: domain.trim() || undefined }),
+        body: JSON.stringify({ clinicName, brandName, specialty, city, address: address.trim() || undefined, clinicPhone: clinicPhone.trim() || undefined, latitude: pin?.lat, longitude: pin?.lng, adminName, email, password, logoDataUrl: logo, primaryColor: color, tagline, aiName: aiName.trim() || undefined, slug: shownSlug.length >= 3 ? shownSlug : undefined, customDomain: domain.trim() || undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create clinic");
@@ -157,6 +169,18 @@ export default function SignupPage() {
                     placeholder="e.g. Bangalore"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Clinic address</label>
+                  <textarea value={address} onChange={(e) => setAddress(e.target.value)} rows={2} maxLength={300} placeholder="Shop / building, street, area, pincode" className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Clinic phone</label>
+                  <input type="tel" value={clinicPhone} onChange={(e) => setClinicPhone(e.target.value)} maxLength={20} placeholder="Number patients can call" className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                </div>
+                <div>
+                  <button type="button" onClick={pinHere} className="px-3.5 py-2.5 rounded-xl border border-blue-200 text-blue-700 text-sm font-medium hover:bg-blue-50">📍 {pin ? "Update clinic location" : "Use my location as the clinic's pin"}</button>
+                  <p className="text-xs text-gray-400 mt-1">{pinMsg || "Lets patients find you by distance in the Mediflow patient app. Your browser will ask for permission. Optional."}</p>
                 </div>
                 <div className="pt-2 border-t border-gray-100">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Your brand (optional, change anytime in Settings)</p>

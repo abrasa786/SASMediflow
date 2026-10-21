@@ -12,7 +12,7 @@ import { addDomainToVercel, checkAiName, checkColor, checkDomain, checkSlug, new
  */
 export async function POST(req: NextRequest) {
   try {
-    const { clinicName, brandName, specialty, city, adminName, email, password, logoDataUrl, primaryColor, tagline, slug, customDomain, aiName } = await req.json();
+    const { clinicName, brandName, specialty, city, address, clinicPhone, latitude, longitude, adminName, email, password, logoDataUrl, primaryColor, tagline, slug, customDomain, aiName } = await req.json();
 
     if (!clinicName || !specialty || !adminName || !email || !password) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
@@ -89,6 +89,16 @@ export async function POST(req: NextRequest) {
       await admin.auth.admin.deleteUser(userId);
       return NextResponse.json({ error: clinicError.message }, { status: 500 });
     }
+
+    // address, phone and map pin are optional extras: a problem here must never stop the clinic being created
+    try {
+      const extra: Record<string, unknown> = {};
+      if (typeof address === "string" && address.trim()) extra.address = address.trim().slice(0, 300);
+      if (typeof clinicPhone === "string" && /^[0-9+()\s-]{6,20}$/.test(clinicPhone.trim())) extra.phone = clinicPhone.trim();
+      if (Object.keys(extra).length) await admin.from("clinics").update(extra).eq("id", clinic.id);
+      const la = Number(latitude), lo = Number(longitude);
+      if (latitude != null && longitude != null && la >= -90 && la <= 90 && lo >= -180 && lo <= 180) await admin.from("clinics").update({ latitude: la, longitude: lo }).eq("id", clinic.id);
+    } catch { /* ignore */ }
 
     const { error: staffError } = await admin
       .from("clinic_staff")

@@ -335,54 +335,93 @@ function PayModal({ clinicId, s, onClose, onPaid }: { clinicId: string; s: Sitti
   );
 }
 
+const MAX_SITTINGS = 12; // the database accepts 1 to 12 sittings per plan
+const BLANK_TEMPLATE: Template = { id: "", name: "", description: "", total_amount: 0, sittings: [{ label: "Sitting 1", gap_days: 0, share: 100 }] };
+
 function TemplatesTab({ templates, clinicId, canEdit, onChanged }: { templates: Template[]; clinicId: string | null; canEdit: boolean; onChanged: () => void }) {
   const [edit, setEdit] = useState<Template | null>(null);
   return (
-    <div className="grid md:grid-cols-2 gap-4">
-      {templates.map((t) => (
-        <div key={t.id} className="bg-white rounded-2xl border border-slate-200 p-5">
-          <div className="flex justify-between gap-3"><div><p className="font-bold text-slate-900">{t.name}</p><p className="text-sm text-slate-500">{t.description}</p></div><p className="font-semibold tabular-nums">{inr(t.total_amount)}</p></div>
-          <ol className="mt-3 space-y-1.5 text-sm">
-            {t.sittings.map((s, i) => (
-              <li key={i} className="flex justify-between gap-3 text-slate-700"><span>{i + 1}. {s.label}{i > 0 && <span className="text-slate-400"> · after {s.gap_days} days</span>}</span><span className="tabular-nums text-slate-500">{s.share}%</span></li>
-            ))}
-          </ol>
-          {canEdit && <button onClick={() => setEdit(t)} className="mt-3 text-sm text-sky-700 hover:underline">Edit</button>}
-        </div>
-      ))}
-      {templates.length === 0 && <p className="text-sm text-slate-500">No templates yet.</p>}
-      {edit && clinicId && <TemplateEditor t={edit} onClose={() => setEdit(null)} onSaved={() => { setEdit(null); setSetupFlag(clinicId, "templates_reviewed", true); onChanged(); }} />}
+    <div>
+      {canEdit && <div className="mb-4"><button onClick={() => setEdit({ ...BLANK_TEMPLATE, sittings: BLANK_TEMPLATE.sittings.map((x) => ({ ...x })) })} className="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold">+ New template</button></div>}
+      <div className="grid md:grid-cols-2 gap-4">
+        {templates.map((t) => (
+          <div key={t.id} className="bg-white rounded-2xl border border-slate-200 p-5">
+            <div className="flex justify-between gap-3"><div><p className="font-bold text-slate-900">{t.name}</p><p className="text-sm text-slate-500">{t.description}</p></div><p className="font-semibold tabular-nums">{inr(t.total_amount)}</p></div>
+            <ol className="mt-3 space-y-1.5 text-sm">
+              {t.sittings.map((s, i) => (
+                <li key={i} className="flex justify-between gap-3 text-slate-700"><span>{i + 1}. {s.label}{i > 0 && <span className="text-slate-400"> · after {s.gap_days} days</span>}</span><span className="tabular-nums text-slate-500">{s.share}%</span></li>
+              ))}
+            </ol>
+            {canEdit && <button onClick={() => setEdit(t)} className="mt-3 text-sm text-sky-700 hover:underline">Edit</button>}
+          </div>
+        ))}
+        {templates.length === 0 && <p className="text-sm text-slate-500">No templates yet.{canEdit && " Use “New template” to add one."}</p>}
+      </div>
+      {edit && clinicId && <TemplateEditor t={edit} clinicId={clinicId} onClose={() => setEdit(null)} onSaved={() => { setEdit(null); setSetupFlag(clinicId, "templates_reviewed", true); onChanged(); }} />}
     </div>
   );
 }
 
-function TemplateEditor({ t, onClose, onSaved }: { t: Template; onClose: () => void; onSaved: () => void }) {
+function evenShares(n: number) { const base = Math.floor(100 / n); return Array.from({ length: n }, (_, i) => (i === n - 1 ? 100 - base * (n - 1) : base)); }
+
+function TemplateEditor({ t, clinicId, onClose, onSaved }: { t: Template; clinicId: string; onClose: () => void; onSaved: () => void }) {
+  const isNew = !t.id;
+  const [name, setName] = useState(t.name);
+  const [desc, setDesc] = useState(t.description ?? "");
   const [total, setTotal] = useState(String(t.total_amount));
   const [rows, setRows] = useState(t.sittings.map((s) => ({ ...s })));
   const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
   const shareSum = rows.reduce((n, r) => n + (Number(r.share) || 0), 0);
   function set(i: number, k: string, v: string) { setRows(rows.map((r, j) => j === i ? { ...r, [k]: k === "label" ? v : Number(v) } : r)); }
+  function rebalance(next: typeof rows) { const sh = evenShares(next.length); return next.map((r, i) => ({ ...r, share: sh[i] })); }
+  function add() { if (rows.length >= MAX_SITTINGS) return; setRows(rebalance([...rows, { label: `Sitting ${rows.length + 1}`, gap_days: 7, share: 0 }])); }
+  function remove(i: number) { if (rows.length <= 1) return; const next = rows.filter((_, j) => j !== i); next[0] = { ...next[0], gap_days: 0 }; setRows(rebalance(next)); }
   async function save() {
+    setErr("");
+    if (!name.trim()) return setErr("Give the template a name.");
     if (Math.round(shareSum) !== 100) return setErr(`Shares must add up to 100% (now ${shareSum}%).`);
     if (rows.some((r) => !r.label.trim())) return setErr("Every sitting needs a name.");
+    if (rows.some((r, i) => i > 0 && (!Number.isInteger(r.gap_days) || r.gap_days < 0 || r.gap_days > 365))) return setErr("“Days after” must be a whole number from 0 to 365.");
     const n = Number(total); if (!Number.isFinite(n) || n < 0) return setErr("Enter a valid total.");
-    const { error } = await (supabase as any).from("treatment_templates").update({ total_amount: n, sittings: rows }).eq("id", t.id);
+    setBusy(true);
+    const body = { name: name.trim(), description: desc.trim() || null, total_amount: n, sittings: rows.map((r, i) => ({ ...r, label: r.label.trim(), gap_days: i === 0 ? 0 : r.gap_days })) };
+    const q = isNew ? (supabase as any).from("treatment_templates").insert({ clinic_id: clinicId, ...body }) : (supabase as any).from("treatment_templates").update(body).eq("id", t.id);
+    const { error } = await q; setBusy(false);
+    if (error) return setErr(error.code === "23505" ? "You already have a template with that name." : error.message);
+    onSaved();
+  }
+  async function del() {
+    if (!window.confirm(`Delete “${t.name}”? Plans already made from it are not affected.`)) return;
+    setBusy(true);
+    const { error } = await (supabase as any).from("treatment_templates").update({ is_active: false, name: `${t.name} (deleted ${Date.now()})` }).eq("id", t.id);
+    setBusy(false);
     if (error) return setErr(error.message); onSaved();
   }
   return (
-    <Modal title={`Edit ${t.name}`} onClose={onClose}>
+    <Modal title={isNew ? "New treatment template" : `Edit ${t.name}`} onClose={onClose}>
       <div className="space-y-3">
+        <div><label className={labelCls}>Name</label><input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Braces (6 visits)" /></div>
+        <div><label className={labelCls}>Short description <span className="text-slate-400">(optional)</span></label><input className={inputCls} value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
         <div><label className={labelCls}>Total amount (₹)</label><input className={inputCls} inputMode="decimal" value={total} onChange={(e) => setTotal(e.target.value)} /></div>
         {rows.map((r, i) => (
-          <div key={i} className="grid grid-cols-[1fr_72px_72px] gap-2 items-end">
+          <div key={i} className="grid grid-cols-[1fr_64px_64px_28px] gap-2 items-end">
             <div><label className={labelCls}>Sitting {i + 1}</label><input className={inputCls} value={r.label} onChange={(e) => set(i, "label", e.target.value)} /></div>
             <div><label className={labelCls}>Days after</label><input className={inputCls} inputMode="numeric" value={r.gap_days} disabled={i === 0} onChange={(e) => set(i, "gap_days", e.target.value)} /></div>
             <div><label className={labelCls}>Share %</label><input className={inputCls} inputMode="decimal" value={r.share} onChange={(e) => set(i, "share", e.target.value)} /></div>
+            <button type="button" onClick={() => remove(i)} disabled={rows.length <= 1} aria-label={`Remove sitting ${i + 1}`} className="h-[42px] text-slate-400 hover:text-red-600 disabled:opacity-30">✕</button>
           </div>
         ))}
+        <div className="flex items-center justify-between">
+          <button type="button" onClick={add} disabled={rows.length >= MAX_SITTINGS} className="text-sm text-sky-700 hover:underline disabled:opacity-40">+ Add a sitting{rows.length >= MAX_SITTINGS ? ` (max ${MAX_SITTINGS})` : ""}</button>
+          <button type="button" onClick={() => setRows(rebalance(rows))} className="text-xs text-slate-500 hover:underline">Split shares evenly</button>
+        </div>
         <p className={`text-xs ${Math.round(shareSum) === 100 ? "text-slate-500" : "text-red-600"}`}>Shares add up to {shareSum}% (must be 100%).</p>
         {err && <p className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2" role="alert">{err}</p>}
-        <div className="flex justify-end gap-2"><button onClick={onClose} className="px-4 py-2.5 rounded-xl border border-slate-200 text-sm">Cancel</button><button onClick={save} className="px-4 py-2.5 rounded-xl bg-sky-600 text-white text-sm font-semibold">Save</button></div>
+        <div className="flex justify-between gap-2">
+          <div>{!isNew && <button onClick={del} disabled={busy} className="px-3 py-2.5 rounded-xl text-sm text-red-600 hover:bg-red-50">Delete</button>}</div>
+          <div className="flex gap-2"><button onClick={onClose} className="px-4 py-2.5 rounded-xl border border-slate-200 text-sm">Cancel</button><button onClick={save} disabled={busy} className="px-4 py-2.5 rounded-xl bg-sky-600 text-white text-sm font-semibold disabled:opacity-60">{busy ? "Saving…" : "Save"}</button></div>
+        </div>
       </div>
     </Modal>
   );
