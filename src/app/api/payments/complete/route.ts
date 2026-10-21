@@ -25,7 +25,8 @@ export async function POST(req: NextRequest) {
       const { error } = await db.from("invoices").update({ status: "paid", paid_amount: inv.total, payment_method: "physical" }).eq("id", inv.id).eq("clinic_id", b.clinicId);
       if (error) throw new HttpError(400, error.message);
     }
-    let appointmentDate: string | null = null, appointmentId: string | null = inv.appointment_id ?? null;
+    const appointmentId: string | null = inv.appointment_id ?? null;
+    let appointmentDate: string | null = null;
     if (appointmentId) {
       const { data: a } = await db.from("appointments").select("appointment_date, status").eq("id", appointmentId).eq("clinic_id", b.clinicId).maybeSingle();
       appointmentDate = a?.appointment_date ?? null;
