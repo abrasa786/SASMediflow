@@ -7,13 +7,14 @@ import { encryptionEnabled } from "@/lib/ai/crypto";
 
 export const dynamic = "force-dynamic";
 
-const view = (settings: any, clinicId: string, req: NextRequest) => {
+const view = (settings: any, clinicId: string, req: NextRequest, geo: any = {}) => {
   const s = onlineSettings(settings), g = settings?.online_booking?.gateway;
   const gw = gatewayFor(settings);
   return {
     ...s, keyId: g?.key_id ?? (gw ? gw.keyId : ""), hasSecret: !!(g?.secret || gw), hasWebhookSecret: !!(g?.webhook_secret || gw?.webhookSecret),
     encryptionReady: encryptionEnabled(), usingPlatformKeys: !g?.secret && !!gw,
     webhookUrl: `${req.nextUrl.origin}/api/razorpay/webhook?c=${clinicId}`,
+    listed: !!geo.listed_in_app, latitude: geo.latitude ?? null, longitude: geo.longitude ?? null,
   };
 };
 
@@ -21,8 +22,8 @@ export async function GET(req: NextRequest) {
   return handle(async () => {
     const clinicId = req.nextUrl.searchParams.get("clinicId");
     const { db } = await requireClinicMember(req, clinicId, ["admin"]);
-    const { data: c } = await db.from("clinics").select("slug, settings").eq("id", clinicId).maybeSingle();
-    return { ...view(c?.settings, clinicId!, req), slug: c?.slug ?? "" };
+    const { data: c } = await db.from("clinics").select("slug, settings, listed_in_app, latitude, longitude").eq("id", clinicId).maybeSingle();
+    return { ...view(c?.settings, clinicId!, req, c), slug: c?.slug ?? "" };
   });
 }
 
@@ -49,8 +50,14 @@ export async function POST(req: NextRequest) {
     }
     settings.online_booking = next;
     if (next.enabled && fee > 0 && !gatewayFor(settings)) throw new HttpError(400, "Add your Razorpay key id and secret first, or set the fee to 0.");
-    const { error } = await db.from("clinics").update({ settings }).eq("id", b.clinicId);
+    // where the clinic is, and whether it appears in the patient app
+    const geoGiven = "listed" in b;
+    const lat = b.latitude === "" || b.latitude == null ? null : Number(b.latitude), lng = b.longitude === "" || b.longitude == null ? null : Number(b.longitude);
+    if ((lat !== null && !(lat >= -90 && lat <= 90)) || (lng !== null && !(lng >= -180 && lng <= 180)) || (lat === null) !== (lng === null)) throw new HttpError(400, "Enter both latitude and longitude, for example 12.9352 and 77.6245.");
+    if (geoGiven && b.listed && lat === null) throw new HttpError(400, "Add your clinic's location before showing it in the patient app.");
+    const { error } = await db.from("clinics").update(geoGiven ? { settings, latitude: lat, longitude: lng, listed_in_app: !!b.listed } : { settings }).eq("id", b.clinicId);
     if (error) throw new HttpError(500, "Could not save.");
-    return view(settings, b.clinicId, req);
+    const { data: g } = await db.from("clinics").select("listed_in_app, latitude, longitude").eq("id", b.clinicId).maybeSingle();
+    return view(settings, b.clinicId, req, g);
   });
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { corsHeaders } from "@/lib/server/cors";
 
 /**
  * A clinic's own domain (e.g. appointments.yourclinic.com) shows that clinic's public page at "/".
@@ -16,6 +17,14 @@ const RESERVED = new Set(["www", "app", "api", "admin", "mail"]);
 const CANONICAL = (process.env.CANONICAL_HOST ?? "").trim().toLowerCase();
 
 export function middleware(req: NextRequest) {
+  // The public booking and search services may be called by the Mediflow patient app (CORS). Nothing else about them changes.
+  if (req.nextUrl.pathname.startsWith("/api/public/")) {
+    const cors = corsHeaders(req.headers.get("origin"));
+    if (req.method === "OPTIONS") return new NextResponse(null, { status: cors ? 204 : 403, headers: cors ?? {} });
+    const res = NextResponse.next();
+    if (cors) Object.entries(cors).forEach(([k, v]) => res.headers.set(k, v));
+    return res;
+  }
   const h = (req.headers.get("host") ?? "").toLowerCase();
   if (CANONICAL && h.endsWith(".vercel.app")) {
     const u = req.nextUrl.clone(); u.protocol = "https"; u.host = CANONICAL; u.port = "";
@@ -39,4 +48,4 @@ export function middleware(req: NextRequest) {
   return NextResponse.rewrite(url);
 }
 
-export const config = { matcher: ["/((?!_next/|favicon.ico|api/).*)"] };
+export const config = { matcher: ["/((?!_next/|favicon.ico|api/).*)", "/api/public/:path*"] };
