@@ -8,7 +8,7 @@ test("only the patient app's sites may read the public services", () => {
   assert.equal(corsHeaders("https://evil.example"), null);
   assert.equal(corsHeaders(null), null);
   assert.equal(corsHeaders("https://app.mediflow.in", "https://app.mediflow.in/")?.["Access-Control-Allow-Origin"], "https://app.mediflow.in");
-  assert.deepEqual(allowedOrigins("not a url, https://ok.in"), ["http://localhost:3000", "https://ok.in"]);
+  assert.deepEqual(allowedOrigins("not a url, https://ok.in"), ["http://localhost:3000", "https://mediflow-ai-ten.vercel.app", "https://ok.in"]);
 });
 
 test("specialty tags become safe patterns", () => {

@@ -1,10 +1,11 @@
 /**
  * Which websites may call the public booking/search services from a browser: the Mediflow patient app.
- * Set PATIENT_APP_ORIGINS (comma separated, e.g. https://app.mediflow.in) in hosting. http://localhost:3000 is always allowed for development.
+ * Set PATIENT_APP_ORIGINS (comma separated, e.g. https://app.mediflow.in) in hosting to add more.
+ * Always allowed: http://localhost:3000 (development) and the live patient app, https://mediflow-ai-ten.vercel.app.
  * These services carry no cookies and no private data, so this only decides which sites a browser lets read the answers.
  */
 export function allowedOrigins(env: string | undefined = process.env.PATIENT_APP_ORIGINS): string[] {
-  return Array.from(new Set(["http://localhost:3000", ...(env ?? "").split(",").map((o) => o.trim().replace(/\/$/, "")).filter((o) => /^https?:\/\/[^/\s]+$/i.test(o))]));
+  return Array.from(new Set(["http://localhost:3000", "https://mediflow-ai-ten.vercel.app", ...(env ?? "").split(",").map((o) => o.trim().replace(/\/$/, "")).filter((o) => /^https?:\/\/[^/\s]+$/i.test(o))]));
 }
 
 export function corsHeaders(origin: string | null, env?: string): Record<string, string> | null {
