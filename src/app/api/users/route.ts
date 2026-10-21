@@ -31,3 +31,20 @@ export async function DELETE(req: NextRequest) {
     return { success: true, ...data };
   });
 }
+
+/** PATCH: admin only. Sets a new temporary password for another member of this clinic (no email is sent). */
+export async function PATCH(req: NextRequest) {
+  return handle(async () => {
+    const b = await req.json();
+    const { db, userId } = await requireClinicMember(req, b.clinicId, ["admin"]);
+    if (typeof b.userId !== "string" || !/^[0-9a-f-]{36}$/i.test(b.userId)) throw new HttpError(400, "userId is required.");
+    if (typeof b.password !== "string" || b.password.length < 8) throw new HttpError(400, "The new password must be at least 8 characters.");
+    if (b.userId === userId) throw new HttpError(400, "Change your own password from My profile.");
+    const { data: row } = await db.from("clinic_staff").select("role").eq("clinic_id", b.clinicId).eq("user_id", b.userId).maybeSingle();
+    if (!row) throw new HttpError(404, "That user is not in this clinic.");
+    if (row.role === "admin") throw new HttpError(403, "You can't reset another admin's password.");
+    const { error } = await db.auth.admin.updateUserById(b.userId, { password: b.password });
+    if (error) throw new HttpError(400, error.message);
+    return { success: true };
+  });
+}
