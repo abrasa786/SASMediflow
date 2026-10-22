@@ -143,14 +143,16 @@ export default function BillingPage() {
     if (!selectedPatient) { setErr("Select a patient"); return; }
     if (items.some(i => !i.name.trim())) { setErr("Fill all item names"); return; }
     setSaving(true); setErr("");
-    const { data: made, error } = await createInvoice({
+    const base = {
       clinic_id: clinicId,
       clinic_patient_id: selectedPatient.id,
       ...(fromAppt ? { appointment_id: fromAppt.id } : {}),
       items, subtotal, discount, gst_percent: gst, gst_amount: gstAmt, total,
       status, paid_amount: status === "paid" ? total : 0,
-      payment_method: payMethod,
-    });
+    };
+    let { data: made, error } = await createInvoice({ ...base, payment_method: payMethod } as any);
+    // the database hasn't had migration 018 yet: record the desk payment as cash instead
+    if (error && /payment_method/.test(error.message)) ({ data: made, error } = await createInvoice({ ...base, payment_method: "cash" } as any));
     if (error || !made) { setSaving(false); setErr(error?.message ?? "Could not create the invoice."); return; }
     if (credits.length && items.some((i) => i.name.startsWith("Less: online booking fee"))) {
       await supabase.from("appointments").update({ advance_invoice: made.id }).in("id", credits.map((c) => c.id));

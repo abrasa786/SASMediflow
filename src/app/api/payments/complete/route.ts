@@ -22,7 +22,9 @@ export async function POST(req: NextRequest) {
     if (inv.status === "cancelled") throw new HttpError(409, "This invoice is cancelled.");
 
     if (inv.status !== "paid") {
-      const { error } = await db.from("invoices").update({ status: "paid", paid_amount: inv.total, payment_method: "physical" }).eq("id", inv.id).eq("clinic_id", b.clinicId);
+      let { error } = await db.from("invoices").update({ status: "paid", paid_amount: inv.total, payment_method: "physical" }).eq("id", inv.id).eq("clinic_id", b.clinicId);
+      // the database hasn't had migration 018 yet: "physical" is not allowed there, so record it as cash (same thing at the desk)
+      if (error && /payment_method/.test(error.message)) ({ error } = await db.from("invoices").update({ status: "paid", paid_amount: inv.total, payment_method: "cash" }).eq("id", inv.id).eq("clinic_id", b.clinicId));
       if (error) throw new HttpError(400, error.message);
     }
     const appointmentId: string | null = inv.appointment_id ?? null;

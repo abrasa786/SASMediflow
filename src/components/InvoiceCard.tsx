@@ -53,12 +53,14 @@ export default function InvoiceCard({ clinicId, form, accent }: { clinicId: stri
     if (items.some((i) => !i.name.trim())) { setErr("Fill every item name."); return; }
     setBusy(true); setErr("");
     try {
-      const { data: made, error } = await createInvoice({
+      const base = {
         clinic_id: clinicId, clinic_patient_id: form.patientId,
         ...(form.appointmentId ? { appointment_id: form.appointmentId } : {}),
         items, subtotal, discount, gst_percent: gst, gst_amount: gstAmt, total,
-        status: paid ? "paid" : "sent", paid_amount: paid ? total : 0, payment_method: "physical",
-      } as any);
+        status: paid ? "paid" : "sent", paid_amount: paid ? total : 0,
+      };
+      let { data: made, error } = await createInvoice({ ...base, payment_method: "physical" } as any);
+      if (error && /payment_method/.test(error.message)) ({ data: made, error } = await createInvoice({ ...base, payment_method: "cash" } as any));
       if (error || !made) throw new Error(error?.message ?? "Could not create the invoice.");
       if (form.creditIds.length && items.some((i) => i.name.startsWith("Less: online booking fee"))) {
         await supabase.from("appointments").update({ advance_invoice: made.id }).in("id", form.creditIds);
