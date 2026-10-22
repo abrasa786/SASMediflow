@@ -101,7 +101,7 @@ export default function PurchasingPage() {
         {loading ? <p className="text-sm text-slate-400">Loading…</p> : tab === "orders" ? (
           orders.length === 0 ? <Empty icon="📦" title="No purchase orders yet" text={suppliers.length ? "Create one to order stock. When it arrives, receive it and your stock goes up automatically." : "Add a supplier first, then create your first order."} action={suppliers.length ? "Create an order" : "Add a supplier"} onAction={() => suppliers.length ? setNewPo({}) : (setTab("suppliers"), setSupEdit({}))} />
           : <div className="space-y-3">{orders.map((o) => (
-            <div key={o.id} className="bg-white rounded-xl border border-slate-200 p-4">
+            <div key={o.id} onClick={(e: React.MouseEvent) => { if ((e.target as HTMLElement).closest("button, a, input, select")) return; router.push(`/purchasing/orders/${o.id}`); }} className="bg-white rounded-xl border border-slate-200 p-4 cursor-pointer hover:border-sky-300">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div><p className="font-semibold text-slate-900">{o.po_number} <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${STATUS[o.status]}`}>{o.status.replace("_", " ")}</span></p>
                   <p className="text-sm text-slate-500">{o.suppliers?.name} · ordered {day(o.order_date)}{o.expected_date ? ` · expected ${day(o.expected_date)}` : ""}</p></div>
@@ -119,7 +119,7 @@ export default function PurchasingPage() {
             <button onClick={() => setSupEdit({})} className="mb-4 px-4 py-2 rounded-xl border border-slate-300 text-sm font-semibold hover:bg-slate-50">+ Add supplier</button>
             {suppliers.length === 0 ? <Empty icon="🏷️" title="No suppliers yet" text="Add the companies you buy from, with their GSTIN and payment terms." /> :
               <div className="grid md:grid-cols-2 gap-3">{suppliers.map((s) => (
-                <div key={s.id} className="bg-white rounded-xl border border-slate-200 p-4">
+                <div key={s.id} onClick={(e: React.MouseEvent) => { if ((e.target as HTMLElement).closest("button, a, input, select")) return; router.push(`/purchasing/suppliers/${s.id}`); }} className="bg-white rounded-xl border border-slate-200 p-4 cursor-pointer hover:border-sky-300">
                   <p className="font-semibold text-slate-900">{s.name}</p>
                   <p className="text-sm text-slate-500">{[s.contact_name, s.phone].filter(Boolean).join(" · ") || "No contact yet"}</p>
                   <p className="text-xs text-slate-400 mt-1">{s.gstin ? `GSTIN ${s.gstin} · ` : ""}{s.payment_terms_days ? `Pay within ${s.payment_terms_days} days` : "Pay on delivery"}</p>
@@ -131,7 +131,7 @@ export default function PurchasingPage() {
           <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto"><table className="w-full text-sm">
             <thead><tr className="text-left text-xs uppercase tracking-wide text-slate-500 bg-slate-50"><th className="px-4 py-2 font-medium">Supplier</th><th className="px-2 py-2 font-medium">Bill / PO</th><th className="px-2 py-2 font-medium">Due</th><th className="px-2 py-2 font-medium text-right">Amount</th><th className="px-2 py-2 font-medium text-right">Paid</th><th className="px-2 py-2 font-medium">Status</th><th className="px-4 py-2" /></tr></thead>
             <tbody className="divide-y divide-slate-100">{bills.map((b) => { const late = b.status !== "paid" && b.due_date && b.due_date < todayIso(); return (
-              <tr key={b.id}><td className="px-4 py-3 font-medium text-slate-800">{b.suppliers?.name}</td>
+              <tr key={b.id} onClick={(e: React.MouseEvent) => { if ((e.target as HTMLElement).closest("button, a, input, select")) return; router.push(`/purchasing/bills/${b.id}`); }} className="cursor-pointer hover:bg-slate-50"><td className="px-4 py-3 font-medium text-slate-800">{b.suppliers?.name}</td>
                 <td className="px-2 py-3 text-slate-600">{b.bill_number || "–"}<span className="block text-xs text-slate-400">{b.purchase_orders?.po_number}</span></td>
                 <td className={`px-2 py-3 ${late ? "text-red-700 font-medium" : "text-slate-600"}`}>{day(b.due_date)}{late ? " · overdue" : ""}</td>
                 <td className="px-2 py-3 text-right tabular-nums">{inr(b.amount)}</td><td className="px-2 py-3 text-right tabular-nums">{inr(b.paid_amount)}</td>

@@ -19,6 +19,17 @@ export async function POST(req: NextRequest) {
       if (error) throwRpc(error);
       return data;
     }
+    if (b.action === "update") {
+      // header details only: dates and notes. Items, quantities and totals change through receiving, so stock and bills stay correct.
+      if (typeof b.poId !== "string") throw new HttpError(400, "poId is required.");
+      const ok = (v: unknown) => v == null || v === "" || /^\d{4}-\d{2}-\d{2}$/.test(String(v));
+      if (!ok(b.expectedDate) || !ok(b.orderDate)) throw new HttpError(400, "Enter valid dates.");
+      const patch: Record<string, unknown> = { expected_date: b.expectedDate || null, notes: typeof b.notes === "string" ? b.notes.trim().slice(0, 500) || null : null };
+      if (b.orderDate) patch.order_date = b.orderDate;
+      const { error } = await db.from("purchase_orders").update(patch).eq("id", b.poId).eq("clinic_id", b.clinicId);
+      if (error) throw new HttpError(400, error.message);
+      return { updated: true };
+    }
     if (b.action === "cancel") {
       const { error } = await db.rpc("po_cancel", { p_clinic: b.clinicId, p_po: b.poId });
       if (error) throwRpc(error);

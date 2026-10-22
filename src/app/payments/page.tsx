@@ -72,7 +72,7 @@ export default function PaymentsPage() {
                 </tr></thead>
                 <tbody className="divide-y divide-slate-50">
                   {list.map((i) => (
-                    <tr key={i.id} className="hover:bg-slate-50">
+                    <tr key={i.id} onClick={(e) => { if ((e.target as HTMLElement).closest("button, a, input, select, textarea")) return; router.push(`/billing/${i.id}`); }} className="hover:bg-slate-50 cursor-pointer">
                       <td className="px-4 py-3"><p className="font-medium text-slate-900">{i.patient?.name ?? "—"}</p><p className="text-xs text-slate-400">{i.patient?.phone ?? ""}</p></td>
                       <td className="px-4 py-3 font-mono text-xs text-slate-600">{i.invoice_number ?? "—"}</td>
                       <td className="px-4 py-3 text-right font-semibold">₹{Number(i.total || 0).toLocaleString("en-IN")}</td>

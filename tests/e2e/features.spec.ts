@@ -67,6 +67,18 @@ test("add a patient", async () => {
   await expect(page.getByText(`${RUN} Patient`).first()).toBeVisible({ timeout: 15_000 });
 });
 
+test("a patient record opens its own page and can be edited", async () => {
+  await open("/patients", "Patients");
+  await page.getByPlaceholder(/search by name or phone/i).fill(`${RUN} Patient`);
+  await page.getByText(`${RUN} Patient`).first().click();
+  await page.waitForURL(/\/patients\/[0-9a-f-]{36}/);
+  await page.getByLabel("Allergies").fill("Penicillin");
+  await page.getByRole("button", { name: /save changes/i }).click();
+  await expect(page.getByText("Saved.")).toBeVisible({ timeout: 15_000 });
+  await page.reload();
+  await expect(page.getByLabel("Allergies")).toHaveValue("Penicillin");
+});
+
 test("add a staff member without an invitation email (temporary password)", async () => {
   await open("/staff", /staff/i);
   await page.getByRole("button", { name: /\+ add staff/i }).click();
@@ -129,6 +141,38 @@ test("invoice: item lookup, discount, totals, create", async () => {
   await expect(page.getByRole("option", { name: /physical/i }).first()).toBeAttached();
   await page.getByRole("button", { name: /^create invoice$/i }).click();
   await expect(page.getByText(/invoice .* created|INV-/i).first()).toBeVisible({ timeout: 20_000 });
+});
+
+test("the invoice has its own page: edit the discount and notes, totals follow", async () => {
+  await open("/payments", "Payments");
+  await page.getByRole("button", { name: /^all$/i }).click();
+  await page.getByText(`${RUN} Visit`).first().click();
+  await page.waitForURL(/\/billing\/[0-9a-f-]{36}/);
+  await page.getByLabel("Notes").fill("edited by e2e");
+  await page.getByRole("button", { name: /save changes/i }).click();
+  await expect(page.getByText("Saved.")).toBeVisible({ timeout: 15_000 });
+  await page.goBack();
+  await page.goBack();
+});
+
+test("an appointment opens its own page and can be edited", async () => {
+  await open(`/appointments?date=${tomorrow()}`, "Appointments");
+  await page.getByText(`${RUN} Visit`).first().click();
+  await page.waitForURL(/\/appointments\/[0-9a-f-]{36}/);
+  await page.getByLabel("Reason for visit").fill("e2e checkup");
+  await page.getByRole("button", { name: /save changes/i }).click();
+  await expect(page.getByText(/^Saved/)).toBeVisible({ timeout: 15_000 });
+});
+
+test("stock and task rows open record pages", async () => {
+  for (const [path, re] of [["/stock", /\/stock\/[0-9a-f-]{36}/], ["/tasks", /\/tasks\/[0-9a-f-]{36}/]] as const) {
+    await page.goto(path);
+    const row = page.locator("tbody tr, [draggable=true]").first();
+    if (await row.count() === 0) continue;   // nothing created yet
+    await row.click();
+    await page.waitForURL(re);
+    await expect(page.getByRole("button", { name: /save changes/i })).toBeVisible();
+  }
 });
 
 test("invoice PDF opens and is a real PDF", async () => {

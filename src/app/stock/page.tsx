@@ -138,7 +138,7 @@ export default function StockPage() {
                     const low = item.quantity <= (item.min_quantity ?? 0);
                     const out = item.quantity === 0;
                     return (
-                      <tr key={item.id} className={`hover:bg-slate-50 ${low ? "bg-amber-50/50" : ""}`}>
+                      <tr key={item.id} onClick={(e) => { if ((e.target as HTMLElement).closest("button, a, input, select, textarea")) return; router.push(`/stock/${item.id}`); }} className={`hover:bg-slate-50 cursor-pointer ${low ? "bg-amber-50/50" : ""}`}>
                         <td className="px-5 py-3">
                           <p className="font-medium text-slate-900">{item.name}</p>
                           <p className="text-xs text-slate-400">{item.unit}</p>

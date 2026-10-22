@@ -145,7 +145,7 @@ export default function AppointmentsPage() {
               {appointments.map((a) => {
                 const busy = busyId === a.id;
                 return (
-                  <div key={a.id} className={`flex flex-col lg:flex-row lg:items-center gap-3 px-5 py-4 ${busy ? "opacity-60" : ""}`}>
+                  <div key={a.id} onClick={(e) => { if ((e.target as HTMLElement).closest("button, a, input, select, textarea")) return; router.push(`/appointments/${a.id}`); }} className={`flex flex-col lg:flex-row lg:items-center gap-3 px-5 py-4 cursor-pointer hover:bg-slate-50 ${busy ? "opacity-60" : ""}`}>
                     <div className="w-24 shrink-0">
                       <p className="text-sm font-mono font-semibold text-slate-700">{a.appointment_time}</p>
                       {a.duration_minutes ? <p className="text-[11px] text-slate-400">{a.duration_minutes} min</p> : null}

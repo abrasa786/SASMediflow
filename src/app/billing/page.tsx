@@ -249,7 +249,7 @@ export default function BillingPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-50">
                   {filtered.map((inv) => (
-                    <tr key={inv.id} className="hover:bg-slate-50">
+                    <tr key={inv.id} onClick={(e) => { if ((e.target as HTMLElement).closest("button, a, input, select, textarea")) return; router.push(`/billing/${inv.id}`); }} className="hover:bg-slate-50 cursor-pointer">
                       <td className="px-5 py-3 font-mono text-xs text-slate-600">{inv.invoice_number ?? "—"}</td>
                       <td className="px-5 py-3">
                         <p className="font-medium text-slate-900">{(inv as any).clinic_patients?.name ?? inv.patient?.name ?? "—"}</p>

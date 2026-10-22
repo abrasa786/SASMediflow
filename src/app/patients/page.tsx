@@ -119,8 +119,8 @@ export default function PatientsPage() {
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {filtered.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-5 py-3 font-medium text-slate-900">{p.name}</td>
+                  <tr key={p.id} onClick={(e) => { if ((e.target as HTMLElement).closest("button, a, input, select, textarea")) return; router.push(`/patients/${p.id}`); }} className="hover:bg-slate-50 transition-colors cursor-pointer">
+                    <td className="px-5 py-3 font-medium text-sky-700 hover:underline">{p.name}</td>
                     <td className="px-5 py-3 text-slate-500 font-mono text-xs">{p.phone || "—"}</td>
                     <td className="px-5 py-3 hidden md:table-cell">
                       {p.blood_group ? (

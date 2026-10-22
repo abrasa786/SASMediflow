@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import { getActiveClinicId } from "@/lib/auth";
 import { supabase as supabaseClient } from "@/lib/supabase";
@@ -39,6 +40,7 @@ const PRIORITY_LABELS: Record<Priority, string> = {
 };
 
 export default function TasksPage() {
+  const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -189,6 +191,7 @@ export default function TasksPage() {
                       draggable
                       onDragStart={() => setDragId(task.id)}
                       onDragEnd={() => setDragId(null)}
+                      onClick={(e) => { if ((e.target as HTMLElement).closest("button, a, input, select, textarea")) return; router.push(`/tasks/${task.id}`); }}
                       className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 cursor-grab active:cursor-grabbing hover:shadow-md hover:-translate-y-0.5 transition-all group"
                     >
                       <div className="flex items-start justify-between gap-2 mb-2">
