@@ -138,6 +138,11 @@ export default function BillingPage() {
     catch (e: any) { return { status: "failed", error: e.message }; }
   }
 
+  async function openPdf(invoiceId: string) {
+    try { const r = await authFetch<{ pdfUrl: string }>("/api/invoices/send", { body: { clinicId, invoiceId, linkOnly: true } }); window.open(r.pdfUrl, "_blank"); }
+    catch (e: any) { alert(e.message); }
+  }
+
   async function handleCreate(e: React.FormEvent, alsoSend = false) {
     e.preventDefault();
     if (!selectedPatient) { setErr("Select a patient"); return; }
@@ -260,6 +265,7 @@ export default function BillingPage() {
                       <td className="px-5 py-3 text-slate-500 text-xs hidden md:table-cell capitalize">{inv.payment_method ?? "—"}</td>
                       <td className="px-5 py-3">
                         <a href={`/billing/print?id=${inv.id}`} target="_blank" rel="noreferrer" className="text-xs text-sky-700 hover:underline font-medium mr-3">Print</a>
+                        <button onClick={() => openPdf(inv.id)} className="text-xs text-sky-700 hover:underline font-medium mr-3">PDF</button>
                         <button onClick={async () => { const r = await sendOnWhatsApp(inv.id); if (r.status === "sent") alert("Invoice sent on WhatsApp."); else if (r.link && confirm(`${r.error ?? "Could not send automatically."}\n\nOpen WhatsApp to send it yourself?`)) window.open(r.link, "_blank"); else alert(r.error ?? "Could not send."); }} className="text-xs text-emerald-700 hover:underline font-medium mr-3">Send</button>
                         {inv.status !== "paid" && inv.status !== "cancelled" && (
                           <button onClick={() => markPaid(inv)} className="text-xs text-emerald-600 hover:text-emerald-800 font-medium">Payment received</button>
@@ -293,6 +299,7 @@ export default function BillingPage() {
                 </div>
                 {err && <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{err}</p>}
                 <div className="grid grid-cols-1 gap-2">
+                  <button type="button" onClick={() => openPdf(created.id)} className="py-3 border border-slate-300 rounded-xl text-sm font-semibold text-slate-700">Download invoice PDF</button>
                   <button type="button" disabled={busyAct !== ""} onClick={async () => { setBusyAct("send"); const w = await sendOnWhatsApp(created.id); setCreated({ ...created, whatsapp: w }); setBusyAct(""); }} className="py-3 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white rounded-xl text-sm font-semibold">{busyAct === "send" ? "Sending…" : created.whatsapp?.status === "sent" ? "Send again on WhatsApp" : "Send invoice on WhatsApp"}</button>
                   <button type="button" disabled={busyAct !== ""} onClick={() => finishPayment(created.id)} className="py-3 bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white rounded-xl text-sm font-semibold">{busyAct === "pay" ? "Saving…" : "Payment received (physical)"}</button>
                   <a href={`/billing/print?id=${created.id}`} target="_blank" rel="noreferrer" className="text-center py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 hover:bg-slate-50">Print invoice</a>

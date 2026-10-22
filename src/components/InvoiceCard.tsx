@@ -21,7 +21,7 @@ export default function InvoiceCard({ clinicId, form, accent }: { clinicId: stri
   const [active, setActive] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
-  const [done, setDone] = useState<{ number: string; total: number; note: string; link?: string } | null>(null);
+  const [done, setDone] = useState<{ id: string; number: string; total: number; note: string; link?: string } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -73,11 +73,11 @@ export default function InvoiceCard({ clinicId, form, accent }: { clinicId: stri
       }
       if (send) {
         const r = await authFetch<{ status: string; error?: string; link?: string }>("/api/invoices/send", { body: { clinicId, invoiceId: made.id } }).catch((e: any) => ({ status: "failed", error: e.message, link: undefined }));
-        note += `${note ? " " : ""}${r.status === "sent" ? "✅ Sent to the patient on WhatsApp." : r.status === "link" ? "WhatsApp isn't automatic yet; use the button below." : r.status === "skipped" ? "No phone number, so nothing was sent." : `⚠️ WhatsApp failed (${r.error ?? "unknown error"}).`}`;
+        note += `${note ? " " : ""}${r.status === "sent" ? "✅ Sent to the patient on WhatsApp." : r.status === "link" ? "WhatsApp isn't automatic yet; use the button below (the PDF link is included)." : r.status === "skipped" ? "No phone number, so nothing was sent." : `⚠️ WhatsApp failed (${r.error ?? "unknown error"}).`}`;
         link = r.link;
       }
       authFetch("/api/flows/process", { body: { clinicId } }).catch(() => null);
-      setDone({ number: made.invoice_number ?? "", total, note, link });
+      setDone({ id: made.id, number: made.invoice_number ?? "", total, note, link });
     } catch (e: any) { setErr(e.message); }
     setBusy(false);
   }
@@ -88,6 +88,7 @@ export default function InvoiceCard({ clinicId, form, accent }: { clinicId: stri
         <p className="font-semibold">✅ Invoice {done.number} created · {inr(done.total)}</p>
         {done.note && <p className="mt-1">{done.note}</p>}
         {done.link && <a href={done.link} target="_blank" rel="noreferrer" className="inline-block mt-2 px-2.5 py-1 rounded-lg bg-white border border-emerald-300">Send on WhatsApp</a>}
+        <button type="button" onClick={async () => { try { const r = await authFetch<{ pdfUrl: string }>("/api/invoices/send", { body: { clinicId, invoiceId: done.id, linkOnly: true } }); window.open(r.pdfUrl, "_blank"); } catch { /* ignore */ } }} className="inline-block mt-2 ml-2 px-2.5 py-1 rounded-lg bg-white border border-emerald-300">PDF</button>
         <a href="/billing" className="inline-block mt-2 ml-2 underline">Open Billing</a>
       </div>
     );

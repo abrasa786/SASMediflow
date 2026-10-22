@@ -78,6 +78,24 @@ export async function sendViaCloudApi(phone: string, text: string, template?: { 
   return j?.messages?.[0]?.id as string | undefined;
 }
 
+/** Sends a PDF (by public link) as a WhatsApp document with a short caption. Same 24-hour rule as free text. */
+export async function sendDocumentViaCloudApi(phone: string, link: string, filename: string, caption: string) {
+  const id = process.env.WHATSAPP_PHONE_NUMBER_ID, token = process.env.WHATSAPP_ACCESS_TOKEN;
+  const ver = process.env.WHATSAPP_API_VERSION || "v21.0";
+  const res = await fetch(`https://graph.facebook.com/${ver}/${id}/messages`, {
+    method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ messaging_product: "whatsapp", to: phone, type: "document", document: { link, filename, caption: caption.slice(0, 1000) } }),
+    signal: AbortSignal.timeout(10000),
+  });
+  const j: any = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const code = j?.error?.code;
+    const hint = code === 131047 || code === 131026 ? " (WhatsApp only allows free messages within 24 hours of the patient's last message. Set up an approved template for first contact.)" : "";
+    throw new Error((j?.error?.message ?? `WhatsApp error ${res.status}`) + hint);
+  }
+  return j?.messages?.[0]?.id as string | undefined;
+}
+
 export const whatsappConfigured = () => !!(process.env.WHATSAPP_PHONE_NUMBER_ID && process.env.WHATSAPP_ACCESS_TOKEN);
 
 async function deliver(
