@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { authFetch } from "@/lib/api";
 import { getActiveClinicId } from "@/lib/auth";
+import InvoiceCard, { type InvoiceForm } from "@/components/InvoiceCard";
 
-interface Msg { role: "user" | "assistant"; content: string; actions?: { label: string; url: string }[]; slots?: string[] }
+interface Msg { role: "user" | "assistant"; content: string; actions?: { label: string; url: string }[]; slots?: string[]; form?: InvoiceForm }
 const KEY = "mf_assistant_";
 const read = (cid: string): { msgs: Msg[]; draft: any; sid?: string; open: boolean } => { try { return JSON.parse(sessionStorage.getItem(KEY + cid) ?? "") ; } catch { return { msgs: [], draft: null, open: false }; } };
 
@@ -39,7 +40,7 @@ export default function AssistantWidget({ botName, color }: { botName: string; c
       const history = msgs.slice(-8).map((x) => ({ role: x.role, content: x.content }));
       const r = await authFetch("/api/chatbot", { body: { clinicId: cid, message: m, history, draft: draft.current, sessionId: sid.current } });
       sid.current = r.sessionId ?? sid.current; draft.current = r.draft ?? null;
-      setMsgs((x) => [...x, { role: "assistant", content: r.reply, actions: r.actions, slots: r.slots }]);
+      setMsgs((x) => [...x, { role: "assistant", content: r.reply, actions: r.actions, slots: r.slots, form: r.form }]);
     } catch (e: any) { setMsgs((x) => [...x, { role: "assistant", content: `Sorry, something went wrong: ${e.message}` }]); }
     setBusy(false);
   }
@@ -68,6 +69,7 @@ export default function AssistantWidget({ botName, color }: { botName: string; c
                 <div className={`max-w-[88%] rounded-2xl px-3 py-2 whitespace-pre-line ${m.role === "user" ? "text-white rounded-br-sm" : "bg-white border border-slate-100 text-slate-800 rounded-bl-sm"}`} style={m.role === "user" ? { background: accent } : undefined}>
                   {m.content}
                   {m.slots && i === msgs.length - 1 && <div className="flex flex-wrap gap-1 mt-2">{m.slots.map((t) => <button key={t} onClick={() => send(t)} className="text-xs px-2 py-0.5 rounded-full border border-sky-200 bg-sky-50 text-sky-700">{t}</button>)}</div>}
+                  {m.form && <InvoiceCard clinicId={cid} form={m.form} accent={accent} />}
                   {m.actions?.map((a) => <a key={a.url} href={a.url} className="block mt-2 text-xs px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">{a.label}</a>)}
                 </div>
               </div>

@@ -7,9 +7,10 @@ import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
 import { getClinic } from "@/lib/clinic";
 import AiHistoryPanel from "@/components/AiHistoryPanel";
+import InvoiceCard, { type InvoiceForm } from "@/components/InvoiceCard";
 
 interface Action { label: string; url: string }
-interface Message { role: "user" | "assistant"; content: string; ts: Date; actions?: Action[]; slots?: string[] }
+interface Message { role: "user" | "assistant"; content: string; ts: Date; actions?: Action[]; slots?: string[]; form?: InvoiceForm }
 
 const QUICK_PROMPTS = [
   "Book Priya Sharma 9876543210 tomorrow 10am",
@@ -63,7 +64,7 @@ export default function ChatbotPage() {
       sessionRef.current = data.sessionId ?? sessionRef.current;
       setTurns((n) => n + 1);
       draftRef.current = data.draft ?? null;
-      setMessages(prev => [...prev, { role: "assistant", content: data.reply, ts: new Date(), actions: data.actions, slots: data.slots }]);
+      setMessages(prev => [...prev, { role: "assistant", content: data.reply, ts: new Date(), actions: data.actions, slots: data.slots, form: data.form }]);
     } catch (e: any) {
       setMessages(prev => [...prev, { role: "assistant", content: `Sorry, I ran into an error: ${e.message}`, ts: new Date() }]);
     } finally {
@@ -119,6 +120,7 @@ export default function ChatbotPage() {
                     {msg.slots.map(t => <button key={t} onClick={() => send(t)} className="text-xs px-2.5 py-1 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-full border border-sky-200">{t}</button>)}
                   </div>
                 )}
+                {msg.form && <InvoiceCard clinicId={clinicId} form={msg.form} accent="#0ea5e9" />}
                 {msg.actions && msg.actions.length > 0 && (
                   <div className="flex flex-col gap-1.5 mt-2">
                     {msg.actions.map(a => <a key={a.url} href={a.url} target="_blank" rel="noreferrer" className="text-xs px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg border border-emerald-200 font-medium">{a.label} ↗</a>)}

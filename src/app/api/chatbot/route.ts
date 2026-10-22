@@ -15,7 +15,7 @@ import { getPolicy, isUuid, loadHistory, logInteraction, newSession } from "@/li
 export const dynamic = "force-dynamic";
 
 type Action = { label: string; url: string };
-interface Reply { reply: string; draft: any; actions?: Action[]; appointmentId?: string; slots?: string[] }
+interface Reply { reply: string; draft: any; form?: Record<string, unknown>; actions?: Action[]; appointmentId?: string; slots?: string[] }
 
 const ABORT = /^\s*(no|nope|nah|cancel that|never ?mind|stop|forget it|abort|start over|reset)\W*$/i;
 const drName = (n?: string | null) => (!n ? "the doctor" : /^dr\.?\s/i.test(n) ? n : `Dr. ${n}`);
@@ -239,12 +239,19 @@ async function handleInvoice(db: any, clinicId: string, message: string): Promis
   if (!pts.length) return { reply: `I couldn't find that patient${phone ? ` with number ${phone}` : ""}. Open Billing to create the invoice and pick or add the patient.`, draft: null, actions: [{ label: "Open Billing", url: "/billing" }] };
   if (pts.length > 1) return { reply: `More than one patient matches: ${pts.map((p) => p.name).join(", ")}. Send the mobile number of the right one.`, draft: null };
   const pt = pts[0];
-  const { data: ap } = await db.from("appointments").select("id, appointment_date, status").eq("clinic_id", clinicId).eq("clinic_patient_id", pt.id).neq("status", "cancelled").order("appointment_date", { ascending: false }).limit(1);
+  const { data: ap } = await db.from("appointments").select("id, appointment_date, consultation_fee, doctors(name)").eq("clinic_id", clinicId).eq("clinic_patient_id", pt.id).neq("status", "cancelled").order("appointment_date", { ascending: false }).limit(1);
   const a = ap?.[0];
+  const { data: cr } = await db.from("appointments").select("id, advance_paid, appointment_date").eq("clinic_id", clinicId).eq("clinic_patient_id", pt.id).eq("source", "online").gt("advance_paid", 0).is("advance_invoice", null).neq("status", "cancelled").order("appointment_date");
+  const doctor: string = a?.doctors?.name ?? "";
+  const fee = Number(a?.consultation_fee || 0);
+  const items = [
+    { name: `Consultation${doctor ? ` — ${/^dr\.?\s/i.test(doctor) ? doctor : "Dr. " + doctor}` : ""}`, qty: 1, unit_price: fee, amount: fee },
+    ...((cr ?? []) as any[]).map((c) => ({ name: `Less: online booking fee paid (${c.appointment_date})`, qty: 1, unit_price: -Number(c.advance_paid), amount: -Number(c.advance_paid) })),
+  ];
   return {
-    reply: a ? `Found ${pt.name}. Their latest visit was on ${formatDateNice(a.appointment_date)}. Tap below to open the invoice for it, where you can add items, a discount and send it on WhatsApp.`
-             : `Found ${pt.name}, but there is no visit on record. Open Billing and choose the patient to make the invoice.`,
-    draft: null, actions: [{ label: a ? `Invoice for ${pt.name}` : "Open Billing", url: a ? `/billing?appointment=${a.id}` : "/billing" }],
+    reply: `Here is the invoice for ${pt.name}${a ? ` (visit on ${formatDateNice(a.appointment_date)})` : ""}. Add items and a discount, then create it or send it on WhatsApp.`,
+    draft: null,
+    form: { patientId: pt.id, patientName: pt.name, phone: pt.phone, appointmentId: a?.id ?? null, items, creditIds: ((cr ?? []) as any[]).map((c) => c.id) },
   };
 }
 
