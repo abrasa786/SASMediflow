@@ -223,6 +223,31 @@ async function handleAddDoctor(db: any, clinicId: string, role: string, prev: Do
   return { reply: lines.join("\n"), draft: null, actions: [{ label: "Open Availability", url: "/availability" }] };
 }
 
+const INVOICE_ASK = /\b(create|make|generate|raise|prepare|new|open|start)\b[^.?!]*\b(invoice|bill)\b/i;
+
+/** "Create an invoice for 9187983647 / for Abdul": opens the billing form for that patient's latest visit. Any half-finished booking is dropped. */
+async function handleInvoice(db: any, clinicId: string, message: string): Promise<Reply> {
+  const phone = (message.match(/(?<!\d)(?:\+?91[\s-]?)?([6-9]\d{9})(?!\d)/) ?? [])[1];
+  let pts: { id: string; name: string; phone: string | null }[] = [];
+  if (phone) {
+    const { data } = await db.from("clinic_patients").select("id, name, phone").eq("clinic_id", clinicId).ilike("phone", `%${phone}`).limit(6);
+    pts = data ?? [];
+  } else {
+    const nm = message.replace(INVOICE_ASK, " ").replace(/\b(for|an?|the|of|to|please|invoice|bill|patient)\b/gi, " ").trim();
+    if (nm) pts = await findPatients(db, clinicId, nm);
+  }
+  if (!pts.length) return { reply: `I couldn't find that patient${phone ? ` with number ${phone}` : ""}. Open Billing to create the invoice and pick or add the patient.`, draft: null, actions: [{ label: "Open Billing", url: "/billing" }] };
+  if (pts.length > 1) return { reply: `More than one patient matches: ${pts.map((p) => p.name).join(", ")}. Send the mobile number of the right one.`, draft: null };
+  const pt = pts[0];
+  const { data: ap } = await db.from("appointments").select("id, appointment_date, status").eq("clinic_id", clinicId).eq("clinic_patient_id", pt.id).neq("status", "cancelled").order("appointment_date", { ascending: false }).limit(1);
+  const a = ap?.[0];
+  return {
+    reply: a ? `Found ${pt.name}. Their latest visit was on ${formatDateNice(a.appointment_date)}. Tap below to open the invoice for it, where you can add items, a discount and send it on WhatsApp.`
+             : `Found ${pt.name}, but there is no visit on record. Open Billing and choose the patient to make the invoice.`,
+    draft: null, actions: [{ label: a ? `Invoice for ${pt.name}` : "Open Billing", url: a ? `/billing?appointment=${a.id}` : "/billing" }],
+  };
+}
+
 async function customTerms(db: any, clinicId: string): Promise<string[]> {
   try { const sc = await loadSchema(db, clinicId); return sc.objects.filter((o) => !o.is_system).flatMap((o) => [o.label, o.plural_label]); } catch { return []; }
 }
@@ -251,6 +276,8 @@ export async function POST(req: NextRequest) {
       const sc = checkScope(message, { module: "assistant", hasOpenRequest: open, hasHistory: history.length > 0, terms });
       if (!sc.ok) { intentName = "out_of_scope"; return { reply: refusal("assistant", botName, undefined), draft: open ? prev : null }; }
       if (prev?.intent && prev.intent !== "other" && ABORT.test(message)) return { reply: "No problem, I've dropped that request.", draft: null };
+
+      if (INVOICE_ASK.test(message) && !/\b(report|dashboard|chart)\b/i.test(message)) { intentName = "invoice"; return handleInvoice(db, b.clinicId, message); }
 
       // Calendar, records and reports/dashboards: the assistant's modules, for everyone within their role.
       const ax = await runAssistantModules({ db, clinicId: b.clinicId, userId, role, message, prev, today, botName });
