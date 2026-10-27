@@ -79,6 +79,8 @@
   button[class*="text-xs"]:not([class*="rounded-full"]), a[class*="text-xs"][class*="font-semibold"] { min-height: 40px; padding-top: 0.5rem; padding-bottom: 0.5rem; }
   /* narrow controls (Edit, ‹ ›, ×) are 44px wide as well as tall */
   button:not([role="switch"]), [role="button"], a[class*="rounded"][class*="px-"] { min-width: 44px; }
+  /* plain text links (← Billing, a patient name, "Appointment"): a bigger tap area with no change to how the page looks */
+  main a[href]:not([class*="px-"]):not([class*="block"]):not([class*="flex"]) { display: inline-block; padding-block: 0.65rem; margin-block: -0.65rem; overflow-wrap: anywhere; }
   [role="switch"] { min-height: 28px; }
   select { min-height: 44px; }
   input[type="checkbox"], input[type="radio"] { width: 1.25rem; height: 1.25rem; }
