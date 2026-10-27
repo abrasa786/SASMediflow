@@ -84,7 +84,7 @@ export default function AvailabilityPage() {
 
   return (
     <AppShell>
-      <div className="p-6 max-w-4xl mx-auto">
+      <div className="p-4 sm:p-6 max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold text-slate-900">Doctor availability</h1>
         <p className="text-sm text-slate-500 mt-1 mb-6">Working days, breaks, slot length and leave. Booking, the assistant and rescheduling only offer times that fit this.</p>
 
@@ -105,26 +105,29 @@ export default function AvailabilityPage() {
 
             {doc && (
               <fieldset disabled={!canEdit || busy} className="space-y-6">
-                <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5">
+                <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-4 sm:p-5">
                   <h2 className="font-semibold text-slate-900 mb-3">Weekly schedule</h2>
-                  <div className="space-y-2 overflow-x-auto">
+                  <div className="divide-y divide-slate-100">
                     {rows.map((r) => (
-                      <div key={r.weekday} className="grid grid-cols-[110px_1fr] sm:grid-cols-[110px_auto_auto] items-center gap-3 min-w-[560px]">
-                        <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
-                          <input type="checkbox" checked={r.on} onChange={(e) => upd(r.weekday, { on: e.target.checked })} /> {DAYS[r.weekday]}
+                      <div key={r.weekday} className="py-3 first:pt-0 last:pb-0 sm:flex sm:items-start sm:gap-4">
+                        <label className="flex items-center gap-2 text-sm font-medium text-slate-700 sm:w-28 sm:pt-2.5 shrink-0">
+                          <input type="checkbox" checked={r.on} onChange={(e) => upd(r.weekday, { on: e.target.checked })} className="h-5 w-5" /> {DAYS[r.weekday]}
+                          {!r.on && <span className="text-xs font-normal text-slate-400 sm:hidden">Day off</span>}
                         </label>
                         {r.on ? (
-                          <>
-                            <div className="flex items-center gap-2 text-sm text-slate-500">
-                              <input type="time" value={r.start} onChange={(e) => upd(r.weekday, { start: e.target.value })} className={inputCls} /> to
-                              <input type="time" value={r.end} onChange={(e) => upd(r.weekday, { end: e.target.value })} className={inputCls} />
+                          <div className="mt-2 sm:mt-0 grid gap-2 min-w-0 flex-1">
+                            <div className="flex items-center gap-2 text-sm text-slate-500 min-w-0">
+                              <span className="w-12 shrink-0">Hours</span>
+                              <input type="time" value={r.start} onChange={(e) => upd(r.weekday, { start: e.target.value })} className={`${inputCls} min-w-0 flex-1 sm:flex-none sm:w-32`} /> <span>to</span>
+                              <input type="time" value={r.end} onChange={(e) => upd(r.weekday, { end: e.target.value })} className={`${inputCls} min-w-0 flex-1 sm:flex-none sm:w-32`} />
                             </div>
-                            <div className="flex items-center gap-2 text-sm text-slate-500">
-                              Break <input type="time" value={r.break_start} onChange={(e) => upd(r.weekday, { break_start: e.target.value })} className={inputCls} /> to
-                              <input type="time" value={r.break_end} onChange={(e) => upd(r.weekday, { break_end: e.target.value })} className={inputCls} />
+                            <div className="flex items-center gap-2 text-sm text-slate-500 min-w-0">
+                              <span className="w-12 shrink-0">Break</span>
+                              <input type="time" value={r.break_start} onChange={(e) => upd(r.weekday, { break_start: e.target.value })} className={`${inputCls} min-w-0 flex-1 sm:flex-none sm:w-32`} /> <span>to</span>
+                              <input type="time" value={r.break_end} onChange={(e) => upd(r.weekday, { break_end: e.target.value })} className={`${inputCls} min-w-0 flex-1 sm:flex-none sm:w-32`} />
                             </div>
-                          </>
-                        ) : <span className="text-sm text-slate-400 col-span-2">Day off</span>}
+                          </div>
+                        ) : <span className="hidden sm:block text-sm text-slate-400 sm:pt-2.5">Day off</span>}
                       </div>
                     ))}
                   </div>
@@ -132,7 +135,7 @@ export default function AvailabilityPage() {
                   <p className="text-xs text-slate-400 mt-2">Doctors with no saved schedule follow the clinic&apos;s working hours.</p>
                 </section>
 
-                <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5">
+                <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-4 sm:p-5">
                   <h2 className="font-semibold text-slate-900 mb-3">Slot length, fee and WhatsApp number</h2>
                   <div className="grid sm:grid-cols-3 gap-3">
                     <div><label className="text-xs font-medium text-slate-600 block mb-1">Slot length (minutes)</label><input type="number" min={5} max={120} value={slot} onChange={(e) => setSlot(e.target.value)} placeholder="Clinic default" className={`${inputCls} w-full`} /></div>
@@ -142,7 +145,7 @@ export default function AvailabilityPage() {
                   <button onClick={saveProfile} className="mt-4 px-4 py-2.5 bg-sky-500 hover:bg-sky-600 disabled:opacity-60 text-white rounded-xl text-sm font-semibold">Save details</button>
                 </section>
 
-                <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5">
+                <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-4 sm:p-5">
                   <h2 className="font-semibold text-slate-900 mb-3">Leave</h2>
                   <div className="flex flex-wrap items-end gap-3">
                     <div><label className="text-xs font-medium text-slate-600 block mb-1">From</label><input type="date" min={todayIso()} value={lFrom} onChange={(e) => { setLFrom(e.target.value); if (lTo < e.target.value) setLTo(e.target.value); }} className={inputCls} /></div>
