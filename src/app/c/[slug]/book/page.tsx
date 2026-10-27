@@ -39,6 +39,7 @@ export default function BookPage() {
   const [slots, setSlots] = useState<Slot[] | null>(null);
   const [slot, setSlot] = useState<Slot | null>(null);
   const [f, setF] = useState({ name: "", phone: "", email: "", symptoms: "" });
+  const [offers, setOffers] = useState(false);                     // optional, never ticked for them
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [pending, setPending] = useState<{ holdId: string; orderId: string; amount: number; keyId: string; expiresAt: string } | null>(null);
@@ -112,7 +113,7 @@ export default function BookPage() {
   async function book() {
     if (!canPay || !slot) return; setBusy(true); setErr("");
     try {
-      const d = await post("/api/public/book/hold", { ...(slug === "_host" ? { host: window.location.host } : { clinic: slug }), doctorId: slot.doctorId, date, time: slot.time, name: f.name, phone: f.phone, email: f.email, symptoms: f.symptoms });
+      const d = await post("/api/public/book/hold", { ...(slug === "_host" ? { host: window.location.host } : { clinic: slug }), doctorId: slot.doctorId, date, time: slot.time, name: f.name, phone: f.phone, email: f.email, symptoms: f.symptoms, offers });
       if (d.confirmed) { setDone(d.booking); window.scrollTo({ top: 0, behavior: "smooth" }); }
       else { const p = { holdId: d.holdId, orderId: d.orderId, amount: d.amount, keyId: d.keyId, expiresAt: d.expiresAt }; setPending(p); openCheckout(p); }
     } catch (e: any) { setErr(e.message); if (e.data?.code === "SLOT_UNAVAILABLE") loadSlots(); }
@@ -232,6 +233,10 @@ export default function BookPage() {
                 {f.phone && !phoneOk && <span className="text-xs text-red-600">Enter a 10-digit mobile number</span>}</label>
               <label className="block"><span className="text-sm text-slate-600">Email <span className="text-slate-400">(optional)</span></span><input type="email" autoComplete="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} className={input} /></label>
               <label className="block"><span className="text-sm text-slate-600">What&apos;s it about? <span className="text-slate-400">(optional)</span></span><input value={f.symptoms} onChange={(e) => setF({ ...f, symptoms: e.target.value })} className={input} placeholder="e.g. tooth pain, cleaning" /></label>
+              <label className="flex items-start gap-2 text-xs text-slate-500 leading-snug">
+                <input type="checkbox" checked={offers} onChange={(e) => setOffers(e.target.checked)} className="mt-0.5" />
+                <span>Send me occasional dental tips and offers on WhatsApp. You can stop any time by replying STOP.</span>
+              </label>
             </div>
             {cfg.booking.notice && <p className="mt-3 text-xs text-slate-500 bg-slate-50 rounded-lg p-3">{cfg.booking.notice}</p>}
           </section>

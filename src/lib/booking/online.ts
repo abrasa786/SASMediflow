@@ -53,9 +53,25 @@ export function summary(d: any) {
 }
 
 /** Payment is done (checkout success or webhook): make the appointment, message the patient, or refund if the slot was lost. Safe to call twice. */
+/**
+ * The patient ticked "send me occasional tips and offers". Save that, with the date, on their record.
+ * Best effort: a booking must never fail because of this (and it is skipped quietly until migration 020 has run).
+ */
+export async function recordOffersConsent(db: any, clinicId: string, phone: string | null | undefined, source = "online_booking") {
+  try {
+    const last10 = (phone ?? "").replace(/\D/g, "").slice(-10);
+    if (last10.length !== 10) return;
+    const { data } = await db.from("clinic_patients").select("id").eq("clinic_id", clinicId).ilike("phone", `%${last10}`).limit(5);
+    const ids = (data ?? []).map((r: any) => r.id);
+    if (ids.length) await db.from("clinic_patients").update({ marketing_opt_in: true, marketing_opt_in_at: new Date().toISOString(), marketing_opt_in_source: source, marketing_opt_out_at: null }).in("id", ids);
+  } catch { /* ignore */ }
+}
+
 export async function finalizeBooking(db: any, clinic: any, gw: Gateway | null, a: { holdId: string; orderId: string | null; paymentId: string | null }) {
+  const { data: held } = await db.from("booking_holds").select("patient").eq("id", a.holdId).maybeSingle();   // read before the hold is used up
   const { data, error } = await db.rpc("online_confirm", { p_hold: a.holdId, p_order: a.orderId, p_payment: a.paymentId });
   if (!error) {
+    if (held?.patient?.offers === true) await recordOffersConsent(db, clinic.id, held.patient.phone);
     if (!data?.already) {
       try { await notifyAppointment(db, clinic.id, data, "confirmation"); } catch { /* the booking is saved; messaging is best effort */ }
       await processFlowsSoon(db, clinic.id).catch(() => {});

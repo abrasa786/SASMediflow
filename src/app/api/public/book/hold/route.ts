@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
 
     const { data: hold, error } = await db.rpc("online_hold", { p: {
       clinic_id: c.id, doctor_id: doctorId, date: b.date, time: str(b.time, 12), symptoms: str(b.symptoms, 300),
-      patient: { name: str(b.name, 100), phone: str(b.phone, 20), email: str(b.email, 120) },
+      patient: { name: str(b.name, 100), phone: str(b.phone, 20), email: str(b.email, 120), offers: b.offers === true },
     } });
     if (error) {
       const { code, detail } = parseEngineError(error.message);
@@ -33,6 +33,13 @@ export async function POST(req: NextRequest) {
         throw new HttpError(409, "Sorry, that time is no longer available. Please pick another.", { code, suggestions });
       }
       throw new HttpError(code === "ERROR" ? 500 : 400, friendlyEngineMessage(code, detail), { code });
+    }
+
+    if (b.offers === true) {                                 // the stored hold only keeps name, phone and email, so note the opt-in on it
+      try {
+        const { data: h } = await db.from("booking_holds").select("patient").eq("id", hold.hold_id).maybeSingle();
+        if (h) await db.from("booking_holds").update({ patient: { ...h.patient, offers: true } }).eq("id", hold.hold_id);
+      } catch { /* optional */ }
     }
 
     if (!(hold.amount > 0)) {                                // nothing to pay
