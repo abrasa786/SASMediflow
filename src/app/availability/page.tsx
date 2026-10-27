@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "@/lib/toast";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
@@ -32,9 +33,10 @@ export default function AvailabilityPage() {
   const [doctorId, setDoctorId] = useState("");
   const [rows, setRows] = useState<Row[]>(blank());
   const [slot, setSlot] = useState(""); const [fee, setFee] = useState(""); const [phone, setPhone] = useState("");
-  const [lFrom, setLFrom] = useState(todayIso()); const [lTo, setLTo] = useState(todayIso()); const [lWhy, setLWhy] = useState("");
+  const [lFrom, setLFrom] = useState(""); const [lTo, setLTo] = useState(""); const [lWhy, setLWhy] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [bDays, setBDays] = useState<number[]>([1, 2, 3, 4, 5, 6]); const [bS, setBS] = useState("09:00"); const [bE, setBE] = useState("20:30"); const [bBs, setBBs] = useState("13:00"); const [bBe, setBBe] = useState("14:00");
   const [err, setErr] = useState("");
 
   const load = useCallback(async (id: string) => {
@@ -59,11 +61,19 @@ export default function AvailabilityPage() {
 
   async function post(body: any, ok: string) {
     setBusy(true); setMsg(null);
-    try { const r = await authFetch("/api/doctors/availability", { body: { clinicId, doctorId, ...body } }); await load(clinicId); setMsg({ ok: true, text: ok }); return r; }
+    try { const r = await authFetch("/api/doctors/availability", { body: { clinicId, doctorId, ...body } }); await load(clinicId); setMsg({ ok: true, text: ok }); toast(ok); return r; }
     catch (e: any) { setMsg({ ok: false, text: e.message }); }
     finally { setBusy(false); }
   }
 
+  function applyToAll() {
+    if (!bDays.length) return setMsg({ ok: false, text: "Tick at least one working day." });
+    if (!bS || !bE || bE <= bS) return setMsg({ ok: false, text: "The closing time must be after the opening time." });
+    if ((bBs === "") !== (bBe === "")) return setMsg({ ok: false, text: "A break needs both a start and an end." });
+    if (bBs && (bBe <= bBs || bBs < bS || bBe > bE)) return setMsg({ ok: false, text: "The break must sit inside working hours." });
+    setMsg({ ok: true, text: "Applied to the ticked days. Press Save schedule to keep it." });
+    setRows((rs) => rs.map((r) => (bDays.includes(r.weekday) ? { ...r, on: true, start: bS, end: bE, break_start: bBs, break_end: bBe } : { ...r, on: false })));
+  }
   async function saveSchedule() {
     for (const r of rows) if (r.on) {
       if (!r.start || !r.end || r.end <= r.start) return setMsg({ ok: false, text: `${DAYS[r.weekday]}: the end time must be after the start time.` });
@@ -74,10 +84,12 @@ export default function AvailabilityPage() {
   }
   const saveProfile = () => post({ action: "update_doctor", consultation_fee: fee === "" ? undefined : Number(fee), slot_minutes: slot === "" ? null : Number(slot), phone }, "Doctor details saved.");
   async function addLeave() {
-    if (lTo < lFrom) return setMsg({ ok: false, text: "The end date can't be before the start date." });
-    const r = await post({ action: "add_leave", fromDate: lFrom, toDate: lTo, reason: lWhy }, "Leave added. No new bookings can be made in that period.");
+    if (!lFrom) return setMsg({ ok: false, text: "Choose the first day of leave." });
+    const to = lTo || lFrom;
+    if (to < lFrom) return setMsg({ ok: false, text: "The end date can't be before the start date." });
+    const r = await post({ action: "add_leave", fromDate: lFrom, toDate: to, reason: lWhy }, "Leave added. No new bookings can be made in that period.");
     if (r?.affectedAppointments) setMsg({ ok: true, text: `Leave added. ${r.affectedAppointments} existing confirmed appointment(s) fall in that period. Reschedule or cancel them from the Appointments page.` });
-    setLWhy("");
+    setLWhy(""); setLFrom(""); setLTo("");
   }
 
   const myLeaves = (data?.leaves ?? []).filter((l: any) => l.doctor_id === doctorId);
@@ -107,6 +119,23 @@ export default function AvailabilityPage() {
               <fieldset disabled={!canEdit || busy} className="space-y-6">
                 <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-4 sm:p-5">
                   <h2 className="font-semibold text-slate-900 mb-3">Weekly schedule</h2>
+                  <div className="mb-4 rounded-xl border border-sky-100 bg-sky-50/60 p-3 sm:p-4">
+                    <p className="text-sm font-semibold text-sky-900">Same hours every day</p>
+                    <p className="text-xs text-sky-800/80 mt-0.5">Tick the working days, set the shift and the break once, and apply it to all of them. You can still change a single day below.</p>
+                    <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Working days">
+                      {ORDER.map((w) => (
+                        <button type="button" key={w} aria-pressed={bDays.includes(w)} onClick={() => setBDays((d) => (d.includes(w) ? d.filter((x) => x !== w) : [...d, w]))}
+                          className={`px-3 py-2 rounded-xl border text-sm font-medium ${bDays.includes(w) ? "bg-sky-600 border-sky-600 text-white" : "bg-white border-slate-200 text-slate-600"}`}>{DAYS[w].slice(0, 3)}</button>
+                      ))}
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-3 sm:max-w-md">
+                      <div><label className="text-xs font-medium text-slate-600 block mb-1">Opens</label><input type="time" value={bS} onChange={(e) => setBS(e.target.value)} className={`${inputCls} w-full`} /></div>
+                      <div><label className="text-xs font-medium text-slate-600 block mb-1">Closes</label><input type="time" value={bE} onChange={(e) => setBE(e.target.value)} className={`${inputCls} w-full`} /></div>
+                      <div><label className="text-xs font-medium text-slate-600 block mb-1">Break from</label><input type="time" value={bBs} onChange={(e) => setBBs(e.target.value)} className={`${inputCls} w-full`} /></div>
+                      <div><label className="text-xs font-medium text-slate-600 block mb-1">Break to</label><input type="time" value={bBe} onChange={(e) => setBBe(e.target.value)} className={`${inputCls} w-full`} /></div>
+                    </div>
+                    <button type="button" onClick={applyToAll} className="mt-3 px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold">Apply to ticked days</button>
+                  </div>
                   <div className="divide-y divide-slate-100">
                     {rows.map((r) => (
                       <div key={r.weekday} className="py-3 first:pt-0 last:pb-0 sm:flex sm:items-start sm:gap-4">
@@ -148,8 +177,8 @@ export default function AvailabilityPage() {
                 <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-4 sm:p-5">
                   <h2 className="font-semibold text-slate-900 mb-3">Leave</h2>
                   <div className="flex flex-wrap items-end gap-3">
-                    <div><label className="text-xs font-medium text-slate-600 block mb-1">From</label><input type="date" min={todayIso()} value={lFrom} onChange={(e) => { setLFrom(e.target.value); if (lTo < e.target.value) setLTo(e.target.value); }} className={inputCls} /></div>
-                    <div><label className="text-xs font-medium text-slate-600 block mb-1">To</label><input type="date" min={lFrom} value={lTo} onChange={(e) => setLTo(e.target.value)} className={inputCls} /></div>
+                    <div><label className="text-xs font-medium text-slate-600 block mb-1">From</label><input type="date" min={todayIso()} value={lFrom} onChange={(e) => { setLFrom(e.target.value); if (lTo && lTo < e.target.value) setLTo(e.target.value); }} className={inputCls} /></div>
+                    <div><label className="text-xs font-medium text-slate-600 block mb-1">To</label><input type="date" min={lFrom || todayIso()} value={lTo} onChange={(e) => setLTo(e.target.value)} className={inputCls} /></div>
                     <div className="flex-1 min-w-[160px]"><label className="text-xs font-medium text-slate-600 block mb-1">Reason</label><input value={lWhy} onChange={(e) => setLWhy(e.target.value)} placeholder="Optional" className={`${inputCls} w-full`} /></div>
                     <button onClick={addLeave} className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-sm font-semibold">Add leave</button>
                   </div>

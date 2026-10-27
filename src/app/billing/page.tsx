@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "@/lib/toast";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
@@ -42,6 +43,32 @@ export default function BillingPage() {
       });
   }, [selectedPatient]);
   const [items, setItems] = useState<LineItem[]>([{ name: "", qty: 1, unit_price: 0, amount: 0 }]);
+  // The patient's treatment sittings (e.g. root canal: 5500, 4000, 1000): tick the ones this invoice bills, or bill one sitting per invoice
+  const [sittings, setSittings] = useState<{ id: string; plan: string; seq: number; label: string; due: number; paid: number; status: string; billed: number }[]>([]);
+  const [picked, setPicked] = useState<Record<string, number>>({});
+  useEffect(() => {
+    setSittings([]); setPicked({});
+    if (!selectedPatient || !clinicId) return;
+    (async () => {
+      const { data: plans } = await supabase.from("treatment_plans").select("id, title, treatment_sittings(id, seq, label, due_amount, paid_amount, status)").eq("clinic_id", clinicId).eq("clinic_patient_id", selectedPatient.id).eq("status", "active");
+      const sit = ((plans ?? []) as any[]).flatMap((p) => (p.treatment_sittings ?? []).map((t: any) => ({ id: t.id, plan: p.title, seq: t.seq, label: t.label, due: Number(t.due_amount), paid: Number(t.paid_amount), status: t.status })));
+      if (!sit.length) return;
+      const { data: links } = await supabase.from("invoice_sittings").select("sitting_id, amount").in("sitting_id", sit.map((x) => x.id));
+      const billed = new Map<string, number>();
+      for (const l of (links ?? []) as any[]) billed.set(l.sitting_id, (billed.get(l.sitting_id) ?? 0) + Number(l.amount));
+      setSittings(sit.sort((a, b) => a.plan.localeCompare(b.plan) || a.seq - b.seq).map((x) => ({ ...x, billed: billed.get(x.id) ?? 0 })));
+    })();
+  }, [selectedPatient, clinicId]);
+  function togglePicked(t: { id: string; plan: string; seq: number; label: string; due: number; billed: number }) {
+    const left = Math.max(0, t.due - t.billed);
+    const on = picked[t.id] === undefined;
+    setPicked((p) => { const n = { ...p }; if (on) n[t.id] = left; else delete n[t.id]; return n; });
+    const name = `${t.plan} — sitting ${t.seq}${t.label ? ` (${t.label})` : ""}`;
+    setItems((prev) => {
+      const rest = prev.filter((i) => i.name !== name && (i.name.trim() || i.unit_price));
+      return on ? [...rest, { name, qty: 1, unit_price: left, amount: left }] : rest.length ? rest : [{ name: "", qty: 1, unit_price: 0, amount: 0 }];
+    });
+  }
   const [gst, setGst] = useState(18);
   const [discountVal, setDiscountVal] = useState(0);
   const [discMode, setDiscMode] = useState<"amount" | "percent">("amount");
@@ -50,6 +77,9 @@ export default function BillingPage() {
   const [fromAppt, setFromAppt] = useState<{ id: string; date: string; doctor: string } | null>(null);
   const [created, setCreated] = useState<{ id: string; number: string; total: number; whatsapp?: { status: string; error?: string; link?: string } } | null>(null);
   const [busyAct, setBusyAct] = useState("");
+  const [waFail, setWaFail] = useState<{ error: string; link?: string } | null>(null);
+  const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
+  useEffect(() => { if (!notice) return; const t = setTimeout(() => setNotice(null), 5000); return () => clearTimeout(t); }, [notice]);
   const [catalog, setCatalog] = useState<{ name: string; price: number; kind: string }[]>([]);
   const [activeRow, setActiveRow] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
@@ -162,6 +192,8 @@ export default function BillingPage() {
     if (credits.length && items.some((i) => i.name.startsWith("Less: online booking fee"))) {
       await supabase.from("appointments").update({ advance_invoice: made.id }).in("id", credits.map((c) => c.id));
     }
+    const links = Object.entries(picked).map(([sittingId, amount]) => ({ sittingId, amount }));
+    if (links.length) { try { await authFetch("/api/invoices/sittings", { body: { clinicId, invoiceId: made.id, links } }); } catch (x: any) { setErr(`Invoice made, but the sittings could not be linked: ${x.message}`); } }
     runFlows();
     let whatsapp: { status: string; error?: string; link?: string } | undefined;
     if (alsoSend) whatsapp = await sendOnWhatsApp(made.id);
@@ -169,6 +201,7 @@ export default function BillingPage() {
     if (status === "paid") { await finishPayment(made.id); return; }
     setSaving(false);
     await load(clinicId);
+    toast(`Invoice ${made.invoice_number ?? ""} created successfully`);
     setCreated({ id: made.id, number: made.invoice_number ?? "", total, whatsapp });
   }
 
@@ -213,6 +246,8 @@ export default function BillingPage() {
           </button>
         </div>
 
+        {notice && <p className={`mb-4 text-sm rounded-xl px-4 py-3 ${notice.ok ? "bg-emerald-50 text-emerald-800 border border-emerald-100" : "bg-red-50 text-red-700 border border-red-100"}`} role="status">{notice.text}</p>}
+        {waFail && <div className="mb-4 text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3" role="alert"><p>{waFail.error}</p><div className="mt-2 flex gap-3">{waFail.link && <a href={waFail.link} target="_blank" rel="noreferrer" className="px-3 py-2 rounded-xl bg-emerald-500 text-white font-semibold">Open WhatsApp and send it myself</a>}<button onClick={() => setWaFail(null)} className="text-slate-500">Dismiss</button></div></div>}
         {/* Filter tabs */}
         <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
           {["all","pending","draft","sent","paid","partially_paid","cancelled"].map(f => (
@@ -266,7 +301,7 @@ export default function BillingPage() {
                       <td className="px-5 py-3">
                         <a href={`/billing/print?id=${inv.id}`} target="_blank" rel="noreferrer" className="text-xs text-sky-700 hover:underline font-medium mr-3">Print</a>
                         <button onClick={() => openPdf(inv.id)} className="text-xs text-sky-700 hover:underline font-medium mr-3">PDF</button>
-                        <button onClick={async () => { const r = await sendOnWhatsApp(inv.id); if (r.status === "sent") alert("Invoice sent on WhatsApp."); else if (r.link && confirm(`${r.error ?? "Could not send automatically."}\n\nOpen WhatsApp to send it yourself?`)) window.open(r.link, "_blank"); else alert(r.error ?? "Could not send."); }} className="text-xs text-emerald-700 hover:underline font-medium mr-3">Send</button>
+                        <button onClick={async () => { const r = await sendOnWhatsApp(inv.id); if (r.status === "sent") toast("Invoice sent on WhatsApp."); else setWaFail({ error: r.error ?? "Could not send automatically.", link: r.link }); }} className="text-xs text-emerald-700 hover:underline font-medium mr-3">Send</button>
                         {inv.status !== "paid" && inv.status !== "cancelled" && (
                           <button onClick={() => markPaid(inv)} className="text-xs text-emerald-600 hover:text-emerald-800 font-medium">Payment received</button>
                         )}
@@ -334,6 +369,24 @@ export default function BillingPage() {
 
               {/* Line items */}
               <div>
+                {sittings.length > 0 && (
+                  <div className="mb-4 rounded-xl border border-sky-100 bg-sky-50/60 p-3">
+                    <p className="text-xs font-semibold text-sky-900">Treatment sittings for this patient</p>
+                    <p className="text-xs text-sky-800/80 mb-2">Tick the sittings to bill on this invoice: all of them for one invoice, or just one for a separate invoice.</p>
+                    <ul className="space-y-1">
+                      {sittings.map((t) => {
+                        const left = Math.max(0, t.due - t.billed);
+                        return (
+                          <li key={t.id}><label className="flex items-start gap-2 text-sm">
+                            <input type="checkbox" className="mt-0.5 h-5 w-5 shrink-0" checked={picked[t.id] !== undefined} disabled={left <= 0 && picked[t.id] === undefined} onChange={() => togglePicked(t)} />
+                            <span className="min-w-0 flex-1"><span className="font-medium text-slate-800">{t.plan} · sitting {t.seq}</span>
+                              <span className="block text-xs text-slate-500">₹{t.due.toLocaleString("en-IN")}{t.billed > 0 ? ` · ₹${t.billed.toLocaleString("en-IN")} already invoiced` : ""} · {t.status === "done" ? "done" : t.status}</span></span>
+                          </label></li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
                 <label className="text-xs font-medium text-slate-600 block mb-1">Items *</label>
                 <div className="space-y-2">
                   {items.map((item, i) => (

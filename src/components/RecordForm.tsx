@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "@/lib/toast";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -65,7 +66,7 @@ export default function RecordForm({ table, id, fields, title, subtitle, backHre
     const { error } = await supabase.from(table).update(patch).eq("id", id).eq("clinic_id", clinicId);
     setBusy(false);
     if (error) return setErr(error.message);
-    setMsg("Saved."); await load(clinicId);
+    setMsg("Saved."); toast("Saved successfully"); await load(clinicId);
   }
 
   if (row === undefined) return <AppShell><div className="p-10 text-center text-slate-400 text-sm">Loading…</div></AppShell>;

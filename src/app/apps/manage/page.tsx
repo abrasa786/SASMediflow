@@ -19,7 +19,12 @@ export default function ManageAppsPage() {
   const [msg, setMsg] = useState(""); const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
 
   const load = useCallback((c: string) => authFetch(`/api/apps?clinicId=${c}`).then(setD).catch((e) => setErr(e.message)), []);
-  useEffect(() => { const c = getActiveClinicId(); if (!c) { router.push("/login"); return; } setCid(c); load(c); }, [router, load]);
+  useEffect(() => {
+    const c = getActiveClinicId(); if (!c) { router.push("/login"); return; } setCid(c); load(c);
+    const again = () => { if (document.visibilityState === "visible") load(c); };      // coming back from the Builder shows the new app
+    document.addEventListener("visibilitychange", again); window.addEventListener("focus", again);
+    return () => { document.removeEventListener("visibilitychange", again); window.removeEventListener("focus", again); };
+  }, [router, load]);
   useEffect(() => { if (d && d.role !== "admin") router.push("/dashboard"); }, [d, router]);
 
   async function save(everyone: boolean) {

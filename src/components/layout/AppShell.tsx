@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import ToastHost from "@/components/ToastHost";
 import AssistantWidget from "@/components/AssistantWidget";
 import Sidebar from "./Sidebar";
 import { getSession, getActiveClinicId } from "@/lib/auth";
@@ -83,6 +84,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+      <ToastHost />
       <AssistantWidget botName={clinic?.ai_name || "Assistant"} color={clinic?.primary_color} />
     </div>
   );

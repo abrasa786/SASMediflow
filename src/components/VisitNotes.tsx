@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "@/lib/toast";
 import { useCallback, useEffect, useState } from "react";
 import { authFetch } from "@/lib/api";
 import { supabase as sb } from "@/lib/supabase";
@@ -33,7 +34,7 @@ export default function VisitNotes({ clinicId, patientId, appointmentId, canEdit
       const r = await authFetch<{ reminder: { orderBy: string; checkBy: string; neededBy: string | null; late: boolean; stock: string; onOrder: string | null } | null; reminderError: string | null }>("/api/visits/note", { body: { clinicId, patientId, appointmentId, action: editing ? "update" : "create", id: editing ?? undefined, fields: f } });
       if (r.reminderError) setErr(`Saved, but the reminder could not be made: ${r.reminderError}`);
       else if (r.reminder) setInfo(`Reminders set. ${r.reminder.onOrder ? `Already on order ${r.reminder.onOrder}; ` : `Order by ${nice(r.reminder.orderBy)}${r.reminder.late ? " (the visit is close, so order today)" : ""}; `}check it arrived on ${nice(r.reminder.checkBy)}${r.reminder.neededBy ? `, for the visit on ${nice(r.reminder.neededBy)}` : ". No next appointment is booked yet, so book one and the dates will follow"}. ${r.reminder.stock}`);
-      setF(EMPTY); setEditing(null); await load(); onChange?.();
+      setF(EMPTY); setEditing(null); toast("Treatment note saved successfully"); await load(); onChange?.();
     } catch (x: any) { setErr(x.message); }
     setBusy(false);
   }

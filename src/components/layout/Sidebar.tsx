@@ -66,10 +66,14 @@ export default function Sidebar({ clinicName, userEmail, role, logoUrl, brandCol
     const id = getActiveClinicId(); if (!id) return;
     setCid(id);
     try { setMode(localStorage.getItem("mf_app_" + id) ?? ""); } catch { /* storage blocked */ }
-    // the app list rarely changes: show the saved copy straight away and only ask the server again every few minutes
+    // the app list rarely changes: show the saved copy straight away and only ask the server again every few minutes,
+    // or at once when the Builder has just added, changed or undone an app
+    const fetchApps = () => authFetch(`/api/apps?clinicId=${id}`).then((r) => { setApps(r.apps ?? []); try { sessionStorage.setItem("mf_apps_" + id, JSON.stringify({ apps: r.apps ?? [], t: Date.now() })); } catch { /* optional */ } }).catch(() => setApps([]));
     let stale = true;
     try { const c = JSON.parse(sessionStorage.getItem("mf_apps_" + id) ?? "null"); if (c?.apps) { setApps(c.apps); stale = Date.now() - (c.t ?? 0) > 5 * 60_000; } } catch { /* optional */ }
-    if (stale) authFetch(`/api/apps?clinicId=${id}`).then((r) => { setApps(r.apps ?? []); try { sessionStorage.setItem("mf_apps_" + id, JSON.stringify({ apps: r.apps ?? [], t: Date.now() })); } catch { /* optional */ } }).catch(() => setApps([]));
+    if (stale) fetchApps();
+    window.addEventListener("mf:apps-changed", fetchApps);
+    return () => window.removeEventListener("mf:apps-changed", fetchApps);
   }, []);
   function pick(v: string) { setMode(v); try { localStorage.setItem("mf_app_" + cid, v); } catch { /* ignore */ } const a = apps.find((x) => x.api_name === v); if (a) router.push(`/apps/${a.api_name}`); }
   const tabHref = (app: AppInfo, t: AppTab) => t.path || (t.kind === "object" && t.object ? `/builder/data?table=${t.object}` : `/apps/${app.api_name}`);

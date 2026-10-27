@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "@/lib/toast";
 import AppShell from "@/components/layout/AppShell";
 import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
@@ -167,6 +168,10 @@ export default function AppointmentsPage() {
                     <div className="flex items-center gap-2 flex-wrap lg:justify-end">
                       <span className="text-sm font-semibold text-slate-700 mr-1">₹{a.consultation_fee}</span>
                       <span className={`text-xs font-semibold px-2.5 py-1 rounded-lg ${STATUS_COLORS[a.status] ?? "bg-gray-100 text-gray-500"}`}>{a.status.replace("_", " ")}</span>
+                      {a.status !== "cancelled" && ["invoiced", "part_paid", "paid"].includes((a as any).billing_status) && (
+                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-lg ${(a as any).billing_status === "paid" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+                          {(a as any).billing_status === "paid" ? "Paid & settled" : (a as any).billing_status === "part_paid" ? "Part paid" : "Invoiced"}</span>
+                      )}
                       {a.status === "confirmed" && (
                         <>
                           <button disabled={busy} onClick={() => complete(a)} className="text-xs px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-medium">Done · bill</button>
@@ -194,11 +199,11 @@ export default function AppointmentsPage() {
       )}
       {moveAppt && (
         <MoveModal clinicId={clinicId} appt={moveAppt} defaultDate={date} onClose={() => setMoveAppt(null)}
-          onDone={(title, notifications) => { setMoveAppt(null); setOutcome({ title, lines: [], notifications, tone: "ok" }); load(clinicId, date); }} />
+          onDone={(title, notifications) => { toast(title); setMoveAppt(null); setOutcome({ title, lines: [], notifications, tone: "ok" }); load(clinicId, date); }} />
       )}
       {cancelAppt && (
         <CancelModal clinicId={clinicId} appt={cancelAppt} onClose={() => setCancelAppt(null)}
-          onDone={(title, notifications) => { setCancelAppt(null); setOutcome({ title, lines: [], notifications, tone: "ok" }); load(clinicId, date); }} />
+          onDone={(title, notifications) => { toast(title); setCancelAppt(null); setOutcome({ title, lines: [], notifications, tone: "ok" }); load(clinicId, date); }} />
       )}
     </AppShell>
   );
@@ -321,8 +326,11 @@ function BookModal({ clinicId, doctors, defaultDate, onClose, onBooked }: { clin
           patient: who === "existing" ? { id: picked!.id } : { name: name.trim(), phone: phone.trim(), age: age ? Number(age) : undefined, gender: gender || undefined },
         },
       });
-      setDone(r);
       onBooked(date);
+      toast("Appointment created successfully");
+      const notes: any[] = (r as any).notifications ?? [];
+      if (notes.every((n) => n.status === "sent" || n.status === "skipped")) onClose();   // nothing left to read or tap: close the pop-up
+      else setDone(r);                                                                     // a WhatsApp message needs a manual send: keep the details open
     } catch (e: any) {
       setErr(e.message);
       if (e.status === 409) { setAlts(e.data?.suggestions ?? []); setTime(""); setReload((n) => n + 1); }

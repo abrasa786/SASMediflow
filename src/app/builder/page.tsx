@@ -106,6 +106,7 @@ export default function BuilderPage() {
     try {
       const r = await api("/api/builder/apply", { clinicId, prompt: m.prompt, plan: m.plan });
       setSchema(r.schema);
+      window.dispatchEvent(new Event("mf:apps-changed"));      // the menu and App Manager pick up the new app straight away
       setMsgs((x) => x.map((y) => (y.id === m.id ? { ...y, state: "applied" } : y)));
       push({ role: "assistant", text: "Done. Everything was applied together and is saved in your change history, so you can undo it. Want to add anything else?" });
       refresh(clinicId);
@@ -121,6 +122,7 @@ export default function BuilderPage() {
     try {
       const r = await api("/api/builder/rollback", { clinicId, changesetId: id });
       setSchema(r.schema);
+      window.dispatchEvent(new Event("mf:apps-changed"));
       const kept = r.result?.kept ?? 0;
       push({ role: "assistant", text: `Change undone.${kept ? ` ${kept} item${kept > 1 ? "s" : ""} already held data, so they were archived or hidden instead of deleted.` : ""}` });
       refresh(clinicId);
@@ -203,7 +205,11 @@ export default function BuilderPage() {
                   {schema.apps.map((a) => (
                     <div key={a.api_name} className="mb-3 rounded-xl bg-sky-50 p-3">
                       <p className="font-semibold text-gray-800">{a.icon} {a.label}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">Tabs: {a.tabs.map((t) => t.label).join(", ") || "none"}</p>
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        {a.tabs.map((t) => <a key={t.label} href={t.object ? `/builder/data?table=${t.object}` : `/apps/${a.api_name}`} className="text-xs px-2 py-1 rounded-lg bg-white border border-sky-100 text-sky-800">{t.label}</a>)}
+                        {!a.tabs.length && <span className="text-xs text-gray-500">No tabs yet</span>}
+                      </div>
+                      <p className="mt-2 text-xs"><a href={`/apps/${a.api_name}`} className="font-semibold text-sky-700 underline">Open app</a> <span className="text-gray-400">·</span> <a href="/apps/manage" className="text-sky-700 underline">Who can see it</a></p>
                     </div>
                   ))}
                   {schema.objects.map((o) => (

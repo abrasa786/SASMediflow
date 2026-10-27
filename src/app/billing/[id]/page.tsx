@@ -7,6 +7,7 @@ import AppShell from "@/components/layout/AppShell";
 import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
+import InvoiceTreatments from "@/components/InvoiceTreatments";
 
 interface Line { name: string; qty: number; unit_price: number; amount: number }
 const inp = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:bg-slate-50";
@@ -33,6 +34,7 @@ export default function InvoiceRecord({ params }: { params: { id: string } }) {
   const [busy, setBusy] = useState("");
   const [err, setErr] = useState("");
   const [msg, setMsg] = useState("");
+  const [waFail, setWaFail] = useState<{ error: string; link?: string } | null>(null);
 
   const load = useCallback(async (cid: string) => {
     const { data } = await supabase.from("invoices").select("*, clinic_patients(id, name, phone)").eq("id", params.id).eq("clinic_id", cid).maybeSingle();
@@ -93,12 +95,11 @@ export default function InvoiceRecord({ params }: { params: { id: string } }) {
     try { const r = await authFetch<{ pdfUrl: string }>("/api/invoices/send", { body: { clinicId, invoiceId: inv.id, linkOnly: true } }); window.open(r.pdfUrl, "_blank"); } catch (e: any) { setErr(e.message); }
   }
   async function whatsapp() {
-    setBusy("wa"); setErr(""); setMsg("");
+    setBusy("wa"); setErr(""); setMsg(""); setWaFail(null);
     try {
       const r = await authFetch<{ status: string; error?: string; link?: string }>("/api/invoices/send", { body: { clinicId, invoiceId: inv.id } });
       if (r.status === "sent") setMsg("✅ Sent to the patient on WhatsApp as a PDF.");
-      else if (r.link && confirm(`${r.error ?? "Could not send automatically."}\n\nOpen WhatsApp to send it yourself?`)) window.open(r.link, "_blank");
-      else setErr(r.error ?? "Could not send.");
+      else setWaFail({ error: r.error ?? "Could not send automatically.", link: r.link });   // a real link the person taps: phones block pop-ups opened after a wait
     } catch (e: any) { setErr(e.message); }
     setBusy("");
   }
@@ -166,10 +167,12 @@ export default function InvoiceRecord({ params }: { params: { id: string } }) {
           </div>
           {due > 0 && status !== "cancelled" && <p className="text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2">Balance due: <strong>{inr(due)}</strong></p>}
           <div><label className="text-xs font-medium text-slate-600 block mb-1">Notes</label><textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} className={inp} /></div>
+          {waFail && <div className="text-sm text-amber-800 bg-amber-50 rounded-lg px-3 py-2" role="alert"><p>{waFail.error}</p>{waFail.link && <a href={waFail.link} target="_blank" rel="noreferrer" className="inline-block mt-2 px-3 py-2 rounded-xl bg-emerald-500 text-white font-semibold">Open WhatsApp and send it myself</a>}</div>}
           {err && <p className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2" role="alert">{err}</p>}
           {msg && <p className="text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2">{msg}</p>}
           <div className="flex gap-2"><button disabled={busy !== ""} className="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white text-sm font-semibold">{busy === "save" ? "Saving…" : "Save changes"}</button><Link href="/billing" className="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700">Close</Link></div>
         </form>
+        {clinicId && <InvoiceTreatments clinicId={clinicId} invoiceId={params.id} />}
       </div>
     </AppShell>
   );
