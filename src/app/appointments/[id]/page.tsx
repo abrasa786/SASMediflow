@@ -8,7 +8,9 @@ import SlotPicker from "@/components/SlotPicker";
 import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
-import { getClinicDoctors } from "@/lib/clinic";
+import { getClinicDoctors, getMyRoleInClinic } from "@/lib/clinic";
+import PatientSummary from "@/components/PatientSummary";
+import VisitNotes from "@/components/VisitNotes";
 import type { Doctor } from "@/types";
 
 const inp = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:bg-slate-50";
@@ -32,6 +34,8 @@ export default function AppointmentRecord({ params }: { params: { id: string } }
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [msg, setMsg] = useState("");
+  const [canNote, setCanNote] = useState(false);
+  const [rk, setRk] = useState(0);        // bumps when a visit note changes, so the summary refreshes
 
   const load = useCallback(async (cid: string) => {
     const { data } = await supabase.from("appointments").select("*, clinic_patients(id, name, phone), doctors(name)").eq("id", params.id).eq("clinic_id", cid).maybeSingle();
@@ -46,6 +50,7 @@ export default function AppointmentRecord({ params }: { params: { id: string } }
     const cid = getActiveClinicId();
     if (!cid) { router.push("/login"); return; }
     setClinicId(cid); load(cid); getClinicDoctors(cid).then(setDoctors);
+    getMyRoleInClinic(cid).then((r) => setCanNote(r === "admin" || r === "doctor" || r === "nurse"));
   }, [router, load]);
 
   async function save(e: React.FormEvent) {
@@ -88,6 +93,8 @@ export default function AppointmentRecord({ params }: { params: { id: string } }
           </div>
         </div>
 
+        {p && <PatientSummary patientId={p.id} refreshKey={rk} />}
+
         <form onSubmit={save} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mt-5 grid sm:grid-cols-2 gap-4">
           <div><label htmlFor="ap-doc" className="text-xs font-medium text-slate-600 block mb-1">Doctor</label>
             <select id="ap-doc" value={doctorId} onChange={(e) => { setDoctorId(e.target.value); setTime(""); }} className={inp}>
@@ -113,6 +120,7 @@ export default function AppointmentRecord({ params }: { params: { id: string } }
           <div className="sm:col-span-2 flex gap-2"><button disabled={busy} className="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white text-sm font-semibold">{busy ? "Saving…" : "Save changes"}</button>
             <Link href={`/appointments?date=${a.appointment_date}`} className="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700">Close</Link></div>
         </form>
+        {p && clinicId && <VisitNotes clinicId={clinicId} patientId={p.id} appointmentId={a.id} canEdit={canNote} onChange={() => setRk((n) => n + 1)} />}
       </div>
     </AppShell>
   );
