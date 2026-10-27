@@ -235,7 +235,7 @@ export default function BookPage() {
               <label className="block"><span className="text-sm text-slate-600">What&apos;s it about? <span className="text-slate-400">(optional)</span></span><input value={f.symptoms} onChange={(e) => setF({ ...f, symptoms: e.target.value })} className={input} placeholder="e.g. tooth pain, cleaning" /></label>
               <label className="flex items-start gap-2 text-xs text-slate-500 leading-snug">
                 <input type="checkbox" checked={offers} onChange={(e) => setOffers(e.target.checked)} className="mt-0.5" />
-                <span>Send me occasional dental tips and offers on WhatsApp. You can stop any time by replying STOP.</span>
+                <span>Would you like to get updates from the clinic on WhatsApp? <span className="text-slate-400">Tips and offers now and then. Reply STOP any time to stop.</span></span>
               </label>
             </div>
             {cfg.booking.notice && <p className="mt-3 text-xs text-slate-500 bg-slate-50 rounded-lg p-3">{cfg.booking.notice}</p>}
