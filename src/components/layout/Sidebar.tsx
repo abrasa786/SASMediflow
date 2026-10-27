@@ -11,6 +11,7 @@ export const NAV = [
   { href: "/dashboard",    icon: "🏠", label: "Dashboard" },
   { href: "/setup",        icon: "🚀", label: "Setup", roles: ["admin"] as ClinicRole[] },
   { href: "/appointments", icon: "📅", label: "Appointments" },
+  { href: "/appointments/list", icon: "📋", label: "All appointments" },
   { href: "/calendar",     icon: "🗓️", label: "Calendar" },
   { href: "/availability", icon: "⏰", label: "Availability", roles: ["admin", "doctor"] as ClinicRole[] },
   { href: "/patients",     icon: "👥", label: "Patients" },

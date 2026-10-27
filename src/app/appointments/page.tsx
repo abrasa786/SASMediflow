@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "@/lib/toast";
 import AppShell from "@/components/layout/AppShell";
@@ -117,6 +118,7 @@ export default function AppointmentsPage() {
             <input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} className="px-3 py-2 rounded-xl border border-slate-200 text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500" />
             <button onClick={() => setDate(shiftDay(date, 1))} className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm hover:bg-slate-50" aria-label="Next day">›</button>
             {!isToday && <button onClick={() => setDate(todayIso())} className="px-3 py-2 rounded-xl text-sm text-sky-700 hover:bg-sky-50">Today</button>}
+            <Link href="/appointments/list" className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm font-medium hover:bg-slate-50">All appointments</Link>
             <button onClick={() => setShowBook(true)} className="bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors">+ Book</button>
           </div>
         </div>
