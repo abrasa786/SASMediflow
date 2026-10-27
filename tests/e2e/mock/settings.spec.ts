@@ -13,7 +13,7 @@ test.describe("Settings", () => {
     app.api("POST /api/clinic/setup", () => ({ status: 400, json: { error: "Enter a valid email address, like name@example.com." } }));
     await page.goto("/settings");
     await page.getByRole("button", { name: "Save Settings" }).click();
-    const alert = page.getByRole("alert").first();
+    const alert = page.locator("[role=alert]:not(#__next-route-announcer__)").first();
     await expect(alert).toContainText("valid email");
     await expect(alert).toBeInViewport();
   });

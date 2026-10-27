@@ -100,6 +100,11 @@ export class App {
     return r.fulfill({ status: 200, body: "[]" });
   }
 
+  private defaults: Record<string, unknown> = {
+    "/api/ai/settings": { policy: { external_enabled: false, retention_days: 30 }, provider_configured: false, encrypted_at_rest: true },
+    "/api/online-booking": { enabled: false, config: {} },
+  };
+
   private async apiRoute(r: Route) {
     const req = r.request(), url = new URL(req.url());
     if (!/\/api\//.test(url.pathname) || url.origin.includes("supabase")) return r.fallback();
@@ -107,7 +112,7 @@ export class App {
     const call: Call = { method: req.method(), path: url.pathname, body };
     this.calls.push(call);
     const h = this.handlers.get(`${call.method} ${call.path}`) ?? this.handlers.get(call.path);
-    const out = h ? await h(call) : { json: { ok: true, rows: [], items: [] } };
+    const out = h ? await h(call) : { json: this.defaults[url.pathname] ?? { ok: true, rows: [], items: [] } };
     if (out.delayMs) await new Promise((x) => setTimeout(x, out.delayMs));
     return r.fulfill({ status: out.status ?? 200, contentType: "application/json", body: JSON.stringify(out.json ?? { ok: true }) });
   }

@@ -6,17 +6,19 @@ import { toast } from "@/lib/toast";
 
 /** Settings card (admin): external AI on/off, how long history is kept, and clearing everything. */
 export default function AiPrivacyCard({ clinicId }: { clinicId: string }) {
-  const [s, setS] = useState<any>(null);
+  const [raw, setS] = useState<any>(null);
+  // a reply without the expected parts is treated as "off, 30 days" instead of crashing the page
+  const s = raw && { ...raw, policy: { external_enabled: false, retention_days: 30, ...(raw.policy ?? {}) } };
   const [days, setDays] = useState(30);
   const [err, setErr] = useState(""); const [msg, setMsg] = useState(""); const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    authFetch(`/api/ai/settings?clinicId=${clinicId}`).then((d) => { setS(d); setDays(d.policy.retention_days); }).catch((e) => setErr(e.message));
+    authFetch(`/api/ai/settings?clinicId=${clinicId}`).then((d) => { setS(d); setDays(d.policy?.retention_days ?? 30); }).catch((e) => setErr(e.message));
   }, [clinicId]);
 
   async function save(patch: Record<string, unknown>, ok: string) {
     setBusy(true); setErr(""); setMsg("");
-    try { const d = await authFetch("/api/ai/settings", { body: { clinicId, ...patch } }); setS(d); setDays(d.policy.retention_days); setMsg(ok); toast(ok); }
+    try { const d = await authFetch("/api/ai/settings", { body: { clinicId, ...patch } }); setS(d); setDays(d.policy?.retention_days ?? 30); setMsg(ok); toast(ok); }
     catch (e: any) { setErr(e.message); toast(e.message, false); } finally { setBusy(false); }
   }
   async function clearAll() {

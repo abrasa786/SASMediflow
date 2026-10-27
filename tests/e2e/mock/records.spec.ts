@@ -27,7 +27,7 @@ test.describe("Records", () => {
   test("negative: cancelling the confirmation deletes nothing", async ({ page, app }) => {
     await page.goto(`/patients/${PID}`);
     await page.getByRole("button", { name: "Delete this patient" }).click();
-    await page.getByRole("dialog", { name: "Confirm delete" }).getByRole("button", { name: /cancel/i }).click();
+    await page.getByRole("dialog", { name: "Confirm delete" }).getByRole("button", { name: /keep it/i }).click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
     expect(app.called("/api/records/delete")).toHaveLength(0);
   });

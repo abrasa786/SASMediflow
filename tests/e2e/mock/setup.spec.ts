@@ -17,7 +17,7 @@ test.describe("Setup", () => {
     await page.getByPlaceholder("98765 43210").fill("123");
     await page.getByPlaceholder("Street, area").fill("12 Main Road");
     await page.getByRole("button", { name: "Save and continue" }).click();
-    await expect(page.getByRole("alert")).toContainText("at least 10 digits");
+    await expect(page.locator("[role=alert]:not(#__next-route-announcer__)")).toContainText("at least 10 digits");
     expect(app.called("/api/clinic/setup")).toHaveLength(0);
   });
 
@@ -25,7 +25,7 @@ test.describe("Setup", () => {
     await page.goto("/setup");
     await page.getByPlaceholder("98765 43210").fill("9876543210");
     await page.getByRole("button", { name: "Save and continue" }).click();
-    await expect(page.getByRole("alert")).toContainText("address");
+    await expect(page.locator("[role=alert]:not(#__next-route-announcer__)")).toContainText("address");
   });
 
   test("negative: when the server refuses, its reason is shown (not a silent failure)", async ({ page, app }) => {
@@ -34,7 +34,7 @@ test.describe("Setup", () => {
     await page.getByPlaceholder("98765 43210").fill("9876543210");
     await page.getByPlaceholder("Street, area").fill("12 Main Road, Coimbatore");
     await page.getByRole("button", { name: "Save and continue" }).click();
-    await expect(page.getByRole("alert")).toContainText("cannot do this");
+    await expect(page.locator("[role=alert]:not(#__next-route-announcer__)")).toContainText("cannot do this");
   });
 
   test("positive: adding a doctor by name", async ({ page, app }) => {
@@ -50,7 +50,7 @@ test.describe("Setup", () => {
     app.db.clinics[0].phone = "9876543210"; app.db.clinics[0].address = "12 Main Road";
     await page.goto("/setup");
     await page.getByRole("button", { name: "Add doctor" }).click();
-    await expect(page.getByRole("alert")).toContainText("doctor's name");
+    await expect(page.locator("[role=alert]:not(#__next-route-announcer__)")).toContainText("doctor's name");
     expect(app.called("/api/clinic/setup")).toHaveLength(0);
   });
 

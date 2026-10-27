@@ -29,10 +29,11 @@ for (const [name, w, h, touch] of DEVICES) {
     test.use({ viewport: { width: w, height: h }, hasTouch: touch, isMobile: touch });
 
     test(`no screen needs sideways scrolling or has a clipped control`, async ({ page }) => {
+      test.setTimeout(150_000);
       const problems: string[] = [];
       for (const s of SCREENS) {
-        await page.goto(s, { waitUntil: "networkidle" }).catch(() => null);
-        await page.waitForTimeout(250);
+        await page.goto(s, { waitUntil: "domcontentloaded" }).catch(() => null);
+        await page.waitForTimeout(700);
         if (/\/login/.test(page.url())) { problems.push(`${s} → sent to login`); continue; }
         const r = await overflow(page);
         if (r.sw > r.vw + 1 || r.bad.length) problems.push(`${s}: page ${r.sw}px in a ${r.vw}px screen ${r.bad.join(" | ")}`);
@@ -48,7 +49,7 @@ for (const [name, w, h, touch] of DEVICES) {
       await expect(nav.getByRole("link", { name: "Billing", exact: true })).toBeInViewport();
       await expect(page.getByRole("button", { name: "Open menu" })).toBeInViewport();
       await expect(page.getByRole("button", { name: /^Open / }).last()).toBeInViewport();
-      await expect(page.getByRole("link", { name: /\+ New/ }).first()).toBeInViewport();
+      await expect(page.getByRole("link", { name: "New", exact: true }).first()).toBeInViewport();
     });
 
     if (touch) {

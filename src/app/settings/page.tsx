@@ -10,6 +10,7 @@ import { toast } from "@/lib/toast";
 import PriceListEditor from "@/components/PriceListEditor";
 import BrandingCard from "@/components/BrandingCard";
 import AiPrivacyCard from "@/components/AiPrivacyCard";
+import Boundary from "@/components/Boundary";
 import OnlineBookingCard from "@/components/OnlineBookingCard";
 import type { Clinic, ClinicRole } from "@/types";
 
@@ -222,10 +223,10 @@ export default function SettingsPage() {
           )}
         </form>
 
-        {isAdmin && clinic?.id && <BrandingCard clinicId={clinic.id} />}
-        {isAdmin && clinic?.id && <OnlineBookingCard clinicId={clinic.id} />}
-        {isAdmin && clinic?.id && <AiPrivacyCard clinicId={clinic.id} />}
-        <PriceListEditor clinicId={clinic?.id ?? null} canEdit={isAdmin} />
+        {isAdmin && clinic?.id && <Boundary label="Branding"><BrandingCard clinicId={clinic.id} /></Boundary>}
+        {isAdmin && clinic?.id && <Boundary label="Online booking"><OnlineBookingCard clinicId={clinic.id} /></Boundary>}
+        {isAdmin && clinic?.id && <Boundary label="AI & privacy"><AiPrivacyCard clinicId={clinic.id} /></Boundary>}
+        <Boundary label="Price list"><PriceListEditor clinicId={clinic?.id ?? null} canEdit={isAdmin} /></Boundary>
       </div>
     </AppShell>
   );

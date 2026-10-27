@@ -19,7 +19,7 @@ test.describe("Invoice", () => {
     app.api("POST /api/invoices/send", () => ({ json: { status: "link", error: "WhatsApp is not connected yet.", link: "https://wa.me/919187983647?text=hi" } }));
     await page.goto(`/billing/${IID}`);
     await page.getByRole("button", { name: "Send on WhatsApp" }).click();
-    await expect(page.getByRole("alert")).toContainText("not connected");
+    await expect(page.locator("[role=alert]:not(#__next-route-announcer__)")).toContainText("not connected");
     await expect(page.getByRole("link", { name: /send it myself/i })).toBeVisible();
   });
 
@@ -28,7 +28,7 @@ test.describe("Invoice", () => {
     await page.goto(`/billing/${IID}`);
     const b = page.getByRole("button", { name: "Send on WhatsApp" });
     await b.click();
-    await expect(page.getByRole("alert")).toContainText("Something went wrong");
+    await expect(page.locator("[role=alert]:not(#__next-route-announcer__)")).toContainText("Something went wrong");
     await expect(b).toBeEnabled();
   });
 

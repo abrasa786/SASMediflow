@@ -17,13 +17,13 @@ test.describe("Layout and navigation", () => {
     await page.goto("/dashboard");
     await page.waitForURL(/\/(dashboard|setup)/);
     await page.goto("/dashboard");
-    await expect(page.getByRole("link", { name: /New booking/ }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: "New booking", exact: true }).first()).toBeVisible();
   });
 
   for (const [name, href, list, label] of TABS) {
     test(`${name}: + New and List view are present`, async ({ page }) => {
       await page.goto(href);
-      await expect(page.getByRole("link", { name: new RegExp(`\\+ ${label}`) }).first()).toBeVisible();
+      await expect(page.getByRole("link", { name: label, exact: true }).first()).toBeVisible();
       await expect(page.getByRole("link", { name: "List view" })).toHaveAttribute("href", list!);
     });
     test(`${name}: the List view opens with a search box`, async ({ page }) => {
@@ -76,7 +76,7 @@ bare.describe("Signed out", () => {
     await page.getByPlaceholder("you@yourclinic.com").fill("a@b.com");
     await page.getByPlaceholder("Your password").fill("wrong-password");
     await page.getByRole("button", { name: /sign in/i }).first().click();
-    await bareExpect(page.getByRole("alert")).toBeVisible();
+    await bareExpect(page.locator("[role=alert]:not(#__next-route-announcer__)")).toBeVisible();
   });
   bare("negative: a forged calendar or PDF link is refused", async ({ request }) => {
     bareExpect((await request.get("/api/appointments/calendar?id=33333333-3333-4333-8333-333333333333&t=bad")).status()).toBe(404);
