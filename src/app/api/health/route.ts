@@ -9,6 +9,9 @@ export async function GET() {
     supabase_url: !!process.env.NEXT_PUBLIC_SUPABASE_URL, supabase_anon_key: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     service_role_key: !!process.env.SUPABASE_SERVICE_ROLE_KEY, app_url: !!process.env.NEXT_PUBLIC_APP_URL,
     gemini_optional: !!process.env.GEMINI_API_KEY, whatsapp_optional: !!(process.env.WHATSAPP_PHONE_NUMBER_ID && process.env.WHATSAPP_ACCESS_TOKEN),
+    email_optional: !!(process.env.RESEND_API_KEY && process.env.EMAIL_FROM),
+    whatsapp_templates_set: !!(process.env.WHATSAPP_TEMPLATE_CONFIRMATION_PATIENT && process.env.WHATSAPP_TEMPLATE_CONSENT && process.env.WHATSAPP_TEMPLATE_INVOICE_PATIENT),
+    whatsapp_webhook_ready: !!(process.env.WHATSAPP_VERIFY_TOKEN && process.env.WHATSAPP_APP_SECRET),
     vercel_domains_optional: !!(process.env.VERCEL_API_TOKEN && process.env.VERCEL_PROJECT_ID),
     ai_data_key_recommended: !!process.env.AI_DATA_KEY, cron_secret_recommended: !!process.env.CRON_SECRET,
   };

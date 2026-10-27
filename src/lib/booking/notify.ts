@@ -10,6 +10,7 @@
  *   {{1}} patient name, {{2}} date, {{3}} time, {{4}} doctor, {{5}} clinic
  */
 import { formatDateNice } from "./parse";
+import { emailConfigured, sendEmail } from "../email";
 
 export type NotifyKind = "confirmation" | "reschedule" | "cancellation" | "reminder" | "no_show";
 export interface NotificationResult {
@@ -21,6 +22,7 @@ export interface NotificationResult {
   error?: string;
 }
 
+const SUBJECT: Record<NotifyKind, string> = { confirmation: "Your appointment is booked", reschedule: "Your appointment was moved", cancellation: "Your appointment was cancelled", reminder: "Appointment reminder", no_show: "We missed you today" };
 const drName = (n?: string | null) => (!n ? "your doctor" : /^dr\.?\s/i.test(n) ? n : `Dr. ${n}`);
 const rupees = (n: unknown) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
 
@@ -135,7 +137,19 @@ export async function notifyAppointment(
   const msgs = buildMessages(details, kind);
   const ctx = { clinicId, appointmentId: details.appointment.id };
   const jobs: Promise<NotificationResult>[] = [];
-  if (!only || only.includes("patient")) jobs.push(deliver(db, ctx, "patient", details.patient?.phone, kind, msgs.patient, details));
+  if (!only || only.includes("patient")) {
+    jobs.push(deliver(db, ctx, "patient", details.patient?.phone, kind, msgs.patient, details));
+    // the same message by email too, when the patient has an email address and email is set up (best effort, never blocks the booking)
+    if (emailConfigured() && details.patient?.id) {
+      jobs.push((async (): Promise<NotificationResult | null> => {
+        try {
+          const { data: pt } = await db.from("clinic_patients").select("email").eq("id", details.patient.id).maybeSingle();
+          if (pt?.email) await sendEmail(pt.email, `${SUBJECT[kind]} · ${details.clinic?.name ?? "your clinic"}`, msgs.patient.replace(/\n\nReply (CANCEL|STOP)[^\n]*/g, ""), null);
+        } catch { /* optional */ }
+        return null;
+      })() as Promise<NotificationResult>);
+    }
+  }
   if ((!only || only.includes("doctor")) && details.doctor) jobs.push(deliver(db, ctx, "doctor", details.doctor.phone, kind, msgs.doctor, details));
-  return Promise.all(jobs);
+  return (await Promise.all(jobs)).filter(Boolean);
 }

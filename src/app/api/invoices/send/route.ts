@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { handle, HttpError } from "@/lib/server/http";
 import { requireClinicMember } from "@/lib/server/auth";
 import { sendViaCloudApi, sendDocumentViaCloudApi, whatsappConfigured, whatsappPhone, waLink } from "@/lib/booking/notify";
+import { emailConfigured, sendEmail } from "@/lib/email";
 import { invoicePdfUrl } from "@/lib/server/invoice-pdf";
 
 const rupees = (n: unknown) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
     const b = await req.json();
     const { db } = await requireClinicMember(req, b.clinicId, ["admin", "doctor", "nurse", "receptionist"]);
     if (typeof b.invoiceId !== "string" || !/^[0-9a-f-]{36}$/i.test(b.invoiceId)) throw new HttpError(400, "invoiceId is required.");
-    const { data: inv } = await db.from("invoices").select("id, invoice_number, items, subtotal, discount, gst_amount, total, paid_amount, status, clinic_patients(name, phone)").eq("id", b.invoiceId).eq("clinic_id", b.clinicId).maybeSingle();
+    const { data: inv } = await db.from("invoices").select("id, invoice_number, items, subtotal, discount, gst_amount, total, paid_amount, status, clinic_patients(name, phone, email)").eq("id", b.invoiceId).eq("clinic_id", b.clinicId).maybeSingle();
     if (!inv) throw new HttpError(404, "Invoice not found.");
     if (b.linkOnly) return { pdfUrl: invoicePdfUrl(process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin, inv.id) };
     const { data: clinic } = await db.from("clinics").select("name, brand_name, phone").eq("id", b.clinicId).maybeSingle();
@@ -36,7 +37,11 @@ export async function POST(req: NextRequest) {
     const short = `🧾 Invoice ${inv.invoice_number ?? ""} from ${cname}\nTotal: ${rupees(inv.total)}${balance > 0 ? ` · Due: ${rupees(balance)}` : " · Paid in full"}`;
     const linkText = `${text}\n\n📄 Invoice PDF: ${pdfUrl}`;
 
-    if (!whatsappConfigured()) return { status: "link", link: waLink(phone, linkText), pdfUrl, error: "WhatsApp is not connected yet. Tap the link to send it from your own WhatsApp." };
+    // also email it when the patient has an address and email is set up (does not change the WhatsApp result)
+    let emailed: "sent" | "failed" | undefined;
+    if (emailConfigured() && pat.email) emailed = (await sendEmail(pat.email, `Invoice ${inv.invoice_number ?? ""} from ${cname}`, linkText, null)).ok ? "sent" : "failed";
+
+    if (!whatsappConfigured()) return { email: emailed, status: "link", link: waLink(phone, linkText), pdfUrl, error: "WhatsApp is not connected yet. Tap the link to send it from your own WhatsApp." };
     try {
       const tpl = process.env.WHATSAPP_TEMPLATE_INVOICE_PATIENT;
       if (tpl) {
@@ -45,9 +50,9 @@ export async function POST(req: NextRequest) {
       } else {
         await sendDocumentViaCloudApi(phone, pdfUrl, fname, short);
       }
-      return { status: "sent", pdfUrl };
+      return { status: "sent", pdfUrl, email: emailed };
     } catch (e: any) {
-      return { status: "failed", error: e.message, link: waLink(phone, linkText), pdfUrl };
+      return { status: "failed", error: e.message, link: waLink(phone, linkText), pdfUrl, email: emailed };
     }
   });
 }
