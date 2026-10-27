@@ -22,11 +22,15 @@ export default function PatientSummary({ patientId, refreshKey = 0 }: { patientI
 
   const load = useCallback(async () => {
     const cid = getActiveClinicId(); if (!cid || !patientId) return;
-    const [p, n, pl] = await Promise.all([
+    const [p, n0, pl] = await Promise.all([
       supabase.from("clinic_patients").select("name, dob, gender, allergies, conditions, medications").eq("id", patientId).eq("clinic_id", cid).maybeSingle(),
-      supabase.from("visit_notes").select("id, visit_date, tooth, treatment, findings, concerns, conditions, alert, follow_up, doctors(name)").eq("clinic_id", cid).eq("clinic_patient_id", patientId).order("visit_date", { ascending: false }).limit(200),
+      supabase.from("visit_notes").select("id, visit_date, tooth, treatment, findings, concerns, conditions, alert, follow_up, open_points, doctors(name)").eq("clinic_id", cid).eq("clinic_patient_id", patientId).order("visit_date", { ascending: false }).limit(200),
       supabase.from("treatment_plans").select("title, status, treatment_sittings(status, target_date)").eq("clinic_id", cid).eq("clinic_patient_id", patientId).eq("status", "active"),
     ]);
+    let n = n0;
+    if (n.error && /open_points/.test(n.error.message)) {       // migration 026 not run yet: show the history without the new column
+      n = await supabase.from("visit_notes").select("id, visit_date, tooth, treatment, findings, concerns, conditions, alert, follow_up, doctors(name)").eq("clinic_id", cid).eq("clinic_patient_id", patientId).order("visit_date", { ascending: false }).limit(30);
+    }
     if (n.error) setErr(/visit_notes/.test(n.error.message) ? "Run migration 022 (visit notes) in Supabase to see treatment history here." : n.error.message);
     if (!p.data) return;
     setName(p.data.name);

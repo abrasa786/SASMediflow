@@ -12,6 +12,7 @@ import { getClinicDoctors, getMyRoleInClinic } from "@/lib/clinic";
 import PatientSummary from "@/components/PatientSummary";
 import VisitNotes from "@/components/VisitNotes";
 import AppointmentTreatment from "@/components/AppointmentTreatment";
+import TreatmentFromVisit from "@/components/TreatmentFromVisit";
 import type { Doctor } from "@/types";
 
 const inp = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:bg-slate-50";
@@ -95,7 +96,8 @@ export default function AppointmentRecord({ params }: { params: { id: string } }
         </div>
 
         {p && <PatientSummary patientId={p.id} refreshKey={rk} />}
-        {p && clinicId && <AppointmentTreatment clinicId={clinicId} appointmentId={a.id} patientId={p.id} canEdit={canNote} />}
+        {p && clinicId && <TreatmentFromVisit clinicId={clinicId} appointmentId={a.id} patientId={p.id} canEdit={canNote} onChange={() => setRk((n) => n + 1)} />}
+        {p && clinicId && <AppointmentTreatment key={rk} clinicId={clinicId} appointmentId={a.id} patientId={p.id} canEdit={canNote} />}
 
         <form onSubmit={save} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mt-5 grid sm:grid-cols-2 gap-4">
           <div><label htmlFor="ap-doc" className="text-xs font-medium text-slate-600 block mb-1">Doctor</label>

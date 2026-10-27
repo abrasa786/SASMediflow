@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
     if (!treatment) throw new HttpError(400, "Write what treatment was done.");
     const fields: Record<string, unknown> = {
       treatment, tooth: str(f.tooth, 60), findings: str(f.findings), concerns: str(f.concerns), conditions: str(f.conditions, 500),
-      alert: str(f.alert, 300), follow_up: str(f.follow_up, 500), order_item: str(f.order_item, 120), updated_at: new Date().toISOString(),
+      alert: str(f.alert, 300), follow_up: str(f.follow_up, 500), open_points: str(f.open_points, 500), order_item: str(f.order_item, 120), updated_at: new Date().toISOString(),
     };
     if (isDate(f.visit_date)) fields.visit_date = f.visit_date;
     fields.needed_by = isDate(f.needed_by) ? f.needed_by : null;
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     if (b.action === "update") {
       if (typeof b.id !== "string") throw new HttpError(400, "Missing id.");
       const { data, error } = await db.from("visit_notes").update(fields).eq("id", b.id).eq("clinic_id", b.clinicId).select("id").maybeSingle();
-      if (error) throw new HttpError(400, /order_item|needed_by/.test(error.message) ? "Run migration 023 (order reminders) first." : error.message);
+      if (error) throw new HttpError(400, /order_item|needed_by|open_points/.test(error.message) ? "Run migrations 023 and 026 first." : error.message);
       if (!data) throw new HttpError(404, "Note not found.");
       noteId = data.id;
     } else {
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
         appointmentId = ap.id; doctorId = ap.doctor_id ?? null;
       }
       const { data, error } = await db.from("visit_notes").insert({ ...fields, clinic_id: b.clinicId, clinic_patient_id: b.patientId, appointment_id: appointmentId, doctor_id: doctorId, created_by: userId }).select("id").single();
-      if (error) throw new HttpError(400, /order_item|needed_by/.test(error.message) ? "Run migration 023 (order reminders) first." : error.message);
+      if (error) throw new HttpError(400, /order_item|needed_by|open_points/.test(error.message) ? "Run migrations 023 and 026 first." : error.message);
       noteId = data.id;
     }
 

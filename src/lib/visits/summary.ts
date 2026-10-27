@@ -4,7 +4,7 @@
  */
 export interface VisitNote {
   id: string; visit_date: string; tooth?: string | null; treatment: string; findings?: string | null; concerns?: string | null;
-  conditions?: string | null; alert?: string | null; follow_up?: string | null; doctor?: string | null;
+  conditions?: string | null; alert?: string | null; follow_up?: string | null; open_points?: string | null; doctor?: string | null;
 }
 export interface PatientBasics { name: string; dob?: string | null; gender?: string | null; allergies?: string | null; conditions?: string | null; medications?: string | null }
 export interface PlanBrief { title: string; status: string; done: number; total: number; next?: string | null }
@@ -45,7 +45,7 @@ export function buildSummary(p: PatientBasics, notes: VisitNote[], plans: PlanBr
   }
   const cSeen = new Set<string>(), conditions: string[] = [];
   for (const n of history) { const t = clean(n.conditions); if (t && !cSeen.has(t.toLowerCase())) { cSeen.add(t.toLowerCase()); conditions.push(t); } }
-  const followUps = history.filter((n) => clean(n.follow_up)).slice(0, 3).map((n) => ({ text: clean(n.follow_up), date: n.visit_date }));
+  const followUps = history.filter((n) => clean(n.follow_up) || clean(n.open_points)).slice(0, 3).map((n) => ({ text: [clean(n.follow_up), clean(n.open_points) ? `Open: ${clean(n.open_points)}` : ""].filter(Boolean).join(" · "), date: n.visit_date }));
 
   const L: string[] = [`Patient: ${p.name}${basics.length ? ". " + basics.join(". ") : ""}.`];
   if (alerts.length) L.push("ALERTS: " + alerts.map((a) => `${a.text}${a.tooth ? ` (tooth ${a.tooth})` : ""}, noted ${nice(a.date)}`).join("; ") + ".");

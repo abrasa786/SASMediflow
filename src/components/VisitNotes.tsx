@@ -8,7 +8,7 @@ import { suggestOrderItem } from "@/lib/visits/orders";
 
 const supabase = sb as any;
 const inp = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500";
-const EMPTY = { tooth: "", treatment: "", findings: "", concerns: "", conditions: "", alert: "", follow_up: "", order_item: "", needed_by: "" };
+const EMPTY = { tooth: "", treatment: "", findings: "", concerns: "", conditions: "", alert: "", follow_up: "", open_points: "", order_item: "", needed_by: "" };
 const nice = (iso: string) => new Date(iso + "T00:00:00Z").toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" });
 
 /** Record what was done at this visit and what the doctor found. The next appointment for this patient shows it automatically. */
@@ -61,6 +61,7 @@ export default function VisitNotes({ clinicId, patientId, appointmentId, canEdit
             {n.conditions && <p className="text-xs text-slate-600">Condition: {n.conditions}</p>}
             {n.alert && <p className="text-xs text-red-700 font-medium">⚠ Shown at every future visit: {n.alert}</p>}
             {n.follow_up && <p className="text-xs text-slate-600">Follow-up: {n.follow_up}</p>}
+            {n.open_points && <p className="text-xs text-amber-800">Open points: {n.open_points}</p>}
             {n.order_item && <p className="text-xs text-sky-800">📦 To have ready: {n.order_item}{n.needed_by ? ` by ${nice(n.needed_by)}` : ""}</p>}
             {canEdit && <p className="mt-1 text-xs"><button type="button" onClick={() => edit(n)} className="text-sky-700 underline mr-3">Edit</button><button type="button" onClick={() => remove(n.id)} className="text-red-600">Delete</button></p>}
           </li>
@@ -75,6 +76,7 @@ export default function VisitNotes({ clinicId, patientId, appointmentId, canEdit
           {T("conditions", "Condition noticed", "e.g. inner bone is weak, gums bleed easily")}
           {T("alert", "Warning for future visits (optional)", "Shown in a red box at the top of every future appointment for this patient.")}
           {T("follow_up", "Follow-up needed")}
+          {T("open_points", "Open points for next visit", "Anything still pending: shown in the patient summary at the next appointment.")}
           <div className="sm:col-span-2 rounded-xl border border-sky-100 bg-sky-50/60 p-3 grid sm:grid-cols-2 gap-3">
             <div className="sm:col-span-2"><p className="text-xs font-semibold text-sky-900">Needs something made or bought before the next visit?</p>
               <p className="text-xs text-sky-800/80 mt-0.5">We will remind you to order it in time, and again to check it arrived. The reminders clear when you receive the order in Purchasing.</p></div>
