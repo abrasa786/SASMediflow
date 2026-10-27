@@ -5,6 +5,7 @@ import Link from "next/link";
 import RecordForm, { type Field } from "@/components/RecordForm";
 import { getActiveClinicId } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
+import OffersConsent from "@/components/OffersConsent";
 import PatientSummary from "@/components/PatientSummary";
 
 const FIELDS: Field[] = [
@@ -46,5 +47,5 @@ function History({ patientId }: { patientId: string }) {
 
 export default function PatientRecord({ params }: { params: { id: string } }) {
   return <RecordForm table="clinic_patients" id={params.id} fields={FIELDS} backHref="/patients" backLabel="Patients"
-    title={(r) => r.name} subtitle={(r) => r.phone ?? null}>{(r) => <><PatientSummary patientId={r.id} /><History patientId={r.id} /></>}</RecordForm>;
+    title={(r) => r.name} subtitle={(r) => r.phone ?? null}>{(r) => <><PatientSummary patientId={r.id} /><OffersConsent clinicId={r.clinic_id} patientId={r.id} /><History patientId={r.id} /></>}</RecordForm>;
 }
