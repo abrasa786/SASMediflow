@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { authFetch } from "@/lib/api";
 
 /** Free-slot chips for one day, straight from the availability engine. */
-export default function SlotPicker({ clinicId, date, doctorId, value, onChange, reloadKey = 0 }: {
-  clinicId: string; date: string; doctorId?: string; value: string; onChange: (t: string) => void; reloadKey?: number;
+export default function SlotPicker({ clinicId, date, doctorId, value, onChange, reloadKey = 0, duration }: {
+  clinicId: string; date: string; doctorId?: string; value: string; onChange: (t: string) => void; reloadKey?: number; duration?: number;
 }) {
   const [times, setTimes] = useState<string[]>([]);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
@@ -15,12 +15,12 @@ export default function SlotPicker({ clinicId, date, doctorId, value, onChange, 
     let live = true;
     if (!clinicId || !date) return;
     setState("loading");
-    const qs = new URLSearchParams({ clinicId, date, ...(doctorId ? { doctorId } : {}) });
+    const qs = new URLSearchParams({ clinicId, date, ...(doctorId ? { doctorId } : {}), ...(duration ? { duration: String(duration) } : {}) });
     authFetch(`/api/appointments/slots?${qs}`)
       .then((r) => { if (!live) return; setTimes(doctorId ? (r.doctors?.[0]?.times ?? []) : (r.anyTimes ?? [])); setState("ready"); })
       .catch((e) => { if (!live) return; setErr(e.message); setState("error"); });
     return () => { live = false; };
-  }, [clinicId, date, doctorId, reloadKey]);
+  }, [clinicId, date, doctorId, reloadKey, duration]);
 
   useEffect(() => { if (value && state === "ready" && !times.includes(value)) onChange(""); }, [times, state]); // eslint-disable-line
 

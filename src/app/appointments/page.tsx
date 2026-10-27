@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/lib/toast";
 import AppShell from "@/components/layout/AppShell";
 import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
 import SlotPicker from "@/components/SlotPicker";
+import { suggestDuration, type DurationRow } from "@/lib/durations";
 import { supabase as supabaseClient } from "@/lib/supabase";
 import { getAppointments, getClinicDoctors, searchClinicPatients, todayIso } from "@/lib/clinic";
 import type { Appointment, Doctor, ClinicPatient } from "@/types";
@@ -281,6 +282,13 @@ function BookModal({ clinicId, doctors, defaultDate, onClose, onBooked }: { clin
   const [fee, setFee] = useState(""); const [feeTouched, setFeeTouched] = useState(false);
   const [mode, setMode] = useState<"in_clinic" | "video">("in_clinic");
   const [symptoms, setSymptoms] = useState("");
+  const [minutes, setMinutes] = useState(""); const [minutesTouched, setMinutesTouched] = useState(false);
+  const [durRows, setDurRows] = useState<DurationRow[]>([]);
+  useEffect(() => {      // what this clinic's visits have really taken (empty before migration 027: only the starting guesses are used)
+    supabase.from("treatment_durations").select("key, label, minutes, samples").eq("clinic_id", clinicId).then((r: any) => { if (!r.error) setDurRows(r.data ?? []); });
+  }, [clinicId]);
+  const sug = useMemo(() => suggestDuration(symptoms, durRows), [symptoms, durRows]);
+  useEffect(() => { if (!minutesTouched) { setMinutes(sug ? String(sug.minutes) : ""); setTime(""); } }, [sug, minutesTouched]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [alts, setAlts] = useState<{ date: string; slots: { doctorName: string; time: string }[] }[]>([]);
@@ -322,7 +330,7 @@ function BookModal({ clinicId, doctors, defaultDate, onClose, onBooked }: { clin
       const r = await authFetch("/api/appointments/book", {
         body: {
           clinicId, date, time, doctorId: doctorId || undefined, mode, symptoms: symptoms.trim() || undefined,
-          fee: fee === "" ? undefined : Number(fee),
+          fee: fee === "" ? undefined : Number(fee), durationMinutes: minutes === "" ? undefined : Number(minutes),
           patient: who === "existing" ? { id: picked!.id } : { name: name.trim(), phone: phone.trim(), age: age ? Number(age) : undefined, gender: gender || undefined },
         },
       });
@@ -421,9 +429,15 @@ function BookModal({ clinicId, doctors, defaultDate, onClose, onBooked }: { clin
           <div><label className={labelCls}>Date *</label><input type="date" min={todayIso()} value={date} onChange={(e) => { setDate(e.target.value); setTime(""); }} className={inputCls} /></div>
         </div>
 
+        <div className="grid grid-cols-[minmax(0,1fr)_7rem] gap-3">
+          <div><label className={labelCls}>What is the visit for?</label><input value={symptoms} onChange={(e) => setSymptoms(e.target.value)} placeholder="e.g. Teeth cleaning, implant, tooth pain" className={inputCls} /></div>
+          <div><label className={labelCls}>Minutes</label><input type="number" min={5} max={240} step={5} value={minutes} onChange={(e) => { setMinutes(e.target.value); setMinutesTouched(true); setTime(""); }} placeholder="Auto" className={inputCls} /></div>
+        </div>
+        {sug && !minutesTouched && <p className="text-xs text-slate-500 -mt-2">Suggested {sug.minutes} minutes{sug.basis === "learned" ? ` (what your last ${sug.n} similar visits took)` : sug.basis === "set" ? " (set for this treatment)" : " (a usual time for this kind of visit; it learns from your completed visits)"}. Change it if this patient needs more or less.</p>}
+
         <div>
           <label className={labelCls}>Time slot * <span className="text-slate-400 font-normal">(only free times are shown)</span></label>
-          <SlotPicker clinicId={clinicId} date={date} doctorId={doctorId || undefined} value={time} onChange={setTime} reloadKey={reload} />
+          <SlotPicker clinicId={clinicId} date={date} doctorId={doctorId || undefined} value={time} onChange={setTime} reloadKey={reload} duration={minutes === "" ? undefined : Number(minutes)} />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -432,7 +446,6 @@ function BookModal({ clinicId, doctors, defaultDate, onClose, onBooked }: { clin
             <select value={mode} onChange={(e) => setMode(e.target.value as any)} className={inputCls}><option value="in_clinic">In-clinic</option><option value="video">Video</option></select>
           </div>
         </div>
-        <div><label className={labelCls}>Reason / symptoms</label><input value={symptoms} onChange={(e) => setSymptoms(e.target.value)} placeholder="e.g. Tooth pain" className={inputCls} /></div>
 
         {err && (
           <div className="text-xs text-red-700 bg-red-50 px-3 py-2 rounded-lg space-y-1">
