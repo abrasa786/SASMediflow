@@ -35,7 +35,7 @@ function Inner() {
       </div>
       <table className="w-full mt-4">
         <thead><tr className="text-left text-xs uppercase text-slate-500 border-b border-slate-200"><th className="py-2">#</th><th>Description</th><th className="text-right">Qty</th><th className="text-right">Rate</th><th className="text-right">Amount</th></tr></thead>
-        <tbody>{items.map((i, n) => <tr key={n} className="border-b border-slate-100"><td className="py-2">{n + 1}</td><td>{i.name}</td><td className="text-right tabular-nums">{i.qty}</td><td className="text-right tabular-nums">{inr(i.unit_price)}</td><td className="text-right tabular-nums">{inr(i.amount ?? i.qty * i.unit_price)}</td></tr>)}</tbody>
+        <tbody>{items.map((i, n) => <tr key={n} className="border-b border-slate-100"><td className="py-2">{n + 1}</td><td>{i.name ?? i.description}</td><td className="text-right tabular-nums">{i.qty ?? 1}</td><td className="text-right tabular-nums">{inr(i.unit_price ?? i.price)}</td><td className="text-right tabular-nums">{inr(i.amount ?? i.qty * i.unit_price)}</td></tr>)}</tbody>
       </table>
       <div className="mt-4 ml-auto w-64 space-y-1 tabular-nums">
         <p className="flex justify-between"><span>Subtotal</span><span>{inr(inv.subtotal)}</span></p>

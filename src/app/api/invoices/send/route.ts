@@ -5,6 +5,8 @@ import { sendViaCloudApi, sendDocumentViaCloudApi, whatsappConfigured, whatsappP
 import { emailConfigured, sendEmail } from "@/lib/email";
 import { invoicePdfUrl } from "@/lib/server/invoice-pdf";
 
+export const maxDuration = 30;
+
 const rupees = (n: unknown) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
 
 /**
@@ -28,7 +30,7 @@ export async function POST(req: NextRequest) {
     if (!phone) return { status: "skipped", error: "This patient has no valid mobile number saved." };
 
     const balance = Math.max(0, Number(inv.total) - Number(inv.paid_amount || 0));
-    const lines = (Array.isArray(inv.items) ? inv.items : []).slice(0, 12).map((i: any) => `• ${i.name}${Number(i.qty) > 1 ? ` × ${i.qty}` : ""} — ${rupees(i.amount)}`).join("\n");
+    const lines = (Array.isArray(inv.items) ? inv.items : []).slice(0, 12).map((i: any) => `• ${i.name ?? i.description ?? "Item"}${Number(i.qty) > 1 ? ` × ${i.qty}` : ""} — ${rupees(i.amount ?? i.price)}`).join("\n");
     const text = `🧾 *Invoice ${inv.invoice_number ?? ""}* from *${cname}*\n\nHi ${pat.name ?? ""},\n\n${lines}\n${Number(inv.discount) > 0 ? `Discount: −${rupees(inv.discount)}\n` : ""}${Number(inv.gst_amount) > 0 ? `GST: ${rupees(inv.gst_amount)}\n` : ""}*Total: ${rupees(inv.total)}*${balance > 0 ? `\n*Amount due: ${rupees(balance)}*` : "\n✅ Paid in full"}\n\nThank you for choosing ${cname}.${clinic?.phone ? `\nQuestions? Call ${clinic.phone}.` : ""}`;
 
     const origin = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin;
@@ -39,9 +41,11 @@ export async function POST(req: NextRequest) {
 
     // also email it when the patient has an address and email is set up (does not change the WhatsApp result)
     let emailed: "sent" | "failed" | undefined;
-    if (emailConfigured() && pat.email) emailed = (await sendEmail(pat.email, `Invoice ${inv.invoice_number ?? ""} from ${cname}`, linkText, { fromName: cname, replyTo: clinic?.email })).ok ? "sent" : "failed";
+    const emailJob = emailConfigured() && pat.email
+      ? sendEmail(pat.email, `Invoice ${inv.invoice_number ?? ""} from ${cname}`, linkText, { fromName: cname, replyTo: clinic?.email }).then((r) => { emailed = r.ok ? "sent" : "failed"; }).catch(() => { emailed = "failed"; })
+      : Promise.resolve();
 
-    if (!whatsappConfigured()) return { email: emailed, status: "link", link: waLink(phone, linkText), pdfUrl, error: "WhatsApp is not connected yet. Tap the link to send it from your own WhatsApp." };
+    if (!whatsappConfigured()) { await emailJob; return { email: emailed, status: "link", link: waLink(phone, linkText), pdfUrl, error: "WhatsApp is not connected yet. Tap the link to send it from your own WhatsApp." }; }
     try {
       const tpl = process.env.WHATSAPP_TEMPLATE_INVOICE_PATIENT;
       if (tpl) {
@@ -50,8 +54,10 @@ export async function POST(req: NextRequest) {
       } else {
         await sendDocumentViaCloudApi(phone, pdfUrl, fname, short);
       }
+      await emailJob;
       return { status: "sent", pdfUrl, email: emailed };
     } catch (e: any) {
+      await emailJob;
       return { status: "failed", error: e.message, link: waLink(phone, linkText), pdfUrl, email: emailed };
     }
   });

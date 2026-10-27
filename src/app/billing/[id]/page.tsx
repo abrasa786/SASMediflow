@@ -42,7 +42,7 @@ export default function InvoiceRecord({ params }: { params: { id: string } }) {
     const { data } = await supabase.from("invoices").select("*, clinic_patients(id, name, phone)").eq("id", params.id).eq("clinic_id", cid).maybeSingle();
     if (!data) { setInv(null); return; }
     setInv(data);
-    setItems(Array.isArray(data.items) && data.items.length ? data.items.map((i: any) => ({ name: String(i.name ?? ""), qty: Number(i.qty || 1), unit_price: Number(i.unit_price || 0), amount: Number(i.amount || 0) })) : [{ name: "", qty: 1, unit_price: 0, amount: 0 }]);
+    setItems(Array.isArray(data.items) && data.items.length ? data.items.map((i: any) => ({ name: String(i.name ?? i.description ?? ""), qty: Number(i.qty || 1), unit_price: Number(i.unit_price ?? i.price ?? i.amount ?? 0), amount: Number(i.amount ?? (Number(i.qty || 1) * Number(i.unit_price ?? i.price ?? 0))) })) : [{ name: "", qty: 1, unit_price: 0, amount: 0 }]);
     setGst(Number(data.gst_percent ?? 18)); setDisc(Number(data.discount || 0)); setPct(false);
     setStatus(data.status ?? "sent"); setPaidAmt(Number(data.paid_amount || 0)); setMethod(data.payment_method ?? "physical"); setNotes(data.notes ?? "");
   }, [params.id]);
@@ -99,10 +99,13 @@ export default function InvoiceRecord({ params }: { params: { id: string } }) {
   async function whatsapp() {
     setBusy("wa"); setErr(""); setMsg(""); setWaFail(null);
     try {
-      const r = await authFetch<{ status: string; error?: string; link?: string }>("/api/invoices/send", { body: { clinicId, invoiceId: inv.id } });
-      if (r.status === "sent") setMsg("✅ Sent to the patient on WhatsApp as a PDF.");
+      const r = await Promise.race([
+        authFetch<{ status: string; error?: string; link?: string }>("/api/invoices/send", { body: { clinicId, invoiceId: inv.id } }),
+        new Promise<never>((_, no) => setTimeout(() => no(new Error("Sending is taking too long. Check your internet and press Send again.")), 35000)),
+      ]);
+      if (r.status === "sent") { setMsg("✅ Sent to the patient on WhatsApp as a PDF."); toast("Invoice sent on WhatsApp."); }
       else setWaFail({ error: r.error ?? "Could not send automatically.", link: r.link });   // a real link the person taps: phones block pop-ups opened after a wait
-    } catch (e: any) { setErr(e.message); }
+    } catch (e: any) { setErr(e.message); toast(e.message, false); }
     setBusy("");
   }
   async function received() {

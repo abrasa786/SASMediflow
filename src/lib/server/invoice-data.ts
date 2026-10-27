@@ -13,7 +13,7 @@ export async function loadInvoiceData(db: any, invoiceId: string, clinicId?: str
     clinic: { name: c?.brand_name || c?.name || "Clinic", address: c?.address, city: c?.city, phone: c?.phone, email: c?.email, gst_number: c?.gst_number, logo_url: c?.logo_url, color: c?.primary_color },
     invoice: {
       number: inv.invoice_number ?? "", date: new Date(inv.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Kolkata" }),
-      status: inv.status ?? "", items: Array.isArray(inv.items) ? inv.items.map((i: any) => ({ name: String(i.name ?? ""), qty: Number(i.qty || 1), unit_price: Number(i.unit_price || 0), amount: Number(i.amount || 0) })) : [],
+      status: inv.status ?? "", items: Array.isArray(inv.items) ? inv.items.map((i: any) => ({ name: String(i.name ?? i.description ?? ""), qty: Number(i.qty || 1), unit_price: Number(i.unit_price ?? i.price ?? i.amount ?? 0), amount: Number(i.amount ?? (Number(i.qty || 1) * Number(i.unit_price ?? i.price ?? 0))) })) : [],
       subtotal: Number(inv.subtotal || 0), discount: Number(inv.discount || 0), gst_percent: Number(inv.gst_percent || 0), gst_amount: Number(inv.gst_amount || 0), total: Number(inv.total || 0),
       paid: Number(inv.paid_amount || 0), method: inv.payment_method && inv.status === "paid" ? method[inv.payment_method] ?? null : null,
     },
