@@ -8,7 +8,8 @@ import { supabase as sb } from "@/lib/supabase";
 import { toast } from "@/lib/toast";
 
 const supabase = sb as any;
-const inp = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:bg-slate-50";
+const inpBase = "px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:bg-slate-50";
+const inp = "w-full " + inpBase;
 interface Mat { item: string; qty: string }
 
 /**
@@ -28,7 +29,7 @@ export default function TreatmentFromVisit({ clinicId, appointmentId, patientId,
   const [err, setErr] = useState("");
   const [done, setDone] = useState<{ invoiceId: string; stock: any[] } | null>(null);
 
-  const matsFrom = (c: any) => (Array.isArray(c) ? c : []).map((m: any) => ({ item: String(m.item ?? ""), qty: String(m.qty ?? "") }));
+  const matsFrom = (c: any) => (Array.isArray(c) ? c : []).map((m: any) => ({ item: String(m.item ?? m.name ?? ""), qty: String(m.qty ?? m.quantity ?? "") }));
 
   const load = useCallback(async () => {
     const [t, s, st] = await Promise.all([
@@ -106,8 +107,8 @@ export default function TreatmentFromVisit({ clinicId, appointmentId, patientId,
         <div className="mt-2 space-y-2">
           {mats.map((m, i) => (
             <div key={i} className="flex items-center gap-2">
-              <input list="tv-stock" aria-label="Material" disabled={locked} value={m.item} onChange={(e) => setMat(i, "item", e.target.value)} placeholder="Item" className={`${inp} flex-1 min-w-0`} />
-              <input aria-label="Quantity" type="number" min={1} disabled={locked} value={m.qty} onChange={(e) => setMat(i, "qty", e.target.value)} className={`${inp} w-20 shrink-0`} />
+              <input list="tv-stock" aria-label="Material" disabled={locked} value={m.item} onChange={(e) => setMat(i, "item", e.target.value)} placeholder="Item" className={`${inpBase} flex-1 min-w-0`} />
+              <input aria-label="Quantity" type="number" min={1} disabled={locked} value={m.qty} onChange={(e) => setMat(i, "qty", e.target.value)} className={`${inpBase} w-20 shrink-0`} />
               {!locked && <button type="button" aria-label="Remove" onClick={() => setMats((p) => p.filter((_, j) => j !== i))} className="text-red-500 text-lg px-1">×</button>}
             </div>
           ))}
