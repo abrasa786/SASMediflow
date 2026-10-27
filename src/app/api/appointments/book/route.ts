@@ -3,6 +3,7 @@ import { handle, HttpError } from "@/lib/server/http";
 import { requireClinicMember } from "@/lib/server/auth";
 import { bookAppointmentViaEngine } from "@/lib/booking/engine";
 import { notifyAppointment } from "@/lib/booking/notify";
+import { requestOffersConsent } from "@/lib/offers/consent";
 import { processFlowsSoon } from "@/lib/flows/engine";
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
@@ -29,6 +30,8 @@ export async function POST(req: NextRequest) {
       symptoms: str(b.symptoms), notes: str(b.notes), fee, source: "clinic",
     });
     const notifications = b.notify === false ? [] : await notifyAppointment(db, b.clinicId, details, "confirmation");
+    // a brand-new patient is also asked, on WhatsApp, if they want tips and offers (only when WhatsApp and the consent template are set up)
+    if (b.notify !== false && details?.patient_created && details?.patient?.id) await requestOffersConsent(db, b.clinicId, details.patient.id, true).catch(() => null);
     await processFlowsSoon(db, b.clinicId);
     return { details, notifications };
   });

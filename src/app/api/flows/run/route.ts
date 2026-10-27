@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
 import { createAdminClient } from "@/lib/supabase";
 import { runScheduledFlows } from "@/lib/flows/engine";
+import { runDayBeforeReminders } from "@/lib/booking/reminders";
 import { runRecallDaily } from "@/lib/recall/engine";
 
 export const dynamic = "force-dynamic";
@@ -17,5 +18,7 @@ export async function GET(req: NextRequest) {
   const flows = await runScheduledFlows(db);
   let recall = { clinics: 0, sent: 0 };
   try { recall = await runRecallDaily(db); } catch (e) { console.error("daily recall failed:", e instanceof Error ? e.message : e); }
-  return NextResponse.json({ ok: true, ...flows, recall });
+  let reminders = { reminded: 0 };
+  try { reminders = await runDayBeforeReminders(db); } catch (e) { console.error("reminders failed:", e instanceof Error ? e.message : e); }
+  return NextResponse.json({ ok: true, ...flows, recall, reminders });
 }

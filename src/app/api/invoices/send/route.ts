@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     const { data: inv } = await db.from("invoices").select("id, invoice_number, items, subtotal, discount, gst_amount, total, paid_amount, status, clinic_patients(name, phone, email)").eq("id", b.invoiceId).eq("clinic_id", b.clinicId).maybeSingle();
     if (!inv) throw new HttpError(404, "Invoice not found.");
     if (b.linkOnly) return { pdfUrl: invoicePdfUrl(process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin, inv.id) };
-    const { data: clinic } = await db.from("clinics").select("name, brand_name, phone").eq("id", b.clinicId).maybeSingle();
+    const { data: clinic } = await db.from("clinics").select("name, brand_name, phone, email").eq("id", b.clinicId).maybeSingle();
     const cname = clinic?.brand_name || clinic?.name || "the clinic";
     const pat: any = (inv as any).clinic_patients ?? {};
     const phone = whatsappPhone(pat.phone);
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
     // also email it when the patient has an address and email is set up (does not change the WhatsApp result)
     let emailed: "sent" | "failed" | undefined;
-    if (emailConfigured() && pat.email) emailed = (await sendEmail(pat.email, `Invoice ${inv.invoice_number ?? ""} from ${cname}`, linkText, null)).ok ? "sent" : "failed";
+    if (emailConfigured() && pat.email) emailed = (await sendEmail(pat.email, `Invoice ${inv.invoice_number ?? ""} from ${cname}`, linkText, { fromName: cname, replyTo: clinic?.email })).ok ? "sent" : "failed";
 
     if (!whatsappConfigured()) return { email: emailed, status: "link", link: waLink(phone, linkText), pdfUrl, error: "WhatsApp is not connected yet. Tap the link to send it from your own WhatsApp." };
     try {

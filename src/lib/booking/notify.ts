@@ -144,7 +144,8 @@ export async function notifyAppointment(
       jobs.push((async (): Promise<NotificationResult | null> => {
         try {
           const { data: pt } = await db.from("clinic_patients").select("email").eq("id", details.patient.id).maybeSingle();
-          if (pt?.email) await sendEmail(pt.email, `${SUBJECT[kind]} · ${details.clinic?.name ?? "your clinic"}`, msgs.patient.replace(/\n\nReply (CANCEL|STOP)[^\n]*/g, ""), null);
+          const { data: cl } = await db.from("clinics").select("email").eq("id", details.appointment.clinic_id).maybeSingle();
+          if (pt?.email) await sendEmail(pt.email, `${SUBJECT[kind]} · ${details.clinic?.name ?? "your clinic"}`, msgs.patient.replace(/\n\nReply (CANCEL|STOP)[^\n]*/g, ""), { fromName: details.clinic?.name, replyTo: cl?.email });
         } catch { /* optional */ }
         return null;
       })() as Promise<NotificationResult>);

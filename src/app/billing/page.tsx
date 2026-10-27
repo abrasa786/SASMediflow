@@ -347,7 +347,7 @@ export default function BillingPage() {
                 </div>
               </div>
             ) : (
-            <form onSubmit={handleCreate} className="space-y-4">
+            <form onSubmit={(e) => handleCreate(e, true)} className="space-y-4">
               {/* Patient */}
               <div className="relative">
                 <label className="text-xs font-medium text-slate-600 block mb-1">Patient *</label>

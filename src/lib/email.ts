@@ -14,13 +14,22 @@ export function textToHtml(text: string): string {
   return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.5;color:#0f172a">${body}</div>`;
 }
 
-export async function sendEmail(to: string, subject: string, text: string, replyTo?: string | null): Promise<{ ok: boolean; error?: string }> {
+/** One sending address for every clinic; each email shows the clinic's own name and replies go to the clinic. */
+function fromFor(name?: string | null): string {
+  const raw = process.env.EMAIL_FROM ?? "";
+  const addr = (raw.match(/<([^>]+)>/)?.[1] ?? raw).trim();
+  const clean = (name ?? "").replace(/[<>"\r\n]/g, "").trim();
+  return clean ? `${clean} <${addr}>` : raw;
+}
+
+export async function sendEmail(to: string, subject: string, text: string, opts: { fromName?: string | null; replyTo?: string | null } = {}): Promise<{ ok: boolean; error?: string }> {
+  const replyTo = opts.replyTo;
   if (!emailConfigured()) return { ok: false, error: "Email is not set up" };
   if (!isEmail(to)) return { ok: false, error: "No valid email address" };
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-      body: JSON.stringify({ from: process.env.EMAIL_FROM, to: [to.trim()], subject: subject.slice(0, 150), text: text.replace(/\*/g, ""), html: textToHtml(text), ...(replyTo && isEmail(replyTo) ? { reply_to: replyTo } : {}) }),
+      body: JSON.stringify({ from: fromFor(opts.fromName), to: [to.trim()], subject: subject.slice(0, 150), text: text.replace(/\*/g, ""), html: textToHtml(text), ...(replyTo && isEmail(replyTo) ? { reply_to: replyTo } : {}) }),
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) { const j: any = await res.json().catch(() => ({})); return { ok: false, error: j?.message ?? `Email error ${res.status}` }; }
