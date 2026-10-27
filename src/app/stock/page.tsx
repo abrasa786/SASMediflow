@@ -6,6 +6,7 @@ import AppShell from "@/components/layout/AppShell";
 import { getActiveClinicId } from "@/lib/auth";
 import { getStockItems, upsertStockItem } from "@/lib/clinic";
 import type { StockItem, StockCategory } from "@/types";
+import OrderReminders from "@/components/OrderReminders";
 
 const CATEGORIES: StockCategory[] = ["medicine", "consumable", "equipment", "lab_supply", "other"];
 
@@ -88,6 +89,8 @@ export default function StockPage() {
           </button>
           </div>
         </div>
+
+        {clinicId && <OrderReminders clinicId={clinicId} />}
 
         {/* Low stock alert */}
         {lowCount > 0 && (

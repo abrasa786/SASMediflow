@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { authFetch } from "@/lib/api";
 import { supabase as sb } from "@/lib/supabase";
+import { suggestOrderItem } from "@/lib/visits/orders";
 
 const supabase = sb as any;
 const inp = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500";
-const EMPTY = { tooth: "", treatment: "", findings: "", concerns: "", conditions: "", alert: "", follow_up: "" };
+const EMPTY = { tooth: "", treatment: "", findings: "", concerns: "", conditions: "", alert: "", follow_up: "", order_item: "", needed_by: "" };
+const nice = (iso: string) => new Date(iso + "T00:00:00Z").toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" });
 
 /** Record what was done at this visit and what the doctor found. The next appointment for this patient shows it automatically. */
 export default function VisitNotes({ clinicId, patientId, appointmentId, canEdit, onChange }: { clinicId: string; patientId: string; appointmentId: string; canEdit: boolean; onChange?: () => void }) {
@@ -15,6 +17,7 @@ export default function VisitNotes({ clinicId, patientId, appointmentId, canEdit
   const [editing, setEditing] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [info, setInfo] = useState("");
 
   const load = useCallback(async () => {
     const { data, error } = await supabase.from("visit_notes").select("*").eq("clinic_id", clinicId).eq("appointment_id", appointmentId).order("created_at");
@@ -25,9 +28,11 @@ export default function VisitNotes({ clinicId, patientId, appointmentId, canEdit
 
   const set = (k: string, v: string) => setF((p) => ({ ...p, [k]: v }));
   async function save(e: React.FormEvent) {
-    e.preventDefault(); setErr(""); setBusy(true);
+    e.preventDefault(); setErr(""); setInfo(""); setBusy(true);
     try {
-      await authFetch("/api/visits/note", { body: { clinicId, patientId, appointmentId, action: editing ? "update" : "create", id: editing ?? undefined, fields: f } });
+      const r = await authFetch<{ reminder: { orderBy: string; checkBy: string; neededBy: string | null; late: boolean; stock: string; onOrder: string | null } | null; reminderError: string | null }>("/api/visits/note", { body: { clinicId, patientId, appointmentId, action: editing ? "update" : "create", id: editing ?? undefined, fields: f } });
+      if (r.reminderError) setErr(`Saved, but the reminder could not be made: ${r.reminderError}`);
+      else if (r.reminder) setInfo(`Reminders set. ${r.reminder.onOrder ? `Already on order ${r.reminder.onOrder}; ` : `Order by ${nice(r.reminder.orderBy)}${r.reminder.late ? " (the visit is close, so order today)" : ""}; `}check it arrived on ${nice(r.reminder.checkBy)}${r.reminder.neededBy ? `, for the visit on ${nice(r.reminder.neededBy)}` : ". No next appointment is booked yet, so book one and the dates will follow"}. ${r.reminder.stock}`);
       setF(EMPTY); setEditing(null); await load(); onChange?.();
     } catch (x: any) { setErr(x.message); }
     setBusy(false);
@@ -55,6 +60,7 @@ export default function VisitNotes({ clinicId, patientId, appointmentId, canEdit
             {n.conditions && <p className="text-xs text-slate-600">Condition: {n.conditions}</p>}
             {n.alert && <p className="text-xs text-red-700 font-medium">⚠ Shown at every future visit: {n.alert}</p>}
             {n.follow_up && <p className="text-xs text-slate-600">Follow-up: {n.follow_up}</p>}
+            {n.order_item && <p className="text-xs text-sky-800">📦 To have ready: {n.order_item}{n.needed_by ? ` by ${nice(n.needed_by)}` : ""}</p>}
             {canEdit && <p className="mt-1 text-xs"><button type="button" onClick={() => edit(n)} className="text-sky-700 underline mr-3">Edit</button><button type="button" onClick={() => remove(n.id)} className="text-red-600">Delete</button></p>}
           </li>
         ))}
@@ -68,6 +74,14 @@ export default function VisitNotes({ clinicId, patientId, appointmentId, canEdit
           {T("conditions", "Condition noticed", "e.g. inner bone is weak, gums bleed easily")}
           {T("alert", "Warning for future visits (optional)", "Shown in a red box at the top of every future appointment for this patient.")}
           {T("follow_up", "Follow-up needed")}
+          <div className="sm:col-span-2 rounded-xl border border-sky-100 bg-sky-50/60 p-3 grid sm:grid-cols-2 gap-3">
+            <div className="sm:col-span-2"><p className="text-xs font-semibold text-sky-900">Needs something made or bought before the next visit?</p>
+              <p className="text-xs text-sky-800/80 mt-0.5">We will remind you to order it in time, and again to check it arrived. The reminders clear when you receive the order in Purchasing.</p></div>
+            <div><label htmlFor="vn-order" className="text-xs font-medium text-slate-600 block mb-1">What to order</label><input id="vn-order" value={f.order_item} onChange={(e) => set("order_item", e.target.value)} className={inp} placeholder="e.g. Zirconium crown" />
+              {!f.order_item && suggestOrderItem(f.treatment, f.follow_up) && <button type="button" onClick={() => set("order_item", suggestOrderItem(f.treatment, f.follow_up) ?? "")} className="mt-1 text-xs px-2 py-1 rounded-lg bg-white border border-sky-200 text-sky-800">Remind me to order: {suggestOrderItem(f.treatment, f.follow_up)}</button>}</div>
+            <div><label htmlFor="vn-by" className="text-xs font-medium text-slate-600 block mb-1">Needed by (optional)</label><input id="vn-by" type="date" value={f.needed_by} onChange={(e) => set("needed_by", e.target.value)} className={inp} />
+              <p className="text-xs text-slate-400 mt-1">Leave empty to use the patient&apos;s next booked appointment.</p></div>
+          </div>
           {err && <p className="sm:col-span-2 text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2" role="alert">{err}</p>}
           <div className="sm:col-span-2 flex gap-2">
             <button disabled={busy} className="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white text-sm font-semibold">{busy ? "Saving…" : editing ? "Save entry" : "Add to patient record"}</button>
@@ -75,6 +89,7 @@ export default function VisitNotes({ clinicId, patientId, appointmentId, canEdit
           </div>
         </form>
       )}
+      {info && <p className="mt-3 text-sm text-emerald-800 bg-emerald-50 rounded-lg px-3 py-2" role="status">{info}</p>}
       {!canEdit && err && <p className="mt-2 text-xs text-amber-700">{err}</p>}
     </section>
   );
