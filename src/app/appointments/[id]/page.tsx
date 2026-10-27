@@ -1,5 +1,6 @@
 "use client";
 
+import DeleteRecord from "@/components/DeleteRecord";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -133,6 +134,7 @@ export default function AppointmentRecord({ params }: { params: { id: string } }
             <Link href={`/appointments?date=${a.appointment_date}`} className="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700">Close</Link></div>
         </form>
         {p && clinicId && <VisitNotes clinicId={clinicId} patientId={p.id} appointmentId={a.id} canEdit={canNote} onChange={() => setRk((n) => n + 1)} />}
+        {clinicId && <DeleteRecord clinicId={clinicId} entity="appointments" id={a.id} backHref="/appointments" />}
       </div>
     </AppShell>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import DeleteRecord from "@/components/DeleteRecord";
 import { toast } from "@/lib/toast";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
@@ -104,6 +105,7 @@ export default function RecordForm({ table, id, fields, title, subtitle, backHre
         </form>
         {clinicId && ENTITY[table] && <CustomFields clinicId={clinicId} entity={ENTITY[table]} recordId={id} canEdit={canEdit} />}
         {children?.(row, () => load(clinicId))}
+        {clinicId && <DeleteRecord clinicId={clinicId} entity={table} id={id} backHref={backHref} />}
       </div>
     </AppShell>
   );

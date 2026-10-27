@@ -87,7 +87,7 @@ export default function TreatmentRecord({ params }: { params: { id: string } }) 
             <button disabled={busy} className="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white text-sm font-semibold">{busy ? "Saving…" : isNew ? "Create" : "Save changes"}</button>
             {!isNew && <Link href={`/treatments/library/${params.id}/poster`} className="px-5 py-2.5 rounded-xl border border-sky-200 text-sm font-semibold text-sky-800 bg-sky-50">Make a poster</Link>}
             <Link href="/treatments/library" className="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700">Close</Link>
-            {!isNew && <button type="button" onClick={remove} className="ml-auto px-4 py-2.5 text-sm text-red-600">Delete</button>}
+            {!isNew && <button type="button" onClick={remove} aria-label="Delete this treatment" title="Delete this treatment" className="ml-auto w-11 h-11 flex items-center justify-center rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-lg">🗑</button>}
           </div>
         </form>
       </div>

@@ -104,11 +104,11 @@ export default function Sidebar({ clinicName, userEmail, role, logoUrl, brandCol
 
   return (
     <>
-    {open && <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={onClose} aria-hidden="true" />}
+    {open && <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} aria-hidden="true" />}
     <aside
       id="app-menu"
       aria-label="Main menu"
-      className={`fixed left-0 top-0 h-[100dvh] bg-slate-900 text-slate-300 flex flex-col z-50 lg:z-40 w-[min(280px,85vw)] lg:w-[var(--sidebar-w,240px)] transition-transform duration-200 ${open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
+      className={`fixed left-0 top-0 h-[100dvh] bg-slate-900 text-slate-300 flex flex-col z-50 w-[min(280px,85vw)] transition-transform duration-200 ${open ? "translate-x-0" : "-translate-x-full invisible"}`}
     >
       {/* Clinic header */}
       <div className="px-4 py-5 border-b border-slate-800">
@@ -121,7 +121,7 @@ export default function Sidebar({ clinicName, userEmail, role, logoUrl, brandCol
             <p className="text-white font-semibold text-sm truncate">{clinicName}</p>
             <p className="text-slate-500 text-xs">Mediflow Clinic</p>
           </div>
-          <button onClick={onClose} aria-label="Close menu" className="ml-auto lg:hidden text-slate-400 hover:text-white text-xl px-2 py-1">✕</button>
+          <button onClick={onClose} aria-label="Close menu" className="ml-auto text-slate-400 hover:text-white text-xl px-2 py-1">✕</button>
         </div>
       </div>
 

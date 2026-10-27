@@ -26,6 +26,9 @@ export default function BillingPage() {
   const [loading, setLoading] = useState(true);
   const [clinicId, setClinicId] = useState("");
   const [showNew, setShowNew] = useState(false);
+  useEffect(() => {      // opened with ?new=1 (the "New" button in the top tab bar)
+    try { const u = new URL(window.location.href); if (u.searchParams.get("new") === "1") { setShowNew(true); u.searchParams.delete("new"); window.history.replaceState(null, "", u.pathname + u.search); } } catch { /* ignore */ }
+  }, []);
   const [patientSearch, setPatientSearch] = useState("");
   const [patientResults, setPatientResults] = useState<ClinicPatient[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<ClinicPatient | null>(null);

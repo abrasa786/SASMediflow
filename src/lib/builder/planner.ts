@@ -1,6 +1,7 @@
 import { BUILDER_TOOLS_PROMPT, parseAssistantRequest, parseAudience, parseBuilderRequest } from "./agent-tools";
 import { recommendFields } from "./recommend";
 import { toApiName, validatePlan } from "./validate";
+import { PIN_TARGETS, resolvePin } from "./pins";
 import type { FieldSpec, FieldType, Plan, Schema, Step } from "./types";
 
 export interface PlannerResult {
@@ -29,6 +30,7 @@ TOOLS (the only steps allowed):
 - add_field      {object, field: FieldSpec}
 - hide_field     {object, field}     (data is kept; the "name" field cannot be hidden)
 - create_app     {api_name, label, icon?, description?, objects?: string[]}  -> an app whose tabs are those objects
+- pin_tab        {target: "stock"|"tasks"|"calendar"|an app name, remove?: boolean}  (show or remove a screen as a main tab in the top tab bar)
 - add_tab        {app, kind?: "object"|"dashboard"|"report"|"page", object?, label?}
 ${BUILDER_TOOLS_PROMPT}
 
@@ -141,6 +143,20 @@ function rulesPlan(inp: Input): PlannerResult {
     const fields = fieldPhrases.length ? fieldPhrases.map(inferField) : recommendFields(api, [], sim).fields;
     return { tool: "create_object", args: { api_name: api, label: label.replace(/\b\w/g, (c) => c.toUpperCase()), fields } };
   };
+
+  // main tabs: "show stock in the main tabs", "stocks should come in main app page", "remove tasks from the main tabs"
+  {
+    const where = "(?:the\\s+)?(?:main|top|home)\\s*(?:app\\s*)?(?:page|tabs?|bar|menu|navigation|screen)";
+    const add = p.match(new RegExp(`(?:put|show|add|pin|place|keep|bring|move|display)\\s+(?:the\\s+)?(.+?)\\s+(?:in|on|to|at|into)\\s+${where}`, "i"))
+      || p.match(new RegExp(`^(?:the\\s+)?(.+?)\\s+(?:should\\s+)?(?:come|appear|show|be\\s+shown|be\\s+there|be\\s+visible)\\s+(?:up\\s+)?(?:in|on|at)\\s+${where}`, "i"));
+    const rem = p.match(new RegExp(`(?:remove|hide|take\\s+off|unpin)\\s+(?:the\\s+)?(.+?)\\s+(?:from|off|in)\\s+${where}`, "i"));
+    const mm = rem || add;
+    if (mm) {
+      const r = resolvePin(mm[1], inp.schema.apps.map((a) => ({ api_name: a.api_name, label: a.label })));
+      if (!r) return { message: `I can put these in the main tabs: ${Object.values(PIN_TARGETS).map((t) => t.label).join(", ")}, or any of your apps. Which one do you want?`, plan: null, source: "rules" };
+      return finish([{ tool: "pin_tab", args: { target: r.key, remove: !!rem } }], rem ? `Remove ${r.label} from the main tabs.` : `Show ${r.label} as a main tab at the top, with its own New and List view buttons.`);
+    }
+  }
 
   // reports, dashboards, booking rules, permission sets
   if (parseAssistantRequest(p, inp.schema)) return { message: "Reports and dashboards are made in the AI Assistant chat, and everyone on the team can use it. Ask it there, for example: “Create a dashboard called Daily ops with appointments by doctor and unpaid invoices by month”.", plan: null, source: "rules" };

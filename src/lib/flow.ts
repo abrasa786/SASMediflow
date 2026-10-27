@@ -8,7 +8,7 @@ export async function setupReady(clinicId: string): Promise<{ ready: boolean; di
   return { ready: items.filter((i) => !i.optional && i.id !== "patient").every((i) => i.done), dismissed };
 }
 
-/** Where an admin who has just signed in should land: "/setup" until setup is done, then "/appointments?new=1" once, then null (go where they asked). */
+/** Where an admin who has just signed in should land: "/setup" until setup is done, then home once, then null (go where they asked). */
 export async function firstRunTarget(clinicId: string): Promise<string | null> {
   try {
     const { data } = await supabase.from("clinics").select("settings").eq("id", clinicId).maybeSingle();
@@ -17,6 +17,6 @@ export async function firstRunTarget(clinicId: string): Promise<string | null> {
     const { ready } = await setupReady(clinicId);
     if (!ready) return "/setup";
     await setSetupFlag(clinicId, "completed", true);
-    return "/appointments?new=1";
+    return "/dashboard";
   } catch { return null; }
 }

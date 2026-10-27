@@ -1,5 +1,6 @@
 "use client";
 
+import DeleteRecord from "@/components/DeleteRecord";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -174,6 +175,7 @@ export default function InvoiceRecord({ params }: { params: { id: string } }) {
           <div className="flex gap-2"><button disabled={busy !== ""} className="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white text-sm font-semibold">{busy === "save" ? "Saving…" : "Save changes"}</button><Link href="/billing" className="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700">Close</Link></div>
         </form>
         {clinicId && <InvoiceTreatments clinicId={clinicId} invoiceId={params.id} />}
+        {clinicId && <DeleteRecord clinicId={clinicId} entity="invoices" id={params.id} backHref="/billing" />}
       </div>
     </AppShell>
   );

@@ -19,6 +19,7 @@ import type { AgentStep } from "./agent-tools";
 
 export type Step =
   | AgentStep
+  | { tool: "pin_tab"; args: { target: string; label?: string; remove?: boolean } }
   | { tool: "create_object"; args: { api_name: string; label?: string; plural_label?: string; description?: string; icon?: string; fields?: FieldSpec[] } }
   | { tool: "add_field"; args: { object: string; field: FieldSpec } }
   | { tool: "hide_field"; args: { object: string; field: string } }

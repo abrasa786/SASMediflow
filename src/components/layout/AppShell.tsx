@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { firstRunTarget } from "@/lib/flow";
 import ToastHost from "@/components/ToastHost";
 import GlobalSearch from "@/components/GlobalSearch";
+import TopTabs from "./TopTabs";
 import AssistantWidget from "@/components/AssistantWidget";
 import Sidebar from "./Sidebar";
 import { getSession, getActiveClinicId } from "@/lib/auth";
@@ -61,7 +62,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     if (!ready || role !== "admin" || pathname !== "/dashboard" || guided.current) return;
     guided.current = true;
     const id = getActiveClinicId();
-    if (id) firstRunTarget(id).then((to) => { if (to) router.replace(to); });
+    if (id) firstRunTarget(id).then((to) => { if (to && to !== "/dashboard") router.replace(to); });
   }, [ready, role, pathname, router]);
 
   if (!ready) {
@@ -86,12 +87,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         logoUrl={clinic?.logo_url}
         brandColor={clinic?.primary_color}
       />
-      <div className="flex-1 min-w-0 lg:ml-[var(--sidebar-w,240px)]">
-        {/* Phone top bar: menu button + clinic name */}
-        <header className="lg:hidden sticky top-0 z-30 flex items-center gap-3 px-3 h-14 bg-slate-900 text-white">
-          <button onClick={() => setMenu(true)} aria-label="Open menu" aria-controls="app-menu" aria-expanded={menu} className="w-10 h-10 -ml-1 flex items-center justify-center rounded-lg hover:bg-slate-800 text-2xl">☰</button>
-          <p className="font-semibold text-sm truncate flex-1">{clinic?.brand_name ?? clinic?.name ?? "Clinic"}</p>
-          <button onClick={() => window.dispatchEvent(new Event("mf:search"))} aria-label="Search" className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-slate-800 text-lg">🔍</button>
+      <div className="flex-1 min-w-0">
+        {/* Top bar: menu (left), clinic name, main tabs, search */}
+        <header className="sticky top-0 z-30 flex items-center gap-2 px-3 h-14 bg-slate-900 text-white">
+          <button onClick={() => setMenu(true)} aria-label="Open menu" aria-controls="app-menu" aria-expanded={menu} className="w-10 h-10 -ml-1 flex items-center justify-center rounded-lg hover:bg-slate-800 text-2xl shrink-0">☰</button>
+          <p className="hidden md:block font-semibold text-sm truncate max-w-[10rem] shrink-0">{clinic?.brand_name ?? clinic?.name ?? "Clinic"}</p>
+          <TopTabs />
+          <button onClick={() => window.dispatchEvent(new Event("mf:search"))} aria-label="Search" className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-slate-800 text-lg shrink-0">🔍</button>
         </header>
         <main className="min-h-screen overflow-x-hidden">
           {children}

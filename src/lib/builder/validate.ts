@@ -1,3 +1,4 @@
+import { resolvePin } from "./pins";
 import { describeAgentStep, normalizeAgentStep, SYSTEM_APPS, VIS_ROLES } from "./agent-tools";
 import { FIELD_TYPES, type FieldSpec, type FieldType, type Plan, type Schema, type Step } from "./types";
 
@@ -123,6 +124,12 @@ export function validatePlan(raw: any, schema: Schema): { ok: true; plan: Plan }
         steps.push({ tool: "create_app", args: { api_name: api, label: String(a.label || titleCase(api)).slice(0, 80), icon: a.icon ? String(a.icon).slice(0, 8) : undefined, description: a.description ? String(a.description).slice(0, 300) : undefined, objects: objs } });
         return;
       }
+      case "pin_tab": {
+        const r = resolvePin(String(a.target ?? ""), schema.apps.map((x) => ({ api_name: x.api_name, label: x.label })));
+        if (!r) { errors.push(`${where}: I can't put “${a.target}” in the main tabs. Try a screen name like Stock, Tasks or Calendar, or one of your apps.`); return; }
+        steps.push({ tool: "pin_tab", args: { target: r.key, label: a.label ? String(a.label).slice(0, 40) : undefined, remove: !!a.remove } });
+        return;
+      }
       case "add_tab": {
         const app = toApiName(a.app);
         if (!apps.has(app)) { errors.push(`${where}: app "${a.app}" does not exist`); return; }
@@ -186,6 +193,7 @@ export function describeStep(s: Step): string {
     case "add_field": return `Add field ${describeField(s.args.field)} to “${s.args.object}”`;
     case "hide_field": return `Hide field “${s.args.field}” on “${s.args.object}” (data is kept)`;
     case "create_app": return `Create app “${s.args.label}”${s.args.objects?.length ? " with tabs: " + s.args.objects.join(", ") : ""}`;
+    case "pin_tab": return s.args.remove ? `Remove “${s.args.target.replace("app:", "")}” from the main tabs at the top` : `Show “${s.args.label ?? s.args.target.replace("app:", "")}” as a main tab at the top`;
     case "add_tab": return `Add ${s.args.kind ?? "object"} tab${s.args.object ? ` “${s.args.object}”` : ""} to app “${s.args.app}”`;
     default: return describeAgentStep(s);
   }

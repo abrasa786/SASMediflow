@@ -23,6 +23,10 @@ export default function PatientsPage() {
   const [loading, setLoading] = useState(true);
   const [clinicId, setClinicId] = useState("");
   const [showForm, setShowForm] = useState(false);
+  useEffect(() => {      // opened with ?new=1 (the "New" button in the top tab bar)
+    try { const u = new URL(window.location.href); if (u.searchParams.get("new") === "1") { openNew(); u.searchParams.delete("new"); window.history.replaceState(null, "", u.pathname + u.search); } } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [editing, setEditing] = useState<Partial<ClinicPatient>>(EMPTY);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");

@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { handle, HttpError, loadSchema, requireClinicAdmin } from "@/lib/builder/server";
 import { validatePlan } from "@/lib/builder/validate";
+import { MAX_PINS } from "@/lib/builder/pins";
 import { rememberPlan } from "@/lib/ai/memory";
 import { BUILTIN_RECORDS, loadSchemaWithBuiltins } from "@/lib/builder/builtin";
 
@@ -17,7 +18,21 @@ export async function POST(req: NextRequest) {
     // Steps on built-in records (patients, appointments…) are kept as field definitions; everything else goes through the normal plan.
     const isB = (s: any) => (s.tool === "add_field" || s.tool === "hide_field") && Object.prototype.hasOwnProperty.call(BUILTIN_RECORDS, s.args.object);
     const bSteps = v.plan.steps.filter(isB) as any[];
-    const rest = { ...v.plan, steps: v.plan.steps.filter((s) => !isB(s)) };
+    // Pinning a screen to the main tab bar is a clinic setting (settings.main_tabs), not a table change.
+    const pinSteps = v.plan.steps.filter((s) => s.tool === "pin_tab") as any[];
+    const rest = { ...v.plan, steps: v.plan.steps.filter((s) => !isB(s) && s.tool !== "pin_tab") };
+    if (pinSteps.length) {
+      const { data: cl } = await db.from("clinics").select("settings").eq("id", clinicId).maybeSingle();
+      const settings = ((cl?.settings ?? {}) as any);
+      let tabs: string[] = Array.isArray(settings.main_tabs) ? settings.main_tabs.filter((x: any) => typeof x === "string") : [];
+      for (const s of pinSteps) {
+        const key = String(s.args.target);
+        tabs = s.args.remove ? tabs.filter((t) => t !== key) : tabs.includes(key) ? tabs : [...tabs, key];
+      }
+      if (tabs.length > MAX_PINS) throw new HttpError(400, `The main tab bar can hold ${MAX_PINS} extra tabs. Remove one first.`);
+      const { error: pe } = await db.from("clinics").update({ settings: { ...settings, main_tabs: tabs } }).eq("id", clinicId);
+      if (pe) throw new HttpError(400, pe.message);
+    }
     let n = 0;
     for (const s of bSteps) {
       const entity = s.args.object as string;
@@ -31,7 +46,7 @@ export async function POST(req: NextRequest) {
       }
       n++;
     }
-    if (!rest.steps.length) { await rememberPlan(db, clinicId, "builder", String(prompt ?? ""), v.plan); return { changesetId: null, schema: await loadSchemaWithBuiltins(db, clinicId, await loadSchema(db, clinicId)), builtinChanges: n }; }
+    if (!rest.steps.length) { if (pinSteps.length) n += pinSteps.length; await rememberPlan(db, clinicId, "builder", String(prompt ?? ""), v.plan); return { changesetId: null, schema: await loadSchemaWithBuiltins(db, clinicId, await loadSchema(db, clinicId)), builtinChanges: n }; }
 
     const { data, error } = await db.rpc("builder_apply_plan", {
       p_clinic: clinicId, p_actor: userId, p_prompt: String(prompt ?? ""), p_plan: rest,

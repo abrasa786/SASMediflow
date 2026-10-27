@@ -24,7 +24,7 @@ export default function SetupPage() {
     setItems(r.items); setDismissed(r.dismissed); setLoading(false);
     // Setup finished for the first time: carry on to booking the first appointment (this never happens again).
     const to = await firstRunTarget(clinicId);
-    if (to && to !== "/setup") { toast("Setup complete. Book your first appointment."); router.push(to); }
+    if (to && to !== "/setup") { toast("Setup complete. Welcome to your clinic."); router.push(to); }
   }, [clinicId]);
   useEffect(() => { load(); }, [load]);
 
