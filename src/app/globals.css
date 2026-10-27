@@ -38,7 +38,7 @@
   /* No double-tap zoom delay, no grey flash on tap */
   button, a, input, select, textarea, label, summary { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   /* Button labels stay on one line ("Purchase orders", "+ Add Item", "This Week") instead of breaking in two */
-  button[class*="px-"][class*="rounded"], a[class*="px-"][class*="py-"][class*="rounded"] { white-space: nowrap; }
+  button[class*="px-"][class*="rounded"]:not(.whitespace-normal), a[class*="px-"][class*="py-"][class*="rounded"]:not(.whitespace-normal) { white-space: nowrap; }
 }
 @media (max-width: 1023px) {
   /* iPhone Safari zooms the whole page when you tap a field smaller than 16px, and stays zoomed: that is the "half a form" look */
@@ -47,4 +47,26 @@
 @media (max-width: 640px) {
   /* The title row at the top of a page: if the buttons do not fit beside the title, they drop below it */
   main > div > .flex:first-child { flex-wrap: wrap; row-gap: 0.75rem; }
+}
+
+/* ── Every screen size: folded phones (≈280px), phones, tablets, desktops ────── */
+@layer base {
+  body { overflow-x: clip; }                                   /* one wide thing never makes the whole page slide sideways */
+  img, video, canvas { max-width: 100%; height: auto; }
+  main { overflow-wrap: break-word; }                            /* long emails, names and links wrap instead of pushing the layout */
+  .grid > * { min-width: 0; }                                  /* a grid cell may shrink below its content instead of overflowing */
+  input[type="date"], input[type="time"], input[type="datetime-local"], select { min-width: 0; max-width: 100%; }
+  input[type="date"], input[type="time"], input[type="datetime-local"] { min-height: 2.5rem; }
+}
+@media (max-width: 420px) {
+  /* Two-up form rows (date + time, start + end…) get too narrow on a folded phone or a small one: stack them */
+  form .grid-cols-2, [role="dialog"] .grid-cols-2, .fixed .grid-cols-2 { grid-template-columns: minmax(0, 1fr); }
+  main > div { padding-left: 0.75rem; padding-right: 0.75rem; }
+}
+@media (min-width: 640px) and (max-width: 1023px) {
+  /* Tablets and portrait iPads: a little more room for the content */
+  main > div { padding-left: 1.25rem; padding-right: 1.25rem; }
+}
+@media (min-width: 1536px) {
+  html { font-size: 17px; }                                   /* very large monitors: slightly bigger text */
 }

@@ -53,7 +53,7 @@ export default function ReportView({ result, chart }: { result: any; chart: stri
   }
 
   return (
-    <table className="w-full text-sm"><thead><tr className="text-left text-xs uppercase text-slate-500"><th className="px-3 py-2 font-medium">{result.group_label}</th><th className="px-3 py-2 font-medium text-right">{result.aggregate === "count" ? "Count" : `${result.aggregate} ${result.agg_label}`}</th></tr></thead>
-      <tbody className="divide-y divide-slate-100">{rows.map((r) => <tr key={r.key}><td className="px-3 py-2">{r.key}</td><td className="px-3 py-2 text-right tabular-nums">{fmt(r.value, money)}</td></tr>)}</tbody></table>
+    <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="text-left text-xs uppercase text-slate-500"><th className="px-3 py-2 font-medium">{result.group_label}</th><th className="px-3 py-2 font-medium text-right">{result.aggregate === "count" ? "Count" : `${result.aggregate} ${result.agg_label}`}</th></tr></thead>
+      <tbody className="divide-y divide-slate-100">{rows.map((r) => <tr key={r.key}><td className="px-3 py-2">{r.key}</td><td className="px-3 py-2 text-right tabular-nums">{fmt(r.value, money)}</td></tr>)}</tbody></table></div>
   );
 }

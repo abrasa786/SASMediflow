@@ -179,7 +179,7 @@ export default function SignupPage() {
                   <input type="tel" value={clinicPhone} onChange={(e) => setClinicPhone(e.target.value)} maxLength={20} placeholder="Number patients can call" className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                 </div>
                 <div>
-                  <button type="button" onClick={pinHere} className="px-3.5 py-2.5 rounded-xl border border-blue-200 text-blue-700 text-sm font-medium hover:bg-blue-50">📍 {pin ? "Update clinic location" : "Use my location as the clinic's pin"}</button>
+                  <button type="button" onClick={pinHere} className="whitespace-normal text-left max-w-full px-3.5 py-2.5 rounded-xl border border-blue-200 text-blue-700 text-sm font-medium hover:bg-blue-50">📍 {pin ? "Update clinic location" : "Use my location as the clinic's pin"}</button>
                   <p className="text-xs text-gray-400 mt-1">{pinMsg || "Lets patients find you by distance in the Mediflow patient app. Your browser will ask for permission. Optional."}</p>
                 </div>
                 <div className="pt-2 border-t border-gray-100">
