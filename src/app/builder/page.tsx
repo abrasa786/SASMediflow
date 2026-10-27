@@ -93,6 +93,7 @@ export default function BuilderPage() {
       const r = await api("/api/builder/plan", { clinicId, prompt, history, sessionId: sessionRef.current });
       sessionRef.current = r.sessionId ?? sessionRef.current; setTurns((n) => n + 1);
       push({ role: "assistant", text: r.message, plan: r.plan, lines: r.lines, prompt, state: r.plan ? "pending" : undefined, source: r.source });
+      if (r.plan && r.autoApply) { setBusy(false); await apply({ id: nextId.current - 1, role: "assistant", text: r.message, plan: r.plan, prompt } as Msg); return; }
     } catch (e: any) {
       push({ role: "assistant", text: /already exists/.test(e.message) ? `${e.message}. It is already built: open it under “Your apps” in the left menu, or in the Data tab. To change it, say for example “Add field insurance provider to admission”.` : e.message });
       refresh(clinicId);       // the panel on the right may be out of date

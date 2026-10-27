@@ -17,6 +17,7 @@ interface Input {
   schema: Schema;
   history?: { role: "user" | "assistant"; content: string }[];
   specialty?: string;
+  examples?: { prompt: string; plan: unknown }[];
 }
 
 /* ───────────────────────── Gemini planner ───────────────────────── */
@@ -60,7 +61,8 @@ async function callModel(inp: Input, turns: { role: "user" | "assistant"; conten
 }
 
 async function geminiPlan(inp: Input): Promise<PlannerResult> {
-  const ctx = `CLINIC SPECIALTY: ${inp.specialty || "general"}\nCURRENT SCHEMA:\n${schemaForPrompt(inp.schema)}`;
+  const ex = (inp.examples ?? []).map((e) => `- "${e.prompt.slice(0, 200)}" => ${JSON.stringify(e.plan).slice(0, 900)}`).join("\n");
+  const ctx = `CLINIC SPECIALTY: ${inp.specialty || "general"}\nCURRENT SCHEMA:\n${schemaForPrompt(inp.schema)}${ex ? `\nCHANGES THIS CLINIC HAS APPROVED BEFORE (follow their style):\n${ex}` : ""}`;
   const turns: { role: "user" | "assistant"; content: string }[] = [
     ...(inp.history ?? []).slice(-6),
     { role: "user", content: `${ctx}\n\nADMIN REQUEST: ${inp.prompt}` },

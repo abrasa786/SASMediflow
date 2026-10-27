@@ -5,6 +5,7 @@ import { describeStep } from "@/lib/builder/validate";
 import { AiDisabledError, externalAiAvailable, generate } from "@/lib/ai/gateway";
 import { isUuid, logInteraction, newSession } from "@/lib/ai/store";
 import { loadSchemaWithBuiltins } from "@/lib/builder/builtin";
+import { examplesFor, recallPlan } from "@/lib/ai/memory";
 import { checkScope, OutOfScopeError, refusal } from "@/lib/ai/scope";
 
 export const maxDuration = 60;
@@ -30,8 +31,18 @@ export async function POST(req: NextRequest) {
     // The external model is used only if this clinic's admin switched it on; otherwise the built-in rules plan the change.
     const external = (await externalAiAvailable(db, clinicId)) === "on";
     let sent = "", redactions = 0;
+    // Learned from this clinic's earlier approvals: the same or a very similar request is answered from memory.
+    const recalled = hist.length === 0 ? await recallPlan(db, clinicId, "builder", prompt.trim(), schema) : null;
+    if (recalled) {
+      const lines = recalled.plan.steps.map(describeStep);
+      // Approved twice before: it is now routine for this clinic, so it is applied without asking again (still listed in history, and undoable).
+      const autoApply = recalled.uses > 2;
+      const message = autoApply ? "You've approved this before, so I did it the same way." : "I've done this for you before, so here is the same change again. Check it and approve.";
+      await logInteraction(db, { clinicId, userId, sessionId: sid, module: "builder", question: prompt.trim(), answer: [message, ...lines.map((l: string) => "• " + l)].join("\n"), source: "local" });
+      return { message, plan: recalled.plan, source: "learned", autoApply, lines, sessionId: sid };
+    }
     const result = await makePlan({
-      prompt: prompt.trim(), schema, specialty,
+      prompt: prompt.trim(), schema, specialty, examples: external ? await examplesFor(db, clinicId, "builder") : undefined,
       history: Array.isArray(history) ? history.slice(-6).map((m: any) => ({ role: m.role === "assistant" ? "assistant" : "user", content: String(m.content).slice(0, 1500) })) : [],
       generate: external ? async ({ system, turns }) => {
         try { const o = await generate({ db, clinicId, userId, system, turns, json: true, maxTokens: 4096, scope: { module: "builder", text: prompt, hasHistory: hist.length > 0 } }); sent = o.sentText; redactions += o.redactions; return o.text; }

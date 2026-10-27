@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { handle, HttpError, loadSchema, requireClinicAdmin } from "@/lib/builder/server";
 import { validatePlan } from "@/lib/builder/validate";
+import { rememberPlan } from "@/lib/ai/memory";
 import { BUILTIN_RECORDS, loadSchemaWithBuiltins } from "@/lib/builder/builtin";
 
 export async function POST(req: NextRequest) {
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
       }
       n++;
     }
-    if (!rest.steps.length) return { changesetId: null, schema: await loadSchemaWithBuiltins(db, clinicId, await loadSchema(db, clinicId)), builtinChanges: n };
+    if (!rest.steps.length) { await rememberPlan(db, clinicId, "builder", String(prompt ?? ""), v.plan); return { changesetId: null, schema: await loadSchemaWithBuiltins(db, clinicId, await loadSchema(db, clinicId)), builtinChanges: n }; }
 
     const { data, error } = await db.rpc("builder_apply_plan", {
       p_clinic: clinicId, p_actor: userId, p_prompt: String(prompt ?? ""), p_plan: rest,
@@ -40,6 +41,7 @@ export async function POST(req: NextRequest) {
       for (const s of bSteps) if (s.tool === "add_field") await db.from("custom_field_defs").delete().eq("clinic_id", clinicId).eq("entity", s.args.object).eq("api_name", s.args.field.api_name);
       throw new HttpError(400, `Nothing was changed. ${error.message}`);
     }
+    await rememberPlan(db, clinicId, "builder", String(prompt ?? ""), v.plan);
     return { changesetId: data, schema: await loadSchemaWithBuiltins(db, clinicId, await loadSchema(db, clinicId)), builtinChanges: n };
   });
 }
