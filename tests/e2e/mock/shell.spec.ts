@@ -1,5 +1,5 @@
 import { test, expect } from "./fixture";
-import { test as bare, expect as bareExpect, App } from "./fixture";
+import { bare, expect as bareExpect, App } from "./fixture";
 
 const TABS: [string, string, string | null, string][] = [
   ["Patients", "/patients", "/lists/patients", "New"], ["Appointments", "/appointments", "/lists/appointments", "New"],

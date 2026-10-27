@@ -114,9 +114,11 @@ export class App {
 }
 
 export const test = base.extend<{ app: App }>({
-  app: async ({ page }, use) => {
+  app: [async ({ page }, use) => {
     const app = new App(); await app.attach(page); await use(app);
     expect(app.errors, "uncaught JavaScript errors on the page").toEqual([]);
-  },
+  }, { auto: true }],
 });
+/** For tests that need to start signed out: no automatic fake login. */
+export const bare = base;
 export { expect };
