@@ -7,6 +7,7 @@ import AppShell from "@/components/layout/AppShell";
 import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
+import { toast } from "@/lib/toast";
 import InvoiceTreatments from "@/components/InvoiceTreatments";
 
 interface Line { name: string; qty: number; unit_price: number; amount: number }
@@ -85,7 +86,7 @@ export default function InvoiceRecord({ params }: { params: { id: string } }) {
     if (error && /payment_method/.test(error.message)) { setBusy(""); return setErr("Run the payment-method SQL in Supabase first (see the setup notes), then save again."); }
     if (error) { setBusy(""); return setErr(error.message); }
     if (becomingPaid) {
-      try { const r = await authFetch<{ appointmentId: string | null }>("/api/payments/complete", { body: { clinicId, invoiceId: inv.id, method: "physical" } }); setMsg(r.appointmentId ? "Saved. Marked paid and the visit is closed." : "Saved. Marked paid."); }
+      try { const r = await authFetch<{ appointmentId: string | null }>("/api/payments/complete", { body: { clinicId, invoiceId: inv.id, method: "physical" } }); toast(r.appointmentId ? "Paid in full. The visit is closed." : "Paid in full."); router.push("/dashboard"); return; }
       catch (e2: any) { setBusy(""); return setErr(e2.message); }
     } else setMsg("Saved.");
     setBusy(""); await load(clinicId);
@@ -107,8 +108,8 @@ export default function InvoiceRecord({ params }: { params: { id: string } }) {
     setBusy("pay"); setErr("");
     try {
       const r = await authFetch<{ appointmentId: string | null; appointmentDate: string | null }>("/api/payments/complete", { body: { clinicId, invoiceId: inv.id, method: "physical" } });
-      if (r.appointmentId) { router.push(`/appointments/${r.appointmentId}`); return; }
-      setMsg("Marked paid."); await load(clinicId);
+      toast(r.appointmentId ? "Paid in full. The visit is closed." : "Paid in full.");
+      router.push("/dashboard"); return;          // the bill is done: back to the home page
     } catch (e: any) { setErr(e.message); }
     setBusy("");
   }

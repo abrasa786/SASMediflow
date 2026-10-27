@@ -200,8 +200,10 @@ export default function BillingPage() {
     // paid on the spot: close the visit and go back to the appointments straight away
     if (status === "paid") { await finishPayment(made.id); return; }
     setSaving(false);
-    await load(clinicId);
     toast(`Invoice ${made.invoice_number ?? ""} created successfully`);
+    // created and already on the patient's WhatsApp: nothing left to do here, so back to the home page
+    if (alsoSend && whatsapp?.status === "sent") { router.push("/dashboard"); return; }
+    await load(clinicId);
     setCreated({ id: made.id, number: made.invoice_number ?? "", total, whatsapp });
   }
 
@@ -209,9 +211,9 @@ export default function BillingPage() {
   async function finishPayment(invoiceId: string) {
     setBusyAct("pay"); setErr("");
     try {
-      const r = await authFetch<{ appointmentId: string | null; appointmentDate: string | null }>("/api/payments/complete", { body: { clinicId, invoiceId, method: "physical" } });
-      if (r.appointmentId) { router.push(`/appointments?date=${r.appointmentDate ?? ""}`); return; }
-      setShowNew(false); setCreated(null); resetForm(); await load(clinicId);
+      await authFetch<{ appointmentId: string | null; appointmentDate: string | null }>("/api/payments/complete", { body: { clinicId, invoiceId, method: "physical" } });
+      toast("Paid in full. The visit is closed.");
+      router.push("/dashboard"); return;          // the bill is done: back to the home page
     } catch (e: any) { setErr(e.message); }
     finally { setBusyAct(""); setSaving(false); }
   }
@@ -338,7 +340,7 @@ export default function BillingPage() {
                   <button type="button" disabled={busyAct !== ""} onClick={async () => { setBusyAct("send"); const w = await sendOnWhatsApp(created.id); setCreated({ ...created, whatsapp: w }); setBusyAct(""); }} className="py-3 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white rounded-xl text-sm font-semibold">{busyAct === "send" ? "Sending…" : created.whatsapp?.status === "sent" ? "Send again on WhatsApp" : "Send invoice on WhatsApp"}</button>
                   <button type="button" disabled={busyAct !== ""} onClick={() => finishPayment(created.id)} className="py-3 bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white rounded-xl text-sm font-semibold">{busyAct === "pay" ? "Saving…" : "Payment received (physical)"}</button>
                   <a href={`/billing/print?id=${created.id}`} target="_blank" rel="noreferrer" className="text-center py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 hover:bg-slate-50">Print invoice</a>
-                  <button type="button" onClick={() => { setShowNew(false); resetForm(); }} className="text-xs text-slate-500 hover:underline">Pay later: close</button>
+                  <button type="button" onClick={() => { setShowNew(false); resetForm(); router.push("/dashboard"); }} className="text-xs text-slate-500 hover:underline">Pay later: go to home</button>
                 </div>
               </div>
             ) : (
