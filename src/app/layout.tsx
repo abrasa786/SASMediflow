@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   formatDetection: { telephone: false },     // stop iOS turning phone numbers into blue links that change the layout
 };
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#0f172a" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#0f172a" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

@@ -70,3 +70,63 @@
 @media (min-width: 1536px) {
   html { font-size: 17px; }                                   /* very large monitors: slightly bigger text */
 }
+
+/* ── Device layer: media queries for touch, notches, tablets, landscape phones, large screens ───────────────────────── */
+
+/* Touchscreens (any size): every button and tappable link is at least 44px tall, the size Apple and Google recommend */
+@media (pointer: coarse) {
+  button:not([class*="w-14"]):not([class*="w-10"]):not([class*="w-8"]):not([role="switch"]), [role="button"], a[class*="rounded"][class*="px-"] { min-height: 44px; }
+  button[class*="text-xs"]:not([class*="rounded-full"]), a[class*="text-xs"][class*="font-semibold"] { min-height: 40px; padding-top: 0.5rem; padding-bottom: 0.5rem; }
+  [role="switch"] { min-height: 28px; }
+  select { min-height: 44px; }
+  input[type="checkbox"], input[type="radio"] { width: 1.25rem; height: 1.25rem; }
+  /* hover-only effects do not stick after a tap */
+  .hover\:scale-105:hover { transform: none; }
+}
+
+/* Phones with a notch or rounded corners (and phones turned sideways): keep content and buttons clear of them */
+@supports (padding: max(0px)) {
+  header.sticky { padding-left: max(0.75rem, env(safe-area-inset-left)); padding-right: max(0.75rem, env(safe-area-inset-right)); }
+  button.fixed[aria-label][aria-expanded] { right: max(1rem, env(safe-area-inset-right)); bottom: max(1rem, calc(env(safe-area-inset-bottom) + 0.5rem)); }
+}
+
+/* Pop-ups: never taller than the visible screen (the keyboard shrinks it), scroll inside, and fill a small phone edge to edge */
+@media (max-width: 640px) {
+  [role="dialog"].fixed { align-items: flex-end; padding: 0; }
+  [role="dialog"].fixed > div { max-width: 100%; width: 100%; margin: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; max-height: 92vh; max-height: 92dvh; overflow-y: auto; padding: 1rem; }
+}
+
+/* Tables and wide rows scroll sideways inside their own box instead of squeezing */
+@media screen and (max-width: 767px) {
+  table { display: block; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .overflow-x-auto, nav[aria-label="Main tabs"] { scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+  nav[aria-label="Main tabs"] a { scroll-snap-align: start; }
+}
+
+/* Phones turned sideways: the short screen should not be eaten by the header */
+@media (max-height: 480px) and (orientation: landscape) {
+  header.sticky { height: 3rem; }
+  main { min-height: 0; }
+}
+
+/* Tablets in portrait and landscape: two-column pages get the room, three-up grids do not get cramped */
+@media (min-width: 768px) and (max-width: 1023px) {
+  main > div.max-w-3xl, main > div.max-w-2xl { max-width: 100%; }
+}
+
+/* Large monitors: content does not stretch into unreadable lines */
+@media (min-width: 1280px) {
+  main > div { max-width: 1400px; }
+}
+
+/* People who ask their device for less motion, and for higher contrast */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+@media (prefers-contrast: more) {
+  .text-slate-400, .text-slate-500 { color: rgb(51 65 85); }
+  .border-slate-100, .border-slate-200 { border-color: rgb(148 163 184); }
+}
+
+/* Keyboard users always see where they are */
+:focus-visible { outline: 2px solid var(--accent-dark); outline-offset: 2px; }
