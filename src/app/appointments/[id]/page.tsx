@@ -97,6 +97,10 @@ export default function AppointmentRecord({ params }: { params: { id: string } }
 
         {p && <PatientSummary patientId={p.id} refreshKey={rk} />}
         {p && clinicId && <TreatmentFromVisit clinicId={clinicId} appointmentId={a.id} patientId={p.id} canEdit={canNote} onChange={() => setRk((n) => n + 1)} />}
+        {a && <div className="mt-5 flex flex-wrap items-center gap-3 rounded-2xl border border-sky-200 bg-sky-50 p-4">
+          <p className="flex-1 min-w-[200px] text-sm text-slate-700">Next step: {invoice ? <>the bill <b>{invoice.invoice_number}</b> is ready.</> : "once the treatment is done, raise the bill."}</p>
+          <Link href={invoice ? `/billing/${invoice.id}` : `/billing?appointment=${a.id}`} className="px-4 py-2.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold">{invoice ? "Open the bill →" : "Go to the bill →"}</Link>
+        </div>}
         {p && clinicId && <AppointmentTreatment key={rk} clinicId={clinicId} appointmentId={a.id} patientId={p.id} canEdit={canNote} />}
 
         <form onSubmit={save} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mt-5 grid sm:grid-cols-2 gap-4">

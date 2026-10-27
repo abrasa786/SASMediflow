@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { firstRunTarget } from "@/lib/flow";
 import ToastHost from "@/components/ToastHost";
 import AssistantWidget from "@/components/AssistantWidget";
 import Sidebar from "./Sidebar";
@@ -12,6 +13,8 @@ import type { Clinic, ClinicRole } from "@/types";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const guided = useRef(false);
   const [clinic, setClinic] = useState<Clinic | null>(null);
   const [role, setRole] = useState<ClinicRole | null>(null);
   const [email, setEmail] = useState("");
@@ -51,6 +54,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     init();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // A new clinic is guided: setup first, then its first appointment. Only when an admin lands on the dashboard, and never again once done.
+  useEffect(() => {
+    if (!ready || role !== "admin" || pathname !== "/dashboard" || guided.current) return;
+    guided.current = true;
+    const id = getActiveClinicId();
+    if (id) firstRunTarget(id).then((to) => { if (to) router.replace(to); });
+  }, [ready, role, pathname, router]);
 
   if (!ready) {
     return (

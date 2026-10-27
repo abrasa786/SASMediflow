@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { authFetch } from "@/lib/api";
 import { supabase as sb } from "@/lib/supabase";
 import { toast } from "@/lib/toast";
@@ -15,6 +16,7 @@ interface Mat { item: string; qty: string }
  * A treatment with several sittings carries on from the patient's earlier visit. Completing the sitting raises the bill and uses the stock.
  */
 export default function TreatmentFromVisit({ clinicId, appointmentId, patientId, canEdit, onChange }: { clinicId: string; appointmentId: string; patientId: string; canEdit: boolean; onChange?: () => void }) {
+  const router = useRouter();
   const [templates, setTemplates] = useState<any[]>([]);
   const [stockNames, setStockNames] = useState<string[]>([]);
   const [sitting, setSitting] = useState<any | null>(null);          // the sitting this visit already belongs to
@@ -75,6 +77,7 @@ export default function TreatmentFromVisit({ clinicId, appointmentId, patientId,
       setDone({ invoiceId: r.invoice_id, stock: r.stock ?? [] });
       toast("Sitting completed and bill created");
       await load(); onChange?.();
+      if (r.invoice_id) router.push(`/billing/${r.invoice_id}`);      // next step: the bill
     } catch (e: any) { setErr(e.message); }
     setBusy(false);
   }

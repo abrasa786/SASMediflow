@@ -60,6 +60,9 @@ export default function AppointmentsPage() {
   const [actionErr, setActionErr] = useState("");
 
   const [showBook, setShowBook] = useState(false);
+  useEffect(() => {      // sent here by setup (?new=1): open the booking form straight away
+    try { const u = new URL(window.location.href); if (u.searchParams.get("new") === "1") { setShowBook(true); u.searchParams.delete("new"); window.history.replaceState(null, "", u.pathname + u.search); } } catch { /* ignore */ }
+  }, []);
   const [moveAppt, setMoveAppt] = useState<Appointment | null>(null);
   const [cancelAppt, setCancelAppt] = useState<Appointment | null>(null);
 
@@ -270,6 +273,7 @@ function MoveModal({ clinicId, appt, defaultDate, onClose, onDone }: { clinicId:
 
 // ── Book ────────────────────────────────────────────────────────────
 function BookModal({ clinicId, doctors, defaultDate, onClose, onBooked }: { clinicId: string; doctors: Doctor[]; defaultDate: string; onClose: () => void; onBooked: (date?: string) => void }) {
+  const router = useRouter();
   const [who, setWho] = useState<"existing" | "new">("new");
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<ClinicPatient[]>([]);
@@ -337,6 +341,9 @@ function BookModal({ clinicId, doctors, defaultDate, onClose, onBooked }: { clin
       onBooked(date);
       toast("Appointment created successfully");
       const notes: any[] = (r as any).notifications ?? [];
+      const apptId: string | undefined = (r as any).details?.appointment?.id;
+      // A visit happening today carries straight on to the visit page (treatment, then bill); a booking for another day just closes.
+      if (apptId && date === todayIso() && notes.every((n) => n.status === "sent" || n.status === "skipped")) { onClose(); router.push(`/appointments/${apptId}`); return; }
       if (notes.every((n) => n.status === "sent" || n.status === "skipped")) onClose();   // nothing left to read or tap: close the pop-up
       else setDone(r);                                                                     // a WhatsApp message needs a manual send: keep the details open
     } catch (e: any) {
@@ -358,7 +365,8 @@ function BookModal({ clinicId, doctors, defaultDate, onClose, onBooked }: { clin
         </div>
         <NotificationList items={done.notifications ?? []} />
         <div className="flex gap-2 mt-5">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-sm font-semibold">Done</button>
+          {a.date === todayIso() && <button onClick={() => { onClose(); router.push(`/appointments/${a.id}`); }} className="flex-1 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-sm font-semibold">Go to the visit →</button>}
+          <button onClick={onClose} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold ${a.date === todayIso() ? "border border-slate-300 text-slate-700" : "bg-sky-500 hover:bg-sky-600 text-white"}`}>Done</button>
         </div>
       </Modal>
     );

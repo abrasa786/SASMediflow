@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { firstRunTarget } from "@/lib/flow";
+import { toast } from "@/lib/toast";
 import AppShell from "@/components/layout/AppShell";
 import { getActiveClinicId, getUser } from "@/lib/auth";
 import { getSetupStatus, setSetupFlag, type SetupItem } from "@/lib/setup";
@@ -12,12 +15,16 @@ export default function SetupPage() {
   const [dismissed, setDismissed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState("");
+  const router = useRouter();
   const clinicId = typeof window !== "undefined" ? getActiveClinicId() : null;
 
   const load = useCallback(async () => {
     if (!clinicId) return;
     const r = await getSetupStatus(clinicId);
     setItems(r.items); setDismissed(r.dismissed); setLoading(false);
+    // Setup finished for the first time: carry on to booking the first appointment (this never happens again).
+    const to = await firstRunTarget(clinicId);
+    if (to && to !== "/setup") { toast("Setup complete. Book your first appointment."); router.push(to); }
   }, [clinicId]);
   useEffect(() => { load(); }, [load]);
 
