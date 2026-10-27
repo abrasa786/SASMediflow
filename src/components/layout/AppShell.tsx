@@ -22,15 +22,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     // Show the last known clinic/role instantly (so moving between pages does not flash "Loading…"),
     // then confirm with the server and correct it if anything changed (e.g. a role was changed).
     const clinicId = getActiveClinicId();
+    let fresh = false;     // confirmed with the server in the last few minutes: no need to ask again on every page change
     try {
       const raw = clinicId ? sessionStorage.getItem("mf_shell_" + clinicId) : null;
-      if (raw) { const c = JSON.parse(raw); applyBrand(c.clinic?.primary_color); setClinic(c.clinic); setRole(c.role); setEmail(c.email); setReady(true); }
+      if (raw) { const c = JSON.parse(raw); applyBrand(c.clinic?.primary_color); setClinic(c.clinic); setRole(c.role); setEmail(c.email); setReady(true); fresh = Date.now() - (c.t ?? 0) < 5 * 60_000; }
     } catch { /* cache is optional */ }
 
     async function init() {
       const session = await getSession();
       if (!session) { router.push("/login"); return; }
       if (!clinicId) { router.push("/login"); return; }
+      if (fresh) return;     // the session check above is local; the three server round trips below are skipped
 
       const [c, r] = await Promise.all([
         getClinic(clinicId),
@@ -43,7 +45,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       setRole(r as ClinicRole);
       setEmail(session.user.email ?? "");
       setReady(true);
-      try { sessionStorage.setItem("mf_shell_" + clinicId, JSON.stringify({ clinic: c, role: r, email: session.user.email ?? "" })); } catch { /* ignore */ }
+      try { sessionStorage.setItem("mf_shell_" + clinicId, JSON.stringify({ clinic: c, role: r, email: session.user.email ?? "", t: Date.now() })); } catch { /* ignore */ }
     }
     init();
   // eslint-disable-next-line react-hooks/exhaustive-deps

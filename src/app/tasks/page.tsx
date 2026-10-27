@@ -145,12 +145,12 @@ export default function TasksPage() {
         </div>
 
         {/* Summary */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
           {COLUMNS.map((col) => (
-            <div key={col.key} className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3">
+            <div key={col.key} className="bg-white rounded-xl border border-gray-100 shadow-sm px-3 sm:px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-3">
               <span className="text-xl">{col.emoji}</span>
               <div>
-                <div className={`text-xs font-semibold ${col.color}`}>{col.label}</div>
+                <div className={`text-xs font-semibold whitespace-nowrap ${col.color}`}>{col.label}</div>
                 <div className="text-2xl font-bold text-gray-900" style={{ fontFamily: "Sora, Inter, sans-serif" }}>{byStatus(col.key).length}</div>
               </div>
             </div>
@@ -166,7 +166,7 @@ export default function TasksPage() {
             {COLUMNS.map((col) => (
               <div
                 key={col.key}
-                className="bg-gray-50 rounded-2xl p-4 min-h-[300px]"
+                className="bg-gray-50 rounded-2xl p-4 md:min-h-[300px]"
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
                   e.preventDefault();
