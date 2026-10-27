@@ -250,6 +250,9 @@ function rulesPlan(inp: Input): PlannerResult {
     return finish([objectStep(label, splitList(m[2]), sim)], m[2] ? `Create “${label}” with the fields you listed.` : `Create “${label}” with recommended fields. You can add more any time.`);
   }
 
+  if (/\b(clickable|click|button|screen|layout|colou?r|font|calendar|popup|pop-up|menu|design|looks?|show(?:s|n)?|display)\b/i.test(p)) {
+    return { message: "That changes how a screen looks or behaves, and the Builder can only change your data: apps, tables, fields, who sees what, booking rules and automations. I have saved your request so it can be built into the app itself. Meanwhile, if you meant a new table or field, tell me its name and where it goes.", plan: null, source: "rules" };
+  }
   if (/\b(field|column|checkbox|dropdown|picklist)\b/i.test(p)) {
     return { message: `I can add that. Tell me the field name and the table in one line, for example “add a dropdown field Insurance provider to patients with options Star, HDFC, None”. Tables you have: ${known.map((k) => k.label).join(", ")}.`, plan: null, source: "rules" };
   }

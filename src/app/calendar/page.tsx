@@ -148,7 +148,7 @@ export default function CalendarPage() {
                           const s = toMin(a.start_time), e = Math.max(toMin(a.end_time), s + 15);
                           const picked = sel?.id === a.id;
                           return (
-                            <button key={a.id} onClick={() => setSel(a)}
+                            <button key={a.id} onClick={() => router.push(`/appointments/${a.id}`)} onMouseEnter={() => setSel(a)} onFocus={() => setSel(a)}
                               className={`absolute inset-x-1 rounded-lg border-l-4 ${c.bg} ${c.border} ${c.text} px-2 py-1 text-left overflow-hidden z-[6] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-sky-500 ${a.status === "completed" ? "opacity-70" : ""} ${picked ? "ring-2 ring-slate-900" : ""}`}
                               style={{ top: (s - start) * PX, height: Math.max((e - s) * PX - 2, 22) }}
                               aria-label={`${a.patient?.name ?? "Patient"} at ${hhmm(s)}`}>
@@ -173,9 +173,10 @@ export default function CalendarPage() {
                     {sel.symptoms && <p className="text-sm text-slate-700 mt-2">{sel.symptoms}</p>}
                     <p className="text-xs mt-2"><span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{sel.status}</span></p>
                     {how(sel) && <p className="text-xs text-slate-600 mt-3 bg-sky-50 rounded-lg px-2.5 py-2">🧭 {how(sel)}</p>}
-                    <Link href="/appointments" className="mt-3 inline-block text-sm text-sky-700 hover:underline">Move, cancel or message →</Link>
+                    <Link href={`/appointments/${sel.id}`} className="mt-3 inline-block px-4 py-2 rounded-xl bg-sky-600 text-white text-sm font-semibold">Open full details →</Link>
+                    <Link href="/appointments" className="mt-3 ml-3 inline-block text-sm text-sky-700 hover:underline">Move, cancel or message</Link>
                   </>
-                ) : <p className="text-sm text-slate-500">Select an appointment to see who it is with and why that doctor was assigned.</p>}
+                ) : <p className="text-sm text-slate-500">Click an appointment to open its full details: patient summary, treatment, notes and invoice. Hover to preview it here.</p>}
               </div>
               <div className="bg-white rounded-2xl border border-slate-200 p-4 text-sm">
                 <p className="font-semibold text-slate-800 mb-2">Today at a glance</p>
