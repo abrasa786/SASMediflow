@@ -31,6 +31,13 @@ export async function POST(req: NextRequest) {
       return { added: rows.length };
     }
 
+    if (b.action === "publish") {                           // switch the patient link on or off without touching the content
+      if (typeof b.id !== "string") throw new HttpError(400, "Missing id.");
+      const { error } = await db.from("treatment_info").update({ is_published: !!b.published, updated_at: new Date().toISOString() }).eq("id", b.id).eq("clinic_id", b.clinicId);
+      if (error) throw new HttpError(400, error.message);
+      return { ok: true };
+    }
+
     if (b.action === "delete") {
       if (typeof b.id !== "string") throw new HttpError(400, "Missing id.");
       const { error } = await db.from("treatment_info").delete().eq("id", b.id).eq("clinic_id", b.clinicId);

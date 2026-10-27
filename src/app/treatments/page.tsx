@@ -97,6 +97,7 @@ export default function TreatmentsPage() {
             <h1 className="text-2xl font-bold text-slate-900">Treatments</h1>
             <p className="text-slate-500 text-sm mt-1">Multi-sitting treatments with a date, an amount and a payment for every sitting.</p>
           </div>
+          <a href="/treatments/library" className="px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700">Treatment library</a>
           {canCreate && tab === "plans" && <button onClick={() => setNewOpen(true)} className="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold">+ New treatment plan</button>}
         </div>
 
