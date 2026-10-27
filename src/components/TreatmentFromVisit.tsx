@@ -27,6 +27,7 @@ export default function TreatmentFromVisit({ clinicId, appointmentId, patientId,
   const [label, setLabel] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [planSits, setPlanSits] = useState<any[]>([]);
   const [done, setDone] = useState<{ invoiceId: string; stock: any[] } | null>(null);
 
   const matsFrom = (c: any) => (Array.isArray(c) ? c : []).map((m: any) => ({ item: String(m.item ?? m.name ?? ""), qty: String(m.qty ?? m.quantity ?? "") }));
@@ -39,7 +40,11 @@ export default function TreatmentFromVisit({ clinicId, appointmentId, patientId,
     ]);
     setTemplates(t.data ?? []); setStockNames((s.data ?? []).map((x: any) => x.name));
     const cur = st.data?.[0];
-    if (cur) { setSitting(cur); setTplId(cur.treatment_plans?.template_id ?? ""); setPrice(String(cur.due_amount ?? "")); setMats(matsFrom(cur.consumables)); setLabel(cur.label ?? ""); }
+    if (cur) {
+      const ps = await supabase.from("treatment_sittings").select("id, seq, label, status, appointment_id").eq("clinic_id", clinicId).eq("plan_id", cur.plan_id).order("seq");
+      setPlanSits(ps.data ?? []);
+      setSitting(cur); setTplId(cur.treatment_plans?.template_id ?? ""); setPrice(String(cur.due_amount ?? "")); setMats(matsFrom(cur.consumables)); setLabel(cur.label ?? "");
+    }
   }, [clinicId, appointmentId]);
   useEffect(() => { if (clinicId && appointmentId) load(); }, [clinicId, appointmentId, load]);
 
@@ -91,6 +96,16 @@ export default function TreatmentFromVisit({ clinicId, appointmentId, patientId,
     <section className="mt-5 bg-white rounded-2xl border border-slate-100 shadow-sm p-4" aria-label="Treatment at this visit">
       <h2 className="font-semibold text-slate-900 text-sm">Treatment at this visit</h2>
       {sitting && <p className="text-xs text-slate-500 mt-1">{sitting.treatment_plans?.title} · sitting {sitting.seq}{sitting.label ? ` (${sitting.label})` : ""} · {sitting.status === "done" ? "completed" : "not completed yet"}</p>}
+      {planSits.length > 1 && (
+        <div className="mt-3" aria-label="Treatment progress">
+          <div className="flex flex-wrap gap-1.5">{planSits.map((x) => (
+            <span key={x.id} className={`text-xs px-2.5 py-1 rounded-full border ${x.id === sitting?.id ? "bg-sky-600 border-sky-600 text-white font-semibold" : x.status === "done" ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-white border-slate-200 text-slate-500"}`}>{x.status === "done" ? "✓ " : ""}{x.seq}. {x.label}</span>
+          ))}</div>
+          {sitting?.status === "done" && planSits.some((x) => x.status === "pending" && !x.appointment_id) && (
+            <Link href={`/appointments?new=1&patient=${patientId}`} className="inline-block mt-2.5 px-3.5 py-2 rounded-xl border border-sky-300 text-sky-800 text-sm font-semibold hover:bg-sky-50">Book the next sitting</Link>
+          )}
+        </div>
+      )}
       <div className="mt-3 grid sm:grid-cols-2 gap-3">
         <div className="sm:col-span-2"><label htmlFor="tv-tpl" className="text-xs font-medium text-slate-600 block mb-1">Treatment (from your templates)</label>
           <select id="tv-tpl" disabled={locked || !!sitting} value={tplId} onChange={(e) => pick(e.target.value)} className={inp}>

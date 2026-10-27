@@ -11,6 +11,7 @@
  */
 import { formatDateNice } from "./parse";
 import { emailConfigured, sendEmail } from "../email";
+import { calendarUrl } from "../server/calendar";
 
 export type NotifyKind = "confirmation" | "reschedule" | "cancellation" | "reminder" | "no_show";
 export interface NotificationResult {
@@ -40,14 +41,16 @@ export function buildMessages(d: any, kind: NotifyKind): { patient: string; doct
   const when = `${formatDateNice(a.date)} at ${a.time}`;
   const mode = a.mode === "video" ? "📹 Video consultation" : "🏥 In-clinic visit";
   const contact = c.phone ? `\nFor any change please call ${c.phone}.` : "";
+  const cal = a.id ? calendarUrl(a.id) : "";
+  const addCal = cal ? `\n\n📲 Add a reminder to your phone: ${cal}` : "";
   const prev = d.previous ? `${formatDateNice(d.previous.date)} at ${d.previous.time}` : "";
 
   if (kind === "confirmation") return {
-    patient: `✅ *Appointment confirmed*\n\nHi ${p.name}, your appointment at *${c.name}* is booked.\n\n📅 ${when}\n👨‍⚕️ ${drName(doc?.name)}\n${mode}${a.fee ? `\n💰 Fee: ${rupees(a.fee)}` : ""}${c.address ? `\n📍 ${c.address}` : ""}\n\nPlease arrive 10 minutes early.${contact}`,
+    patient: `✅ *Appointment confirmed*\n\nHi ${p.name}, your appointment at *${c.name}* is booked.\n\n📅 ${when}\n👨‍⚕️ ${drName(doc?.name)}\n${mode}${a.fee ? `\n💰 Fee: ${rupees(a.fee)}` : ""}${c.address ? `\n📍 ${c.address}` : ""}\n\nPlease arrive 10 minutes early.${addCal}${contact}`,
     doctor: `📋 *New appointment*\n\n${p.name}${p.phone ? ` (${p.phone})` : ""}${d.patient_created ? " · new patient" : ""}\n📅 ${when}\n${mode}${a.symptoms ? `\n📝 ${a.symptoms}` : ""}`,
   };
   if (kind === "reschedule") return {
-    patient: `🔁 *Appointment rescheduled*\n\nHi ${p.name}, your appointment at *${c.name}* has moved.\n\n❌ Was: ${prev}\n✅ Now: ${when}\n👨‍⚕️ ${drName(doc?.name)}${contact}`,
+    patient: `🔁 *Appointment rescheduled*\n\nHi ${p.name}, your appointment at *${c.name}* has moved.\n\n❌ Was: ${prev}\n✅ Now: ${when}\n👨‍⚕️ ${drName(doc?.name)}${addCal}${contact}`,
     doctor: `🔁 *Appointment rescheduled*\n\n${p.name}\n❌ Was: ${prev}\n✅ Now: ${when}`,
   };
   if (kind === "cancellation") return {

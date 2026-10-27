@@ -61,8 +61,9 @@ export default function AppointmentsPage() {
   const [actionErr, setActionErr] = useState("");
 
   const [showBook, setShowBook] = useState(false);
+  const [presetPatient, setPresetPatient] = useState<string | null>(null);
   useEffect(() => {      // sent here by setup (?new=1): open the booking form straight away
-    try { const u = new URL(window.location.href); if (u.searchParams.get("new") === "1") { setShowBook(true); u.searchParams.delete("new"); window.history.replaceState(null, "", u.pathname + u.search); } } catch { /* ignore */ }
+    try { const u = new URL(window.location.href); if (u.searchParams.get("new") === "1") { setShowBook(true); setPresetPatient(u.searchParams.get("patient")); u.searchParams.delete("new"); u.searchParams.delete("patient"); window.history.replaceState(null, "", u.pathname + u.search); } } catch { /* ignore */ }
   }, []);
   const [moveAppt, setMoveAppt] = useState<Appointment | null>(null);
   const [cancelAppt, setCancelAppt] = useState<Appointment | null>(null);
@@ -200,7 +201,7 @@ export default function AppointmentsPage() {
       </div>
 
       {showBook && (
-        <BookModal clinicId={clinicId} doctors={doctors} defaultDate={date}
+        <BookModal presetPatientId={presetPatient} clinicId={clinicId} doctors={doctors} defaultDate={date}
           onClose={() => setShowBook(false)} onBooked={(d) => { if (d) setDate(d); load(clinicId, d ?? date); }} />
       )}
       {moveAppt && (
@@ -274,12 +275,17 @@ function MoveModal({ clinicId, appt, defaultDate, onClose, onDone }: { clinicId:
 }
 
 // ── Book ────────────────────────────────────────────────────────────
-function BookModal({ clinicId, doctors, defaultDate, onClose, onBooked }: { clinicId: string; doctors: Doctor[]; defaultDate: string; onClose: () => void; onBooked: (date?: string) => void }) {
+function BookModal({ clinicId, doctors, defaultDate, onClose, onBooked, presetPatientId }: { presetPatientId?: string | null; clinicId: string; doctors: Doctor[]; defaultDate: string; onClose: () => void; onBooked: (date?: string) => void }) {
   const router = useRouter();
   const [who, setWho] = useState<"existing" | "new">("new");
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<ClinicPatient[]>([]);
   const [picked, setPicked] = useState<ClinicPatient | null>(null);
+  useEffect(() => {      // opened from a patient's page: that patient is already chosen
+    if (!presetPatientId) return;
+    (supabaseClient as any).from("clinic_patients").select("*").eq("clinic_id", clinicId).eq("id", presetPatientId).maybeSingle()
+      .then(({ data }: { data: any }) => { if (data) { setPicked(data as ClinicPatient); setWho("existing"); } });
+  }, [presetPatientId, clinicId]);
   const [name, setName] = useState(""); const [phone, setPhone] = useState(""); const [age, setAge] = useState(""); const [gender, setGender] = useState("");
   const [match, setMatch] = useState<{ id: string; name: string }[]>([]);
   const [doctorId, setDoctorId] = useState("");
