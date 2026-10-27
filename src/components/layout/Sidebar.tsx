@@ -7,7 +7,7 @@ import { signOut, clearActiveClinicId, getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
 import type { ClinicRole } from "@/types";
 
-const NAV = [
+export const NAV = [
   { href: "/dashboard",    icon: "🏠", label: "Dashboard" },
   { href: "/setup",        icon: "🚀", label: "Setup", roles: ["admin"] as ClinicRole[] },
   { href: "/appointments", icon: "📅", label: "Appointments" },
@@ -116,6 +116,14 @@ export default function Sidebar({ clinicName, userEmail, role, logoUrl, brandCol
           </div>
           <button onClick={onClose} aria-label="Close menu" className="ml-auto lg:hidden text-slate-400 hover:text-white text-xl px-2 py-1">✕</button>
         </div>
+      </div>
+
+      {/* Search everything */}
+      <div className="px-3 pt-3">
+        <button onClick={() => { onClose?.(); window.dispatchEvent(new Event("mf:search")); }} aria-label="Search everything"
+          className="w-full flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm rounded-lg px-3 py-2 border border-slate-700">
+          <span aria-hidden>🔍</span><span className="flex-1 text-left">Search…</span><kbd className="text-[10px] border border-slate-600 rounded px-1 text-slate-400">Ctrl K</kbd>
+        </button>
       </div>
 
       {/* App launcher */}

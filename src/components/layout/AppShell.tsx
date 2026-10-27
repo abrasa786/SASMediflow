@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { firstRunTarget } from "@/lib/flow";
 import ToastHost from "@/components/ToastHost";
+import GlobalSearch from "@/components/GlobalSearch";
 import AssistantWidget from "@/components/AssistantWidget";
 import Sidebar from "./Sidebar";
 import { getSession, getActiveClinicId } from "@/lib/auth";
@@ -89,12 +90,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {/* Phone top bar: menu button + clinic name */}
         <header className="lg:hidden sticky top-0 z-30 flex items-center gap-3 px-3 h-14 bg-slate-900 text-white">
           <button onClick={() => setMenu(true)} aria-label="Open menu" aria-controls="app-menu" aria-expanded={menu} className="w-10 h-10 -ml-1 flex items-center justify-center rounded-lg hover:bg-slate-800 text-2xl">☰</button>
-          <p className="font-semibold text-sm truncate">{clinic?.brand_name ?? clinic?.name ?? "Clinic"}</p>
+          <p className="font-semibold text-sm truncate flex-1">{clinic?.brand_name ?? clinic?.name ?? "Clinic"}</p>
+          <button onClick={() => window.dispatchEvent(new Event("mf:search"))} aria-label="Search" className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-slate-800 text-lg">🔍</button>
         </header>
         <main className="min-h-screen overflow-x-hidden">
           {children}
         </main>
       </div>
+      <GlobalSearch role={role ?? undefined} />
       <ToastHost />
       <AssistantWidget botName={clinic?.ai_name || "Assistant"} color={clinic?.primary_color} />
     </div>
