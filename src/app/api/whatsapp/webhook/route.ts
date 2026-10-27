@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { createAdminClient } from "@/lib/supabase";
 import { handleInbound } from "@/lib/whatsapp/inbound";
+import { isStopMessage, isStartMessage, setOffersByPhone } from "@/lib/whatsapp/optout";
 import { sendViaCloudApi, whatsappConfigured, whatsappPhone } from "@/lib/booking/notify";
 
 export const dynamic = "force-dynamic";
@@ -41,7 +42,12 @@ export async function POST(req: NextRequest) {
       const since = new Date(Date.now() - 60000).toISOString();
       const { count } = await db.from("wa_inbound").select("message_id", { count: "exact", head: true }).eq("phone", m.from).gte("received_at", since);
       if ((count ?? 0) > 15) continue;
-      const replies = m.text ? await handleInbound(db, m.from, m.text) : ["Hi! I can only read text messages. Send *menu* to see what I can do."];
+      let replies: string[] | null = null;
+      if (isStopMessage(m.text) || isStartMessage(m.text)) {                       // tips and offers: stop or start, handled before the chat
+        const on = isStartMessage(m.text);
+        if (await setOffersByPhone(db, m.from, on)) replies = [on ? "You will get occasional tips and offers from the clinic. Reply STOP any time to stop." : "Done. You will not get tips and offers any more. Appointment reminders will still reach you."];
+      }
+      if (!replies) replies = m.text ? await handleInbound(db, m.from, m.text) : ["Hi! I can only read text messages. Send *menu* to see what I can do."];
       const to = whatsappPhone(m.from);
       if (to && whatsappConfigured()) for (const r of replies) await sendViaCloudApi(to, r);
     } catch (e) { console.error("whatsapp inbound failed:", e instanceof Error ? e.message : e); }
