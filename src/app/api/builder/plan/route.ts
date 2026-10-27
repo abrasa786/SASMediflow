@@ -4,6 +4,7 @@ import { makePlan } from "@/lib/builder/planner";
 import { describeStep } from "@/lib/builder/validate";
 import { AiDisabledError, externalAiAvailable, generate } from "@/lib/ai/gateway";
 import { isUuid, logInteraction, newSession } from "@/lib/ai/store";
+import { loadSchemaWithBuiltins } from "@/lib/builder/builtin";
 import { checkScope, OutOfScopeError, refusal } from "@/lib/ai/scope";
 
 export const maxDuration = 60;
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
       await logInteraction(db, { clinicId, userId, sessionId: sid, module: "builder", question: prompt.trim(), answer: reply, source: "local", intent: "out_of_scope" });
       return { message: reply, plan: null, source: "rules", lines: [], sessionId: sid };
     }
-    const schema = await loadSchema(db, clinicId);
+    const schema = await loadSchemaWithBuiltins(db, clinicId, await loadSchema(db, clinicId));
     // The external model is used only if this clinic's admin switched it on; otherwise the built-in rules plan the change.
     const external = (await externalAiAvailable(db, clinicId)) === "on";
     let sent = "", redactions = 0;
@@ -37,6 +38,7 @@ export async function POST(req: NextRequest) {
         catch (e) { if (e instanceof AiDisabledError || e instanceof OutOfScopeError) throw e; throw e; }
       } : undefined,
     });
+    if (!result.plan) { try { await db.from("builder_unhandled").insert({ clinic_id: clinicId, user_id: userId, prompt: prompt.trim().slice(0, 1000) }); } catch { /* best effort */ } }
     const lines = result.plan ? result.plan.steps.map(describeStep) : [];
     await logInteraction(db, { clinicId, userId, sessionId: sid, module: "builder", question: prompt.trim(), answer: [result.message, ...lines.map((l: string) => "• " + l)].join("\n"),
       source: result.source === "gemini" ? "external" : "rules", sentText: sent || undefined, redactions });

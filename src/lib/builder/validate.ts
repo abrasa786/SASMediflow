@@ -43,6 +43,8 @@ export function validatePlan(raw: any, schema: Schema): { ok: true; plan: Plan }
     objects.set(o.api_name, new Set(o.fields.map((x) => x.api_name)));
     objectFields.set(o.api_name, new Map(o.fields.map((x) => [x.api_name, x.data_type])));
   }
+  const builtin = new Set(schema.objects.filter((o) => o.builtin).map((o) => o.api_name));
+  const customOn = new Map<string, Set<string>>(schema.objects.filter((o) => o.builtin).map((o) => [o.api_name, new Set(o.fields.filter((x) => x.custom).map((x) => x.api_name))]));
   const apps = new Map<string, number>(schema.apps.map((a) => [a.api_name, a.tabs.length]));
   let customObjects = schema.objects.filter((o) => !o.is_system).length;
 
@@ -85,6 +87,11 @@ export function validatePlan(raw: any, schema: Schema): { ok: true; plan: Plan }
         if (objects.get(obj)!.has(nf.api_name)) { errors.push(`${where}: "${obj}" already has a field "${nf.api_name}"`); return; }
         if (objects.get(obj)!.size >= MAX_FIELDS) { errors.push(`${where}: "${obj}" already has ${MAX_FIELDS} fields`); return; }
         if (nf.data_type === "lookup" && !objects.has(nf.lookup_object!)) { errors.push(`${where}: lookup target "${nf.lookup_object}" does not exist`); return; }
+        if (builtin.has(obj)) {
+          if (nf.data_type === "lookup") { errors.push(`${where}: a link to another record cannot be added to ${obj} yet. Use a text, number, date, dropdown or yes/no field instead`); return; }
+          delete nf.unique;
+          customOn.get(obj)!.add(nf.api_name);
+        }
         objects.get(obj)!.add(nf.api_name);
         objectFields.get(obj)!.set(nf.api_name, nf.data_type);
         steps.push({ tool: "add_field", args: { object: obj, field: nf } });
@@ -95,6 +102,7 @@ export function validatePlan(raw: any, schema: Schema): { ok: true; plan: Plan }
         if (!objects.has(obj)) { errors.push(`${where}: object "${a.object}" does not exist`); return; }
         if (fld === "name") { errors.push(`${where}: the Name field cannot be hidden`); return; }
         if (!objects.get(obj)!.has(fld)) { errors.push(`${where}: "${obj}" has no field "${fld}"`); return; }
+        if (builtin.has(obj) && !customOn.get(obj)!.has(fld)) { errors.push(`${where}: "${fld}" is a core ${obj} field and cannot be hidden. Only fields you added can be hidden`); return; }
         objects.get(obj)!.delete(fld);
         steps.push({ tool: "hide_field", args: { object: obj, field: fld } });
         return;

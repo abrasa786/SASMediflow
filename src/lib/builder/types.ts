@@ -44,6 +44,7 @@ export interface SchemaField {
   required?: boolean;
   picklist_values?: string[] | null;
   lookup_object?: string | null;
+  custom?: boolean;            // a field the clinic added to a built-in record (the base columns are not custom)
 }
 export interface SchemaObject {
   api_name: string;
@@ -51,6 +52,7 @@ export interface SchemaObject {
   plural_label: string;
   icon?: string;
   is_system?: boolean;
+  builtin?: boolean;           // patients, appointments, invoices, stock, tasks, doctors: fields go in custom_field_defs
   fields: SchemaField[];
 }
 export interface SchemaApp {

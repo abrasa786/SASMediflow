@@ -33,7 +33,7 @@ const DOMAIN = new RegExp("\\b(" + [
   "treatments?", "sittings?", "dental", "teeth", "tooth", "scal\\w+", "root canal", "consultations?", "prescriptions?", "symptoms?",
   "reports?", "dashboards?", "analytics", "tasks?", "whatsapp", "reminders?", "notifications?",
   "setup", "set up", "settings?", "branding", "logo", "domain", "website", "permissions?", "access", "roles?",
-  "objects?", "tables?", "fields?", "apps?", "tabs?", "dropdowns?", "picklists?", "lookups?", "records?", "templates?", "undo", "rollback", "recommend\\w*",
+  "objects?", "tables?", "fields?", "columns?", "checkbox(?:es)?", "attributes?", "apps?", "tabs?", "dropdowns?", "picklists?", "lookups?", "records?", "templates?", "undo", "rollback", "recommend\\w*",
   "today'?s?", "tomorrow", "this week",
   "agenda", "calendar", "free", "slots?", "available", "holiday", "vacation", "no[- ]?show", "completed", "chart", "graphs?", "flows?", "automation",
 ].join("|") + ")\\b", "i");

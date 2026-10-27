@@ -42,7 +42,7 @@ RULES
 - Order steps so dependencies come first (create objects before apps and lookups).
 - If the request is ambiguous or unsafe, set plan to null and ask 1-3 short questions.
 - Requests about automations, WhatsApp templates or anything outside the tools above are not available yet: say so in "message", set plan to null, and suggest what you can do now.
-- Never invent fields for built-in sources (appointments, invoices, patients, stock).
+- Built-in records (patients, appointments, invoices, stock, tasks, doctors) are in CURRENT SCHEMA. You CAN add fields to them with add_field (types: not lookup). Fields marked custom can be hidden; the core ones cannot. Never say a field request is out of scope: add it, or ask one short question (which table, which type, which dropdown values).
 - Do not invent extra objects the admin did not imply.
 
 Reply with ONLY this JSON:
@@ -112,7 +112,7 @@ function inferField(phrase: string): FieldSpec {
     else if (/date and time|datetime|timestamp/.test(l)) type = "datetime";
     else if (/\b(date|dob|birthday)\b|\b(on|until|from)$/.test(l)) type = "date";
     else if (/(amount|price|cost|fee|charge|rate|total|fees)/.test(l)) type = "currency";
-    else if (/(count|number of|qty|quantity|age|beds|floor|days|hours|rating|dose)/.test(l)) type = "number";
+    else if (/\b(count|number of|qty|quantity|age|beds|floor|days|hours|rating|dose)\b/.test(l)) type = "number";
     else if (/(phone|mobile|contact number)/.test(l)) type = "phone";
     else if (/email/.test(l)) type = "email";
     else if (/(url|link|website)/.test(l)) type = "url";
@@ -184,6 +184,33 @@ function rulesPlan(inp: Input): PlannerResult {
     return finish(steps, `Create the ${appLabel} app with ${tabObjs.length} tab${tabObjs.length > 1 ? "s" : ""}. ${tabObjs.length > 1 ? "Each has" : "It has"} its own table and recommended fields.${who}`);
   }
 
+  // "add a dropdown field Insurance provider to patients", "create a new field called occupation in the patient object", "add a checkbox field consent signed to invoices"
+  {
+    let q = p, opts: string[] | null = null;
+    const om = q.match(/\s+(?:with|having)\s+(?:the\s+)?(?:options?|values?|choices?)\s*:?\s*(.+)$/i);
+    if (om) { opts = om[1].split(/\s*(?:,|\/|\||;|\bor\b|\band\b)\s*/i).map((v) => v.replace(/[."']+$/g, "").trim()).filter(Boolean); q = q.slice(0, om.index); }
+    const TY = "dropdown|picklist|checkbox|tick ?box|yes\\/no|text|long text|number|date|currency|phone|email|url";
+    const tmap: Record<string, string> = { dropdown: "picklist", picklist: "picklist", checkbox: "boolean", tickbox: "boolean", "tick box": "boolean", "yes/no": "boolean", "long text": "long_text" };
+    let fm = q.match(new RegExp(`(?:add|create|make|include|insert|need|want)\\s+(?:an?\\s+|the\\s+)?(?:new\\s+)?(?:(${TY})\\s+)?(?:field|column)s?\\s+(?:called\\s+|named\\s+|for\\s+)?["“]?(.+?)["”]?\\s+(?:to|on|in|into|for|under)\\s+(?:the\\s+)?(.+?)(?:\\s+(?:objects?|tables?|tabs?|records?|forms?|pages?|section))?[.!]?$`, "i"));
+    let ty = fm?.[1], nm = fm?.[2], ob = fm?.[3];
+    if (!fm) {
+      const g = q.match(new RegExp(`(?:add|create|make|include)\\s+(?:an?\\s+|the\\s+)?(?:new\\s+)?(.+?)\\s+(?:(${TY})\\s+)?(?:field|column)\\s+(?:to|on|in|into|for)\\s+(?:the\\s+)?(.+?)(?:\\s+(?:objects?|tables?|tabs?|records?|forms?|pages?))?[.!]?$`, "i"));
+      if (g) { nm = g[1]; ty = g[2]; ob = g[3]; fm = g; if (ty?.toLowerCase() === "number" && nm.trim().split(/\s+/).length <= 3) { nm = nm + " number"; ty = undefined; } }   // "Aadhaar number field" is an ID, not a numeric type
+    }
+    if (fm && nm && ob) {
+      const tgt = findObject(clean(ob), known);
+      if (!tgt) return { message: `Which table should “${clean(nm)}” go on? I couldn't find one called “${clean(ob)}”. You have: ${known.map((k) => k.label).join(", ") || "none yet"}.`, plan: null, source: "rules" };
+      const f = inferField(nm.replace(/^(?:called|named)\s+/i, ""));
+      const t0 = ty?.toLowerCase();
+      if (t0) { f.data_type = (tmap[t0] ?? t0) as FieldType; if (f.data_type !== "picklist") delete f.picklist_values; }
+      if (f.data_type === "picklist") f.picklist_values = opts?.length ? opts : (f.picklist_values?.length ? f.picklist_values : ["Option 1", "Option 2"]);
+      const have = inp.schema.objects.find((o) => o.api_name === tgt)?.fields.map((x) => x.api_name) ?? [];
+      if (have.includes(f.api_name)) return { message: `${tgt} already has a field “${f.label}”. Nothing to add.`, plan: null, source: "rules" };
+      const note = f.data_type === "picklist" && !opts?.length ? " I used placeholder options (Option 1, Option 2). Tell me the real ones and I will change them." : "";
+      return finish([{ tool: "add_field", args: { object: tgt, field: f } }], `Add a ${String(f.data_type).replace("_", " ")} field “${f.label}” to ${tgt}.${note}`);
+    }
+  }
+
   // add field(s)
   m = p.match(/add\s+(?:an?\s+|the\s+)?(?:new\s+)?(?:fields?|columns?)\s+(.+?)\s+(?:to|on|in)\s+(?:the\s+)?(.+?)(?:\s+(?:object|table|tab))?$/i);
   if (m) {
@@ -223,6 +250,9 @@ function rulesPlan(inp: Input): PlannerResult {
     return finish([objectStep(label, splitList(m[2]), sim)], m[2] ? `Create “${label}” with the fields you listed.` : `Create “${label}” with recommended fields. You can add more any time.`);
   }
 
+  if (/\b(field|column|checkbox|dropdown|picklist)\b/i.test(p)) {
+    return { message: `I can add that. Tell me the field name and the table in one line, for example “add a dropdown field Insurance provider to patients with options Star, HDFC, None”. Tables you have: ${known.map((k) => k.label).join(", ")}.`, plan: null, source: "rules" };
+  }
   return {
     message: "I can create apps and tables, add or hide fields, change booking rules, set who can see what, and create flows (when something happens, do something). Try: “Create a Lab app with Lab Test and Lab Order”, “Give nurses access to lab orders”, “Remind patients the day before their appointment”, or “Set appointment slots to 20 minutes”.",
     plan: null,

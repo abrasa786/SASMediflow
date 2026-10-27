@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import CustomFields from "@/components/CustomFields";
 import AppShell from "@/components/layout/AppShell";
 import { getActiveClinicId } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
@@ -18,6 +19,8 @@ const inp = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus
  * A record's own page: every field in one place, editable, with Save. Used for patients, stock, tasks and the like.
  * It reads and writes the one row of `table` that belongs to the signed-in clinic (the database's row-level rules still apply).
  */
+const ENTITY: Record<string, string> = { clinic_patients: "patients", appointments: "appointments", invoices: "invoices", stock_items: "stock", clinic_tasks: "tasks", doctors: "doctors" };
+
 export default function RecordForm({ table, id, fields, title, subtitle, backHref, backLabel, canEdit = true, children, clean }: {
   table: string; id: string; fields: Field[]; title: (row: any) => string; subtitle?: (row: any) => string | null;
   backHref: string; backLabel: string; canEdit?: boolean; children?: (row: any, reload: () => void) => ReactNode;
@@ -98,6 +101,7 @@ export default function RecordForm({ table, id, fields, title, subtitle, backHre
           {canEdit && <div className="sm:col-span-2 flex gap-2"><button disabled={busy} className="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white text-sm font-semibold">{busy ? "Saving…" : "Save changes"}</button>
             <Link href={backHref} className="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700">Close</Link></div>}
         </form>
+        {clinicId && ENTITY[table] && <CustomFields clinicId={clinicId} entity={ENTITY[table]} recordId={id} canEdit={canEdit} />}
         {children?.(row, () => load(clinicId))}
       </div>
     </AppShell>
