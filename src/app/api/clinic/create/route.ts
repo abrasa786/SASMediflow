@@ -1,3 +1,4 @@
+import { appBase } from "@/lib/server/appurl";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase";
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
       const { data: s } = await admin.from("clinics").select("id").ilike("slug", slugClean).maybeSingle();
       if (s) return NextResponse.json({ error: "That web address is already taken. Try another." }, { status: 409 });
     }
-    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin).replace(/\/$/, "");
+    const appUrl = appBase(req.nextUrl.origin);
     const autoConfirm = process.env.AUTO_CONFIRM_EMAILS === "true";
 
     let userId: string;

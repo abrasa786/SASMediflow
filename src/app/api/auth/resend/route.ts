@@ -1,3 +1,4 @@
+import { appBase } from "@/lib/server/appurl";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
@@ -8,7 +9,7 @@ export async function POST(req: NextRequest) {
     if (typeof email !== "string" || !/^\S+@\S+\.\S+$/.test(email)) {
       return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
     }
-    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin).replace(/\/$/, "");
+    const appUrl = appBase(req.nextUrl.origin);
     const anon = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
