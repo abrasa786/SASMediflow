@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import { getActiveClinicId } from "@/lib/auth";
 import { getClinic, getMyRoleInClinic } from "@/lib/clinic";
-import { supabase } from "@/lib/supabase";
+import { authFetch } from "@/lib/api";
+import { toast } from "@/lib/toast";
 import PriceListEditor from "@/components/PriceListEditor";
 import BrandingCard from "@/components/BrandingCard";
 import AiPrivacyCard from "@/components/AiPrivacyCard";
@@ -77,23 +78,26 @@ export default function SettingsPage() {
     e.preventDefault();
     if (!clinic) return;
     setSaving(true); setErr(""); setSaved(false);
-    const { error } = await (supabase as any).from("clinics").update({
-      name, brand_name: brandName, specialty, phone, email, address, city, state,
-      website, gst_number: gst,
-      working_hours: { days: openDays, open: openTime, close: closeTime },
-    }).eq("id", clinic.id);
-    setSaving(false);
-    if (error) { setErr(error.message); return; }
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    try {
+      await authFetch("/api/clinic/setup", { body: { clinicId: clinic.id, action: "profile", fields: {
+        name, brand_name: brandName, specialty, phone, email, address, city, state, website, gst_number: gst,
+        working_hours: { days: openDays, open: openTime, close: closeTime },
+      } } });
+      setSaved(true); toast("Settings saved.");
+      setTimeout(() => setSaved(false), 3000);
+    } catch (e: any) {
+      const m = e?.message || "Could not save. Please try again.";
+      setErr(m); toast(m, false);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } finally { setSaving(false); }
   }
 
   const isAdmin = myRole === "admin";
-  const inp = `w-full px-3 py-2.5 rounded-xl border text-sm focus:outline-none ${isAdmin ? "border-slate-200 focus:ring-2 focus:ring-sky-500 bg-white" : "border-slate-100 bg-slate-50 cursor-not-allowed text-slate-500"}`;
+  const inp = `w-full px-3 py-3 rounded-xl border text-base focus:outline-none ${isAdmin ? "border-slate-200 focus:ring-2 focus:ring-sky-500 bg-white" : "border-slate-100 bg-slate-50 cursor-not-allowed text-slate-500"}`;
 
   return (
     <AppShell>
-      <div className="p-6 max-w-2xl mx-auto">
+      <div className="p-4 sm:p-6 max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
@@ -104,14 +108,15 @@ export default function SettingsPage() {
           )}
         </div>
 
+        {err && <div role="alert" className="mb-4 flex gap-2 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm px-3.5 py-3"><span aria-hidden>⚠️</span><span>{err}</span></div>}
         <form onSubmit={handleSave} className="space-y-6">
           {/* Basic info */}
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
             <h2 className="font-semibold text-slate-900 mb-4 text-sm uppercase tracking-wide text-slate-500">Clinic Info</h2>
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-medium text-slate-600 block mb-1">Legal Name</label>
+                  <label className="text-xs font-medium text-slate-600 block mb-1">Legal Name *</label>
                   <input value={name} onChange={e => setName(e.target.value)} className={inp} disabled={!isAdmin} />
                 </div>
                 <div>
@@ -122,7 +127,7 @@ export default function SettingsPage() {
               <div>
                 <label className="text-xs font-medium text-slate-600 block mb-1">Specialty</label>
                 <select value={specialty} onChange={e => setSpecialty(e.target.value)} className={inp} disabled={!isAdmin}>
-                  <option value="">—</option>
+                  <option value="">Choose a specialty</option>
                   {SPECIALTIES.map(s => <option key={s}>{s}</option>)}
                 </select>
               </div>
@@ -133,7 +138,7 @@ export default function SettingsPage() {
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
             <h2 className="font-semibold text-slate-900 mb-4 text-sm uppercase tracking-wide text-slate-500">Contact</h2>
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-medium text-slate-600 block mb-1">Phone</label>
                   <input value={phone} onChange={e => setPhone(e.target.value)} className={inp} disabled={!isAdmin} />
@@ -147,7 +152,7 @@ export default function SettingsPage() {
                 <label className="text-xs font-medium text-slate-600 block mb-1">Address</label>
                 <input value={address} onChange={e => setAddress(e.target.value)} className={inp} disabled={!isAdmin} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-medium text-slate-600 block mb-1">City</label>
                   <input value={city} onChange={e => setCity(e.target.value)} className={inp} disabled={!isAdmin} />
@@ -184,7 +189,7 @@ export default function SettingsPage() {
                   ))}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-medium text-slate-600 block mb-1">Opens at</label>
                   <input type="time" value={openTime} onChange={e => setOpenTime(e.target.value)} className={inp} disabled={!isAdmin} />

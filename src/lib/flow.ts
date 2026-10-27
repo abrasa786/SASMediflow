@@ -11,12 +11,14 @@ export async function setupReady(clinicId: string): Promise<{ ready: boolean; di
 /** Where an admin who has just signed in should land: "/setup" until setup is done, then home once, then null (go where they asked). */
 export async function firstRunTarget(clinicId: string): Promise<string | null> {
   try {
+    // guide once per sign-in: after being taken to Setup, Home opens normally (the Setup reminder stays on it)
+    const key = "mf_guided_" + clinicId;
     const { data } = await supabase.from("clinics").select("settings").eq("id", clinicId).maybeSingle();
     const s = ((data?.settings ?? {}) as any).setup ?? {};
     if (s.completed || s.dismissed) return null;
     const { ready } = await setupReady(clinicId);
-    if (!ready) return "/setup";
-    await setSetupFlag(clinicId, "completed", true);
+    if (!ready) { try { if (sessionStorage.getItem(key)) return null; sessionStorage.setItem(key, "1"); } catch { /* ignore */ } return "/setup"; }
+    try { await setSetupFlag(clinicId, "completed", true); } catch { return null; }
     return "/dashboard";
   } catch { return null; }
 }

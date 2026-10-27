@@ -1,5 +1,6 @@
 /** First-run setup checklist for a clinic. Everything is computed from the clinic's own data (RLS keeps it separate). */
 import { supabase } from "./supabase";
+import { authFetch } from "./api";
 
 export interface SetupItem {
   id: string;
@@ -43,10 +44,7 @@ export async function getSetupStatus(clinicId: string): Promise<{ items: SetupIt
   return { items, dismissed: !!s?.setup?.dismissed };
 }
 
-/** Merge a flag into clinics.settings.setup (admin only through RLS). */
+/** Set a setup flag. Saved through the server (admin only), so a refusal is reported instead of silently ignored. */
 export async function setSetupFlag(clinicId: string, flag: string, value: boolean) {
-  const { data } = await supabase.from("clinics").select("settings").eq("id", clinicId).maybeSingle();
-  const settings = (data?.settings ?? {}) as any;
-  settings.setup = { ...(settings.setup ?? {}), [flag]: value };
-  return supabase.from("clinics").update({ settings }).eq("id", clinicId);
+  await authFetch("/api/clinic/setup", { body: { clinicId, action: "flag", flag, value } });
 }
