@@ -7,6 +7,7 @@ import { getActiveClinicId } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import OffersConsent from "@/components/OffersConsent";
 import PatientSummary from "@/components/PatientSummary";
+import { planBadge, planTotals } from "@/lib/treatments";
 
 const FIELDS: Field[] = [
   { key: "name", label: "Full name", required: true }, { key: "phone", label: "Phone", type: "tel" },
@@ -41,7 +42,7 @@ function History({ patientId }: { patientId: string }) {
     const db = supabase as any;
     db.from("appointments").select("id, appointment_date, appointment_time, status, doctors(name)").eq("clinic_id", cid).eq("clinic_patient_id", patientId).order("appointment_date", { ascending: false }).limit(20).then(({ data }: any) => setAppts(data ?? []));
     db.from("invoices").select("id, invoice_number, total, paid_amount, status, created_at").eq("clinic_id", cid).eq("clinic_patient_id", patientId).order("created_at", { ascending: false }).limit(50).then(({ data }: any) => setInvs(data ?? []));
-    db.from("treatment_plans").select("id, title, status, total_amount, treatment_sittings(id, seq, label, status, due_amount, appointment_id)").eq("clinic_id", cid).eq("clinic_patient_id", patientId).order("created_at", { ascending: false }).limit(10).then(({ data }: any) => setPlans(data ?? []));
+    db.from("treatment_plans").select("id, title, status, payment_status, mode, total_amount, discount, treatment_sittings(id, seq, label, status, due_amount, paid_amount, appointment_id)").eq("clinic_id", cid).eq("clinic_patient_id", patientId).order("created_at", { ascending: false }).limit(10).then(({ data }: any) => setPlans(data ?? []));
     db.from("visit_notes").select("id, visit_date, treatment, tooth, follow_up").eq("clinic_id", cid).eq("clinic_patient_id", patientId).order("visit_date", { ascending: false }).limit(10).then(({ data }: any) => setNotes(data ?? []));
   }, [patientId]);
   const billed = invs.reduce((s, i) => s + Number(i.total || 0), 0);
@@ -63,13 +64,14 @@ function History({ patientId }: { patientId: string }) {
             <Link key={i.id} href={`/billing/${i.id}`} className={row}><span className="font-mono text-xs">{i.invoice_number}</span><span>{inr(i.total)} <span className="text-xs text-slate-500 capitalize">{String(i.status).replace("_", " ")}</span></span></Link>
           ))}
         </Panel>
-        <Panel title="Treatments" action={<Link href={`/appointments?new=1&patient=${patientId}`} className={smallBtn}>Book next sitting</Link>}>
+        <Panel title="Treatments" action={<span className="flex gap-2"><Link href={`/sittings?new=1&patient=${patientId}`} className={smallBtn}>+ Add sitting</Link><Link href={`/appointments?new=1&patient=${patientId}`} className={smallBtn}>Book next sitting</Link></span>}>
           {plans.length === 0 ? none : plans.map((p) => {
             const s: any[] = [...(p.treatment_sittings ?? [])].sort((x, y) => x.seq - y.seq);
             const doneN = s.filter((x) => x.status === "done").length;
             return (
               <div key={p.id} className="py-2 border-b border-slate-50 last:border-0">
                 <div className="flex justify-between gap-3 text-sm"><span className="font-medium text-slate-800">{p.title}</span><span className="text-xs text-slate-500">{doneN} of {s.length} done</span></div>
+                <p className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-slate-500"><span className={`px-2 py-0.5 rounded-full ${planBadge(p).cls}`}>{planBadge(p).text}</span>{(() => { const t = planTotals(p); return <span>billed {inr(t.billed)} · paid {inr(t.paid)}{t.due > 0 ? ` · ${inr(t.due)} due` : ""}{p.mode === "flexible" && t.estimate > 0 ? ` · estimate ${inr(t.estimate)}` : ""}</span>; })()}{p.status === "active" && <Link href={`/sittings?new=1&patient=${patientId}&plan=${p.id}`} className="text-sky-700 underline">add sitting</Link>}</p>
                 <div className="mt-1.5 h-1.5 rounded-full bg-slate-100 overflow-hidden"><div className="h-full bg-emerald-500" style={{ width: `${s.length ? (doneN / s.length) * 100 : 0}%` }} /></div>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">{s.map((x) => (
                   <Link key={x.id} href={x.appointment_id ? `/appointments/${x.appointment_id}` : `/appointments?new=1&patient=${patientId}`}

@@ -18,9 +18,9 @@ export default function AppointmentTreatment({ clinicId, appointmentId, patientI
 
   const load = useCallback(async () => {
     const r = await supabase.from("treatment_plans")
-      .select("id, title, status, total_amount, discount, treatment_sittings(id, seq, label, status, due_amount, paid_amount, invoice_id, appointment_id, target_date, appointments(appointment_date))")
+      .select("id, title, status, mode, total_amount, discount, treatment_sittings(id, seq, label, status, due_amount, paid_amount, invoice_id, appointment_id, target_date, appointments(appointment_date))")
       .eq("clinic_id", clinicId).eq("clinic_patient_id", patientId).neq("status", "cancelled").order("created_at", { ascending: false });
-    setPlans(r.data ?? []);
+    setPlans((r.data ?? []).filter((p: any) => p.mode !== "flexible"));   // flexible treatments are shown and edited in the Treatment step above
   }, [clinicId, patientId]);
   useEffect(() => { if (clinicId && patientId) load(); }, [clinicId, patientId, load]);
 

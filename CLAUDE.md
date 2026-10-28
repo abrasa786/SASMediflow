@@ -1,7 +1,7 @@
 # Mediflow: standing rules (from the owner)
 
 - **Only add features; never remove or change existing ones** unless asked.
-- **Layout:** main tabs run horizontally across the top (Home, Patients, Appointments, Treatments, Billing, plus any tab the Builder pins). The ☰ menu at the top left holds every other feature, the apps, Setup and the rest. The AI Assistant button stays at the bottom right on every page.
+- **Layout:** main tabs run horizontally across the top (Home, Patients, Appointments, Treatments, Sittings, Billing, plus any tab the Builder pins). The ☰ menu at the top left holds every other feature, the apps, Setup and the rest. The AI Assistant button stays at the bottom right on every page.
 - **Every tab has a "+ New" button and a "List view"** (the shared list: search, filters, columns, sort, saved views). Home has "+ New booking". The tab bar and every page must scroll sideways and up and down on phones.
 - **Home is the dashboard.** Setup runs once for a new clinic, then returns to Home. After an invoice is finished, return to Home.
 - **The Builder can pin a screen or app as a main tab** ("show stock in the main tabs").

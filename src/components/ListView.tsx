@@ -17,7 +17,7 @@ const clean = (s: string) => s.replace(/[,()%\\]/g, " ").trim();
 interface View { name: string; q: string; filters: Record<string, string>; cols: string[]; sort: string; asc: boolean }
 
 /** One list screen for every table: search, filters, choose columns, sort by a column, and saved views. */
-export default function ListView({ entity }: { entity: string }) {
+export default function ListView({ entity, refreshKey = 0 }: { entity: string; refreshKey?: number }) {
   const cfg: ListConfig | undefined = LISTS[entity];
   const router = useRouter();
   const [clinicId, setClinicId] = useState(""); const [userId, setUserId] = useState("");
@@ -78,7 +78,7 @@ export default function ListView({ entity }: { entity: string }) {
     } catch (e: any) { setErr(e.message ?? "Could not load the list."); }
     setLoading(false);
   }, [clinicId, cfg, term, filters, sort, asc]);
-  useEffect(() => { load(0); }, [load]);
+  useEffect(() => { load(0); }, [load, refreshKey]);
 
   const visible = useMemo(() => (cfg ? cfg.cols.filter((c) => cols.includes(c.key)) : []), [cfg, cols]);
   const activeFilters = Object.values(filters).filter(Boolean).length;

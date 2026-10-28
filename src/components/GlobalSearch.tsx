@@ -61,7 +61,7 @@ export default function GlobalSearch({ role }: { role?: ClinicRole }) {
     const like = `%${text.replace(/[%_\\]/g, (m) => "\\" + m)}%`;
     const digits = text.replace(/\D/g, "");
     const safe = async (p: any) => { try { const r = await p; return r.error ? [] : (r.data ?? []); } catch { return []; } };      // a table you may not read (or that is not set up yet) is skipped
-    const [pt, ph, inv, doc, stk, tpl, tsk] = await Promise.all([
+    const [pt, ph, inv, doc, stk, tpl, tsk, sit] = await Promise.all([
       safe(supabase.from("clinic_patients").select("id, name, phone").eq("clinic_id", clinicId).ilike("name", like).limit(6)),
       digits.length >= 4 ? safe(supabase.from("clinic_patients").select("id, name, phone").eq("clinic_id", clinicId).ilike("phone_norm", `%${digits}%`).limit(6)) : Promise.resolve([]),
       safe(supabase.from("invoices").select("id, invoice_number, total, status").eq("clinic_id", clinicId).ilike("invoice_number", like).limit(5)),
@@ -69,6 +69,7 @@ export default function GlobalSearch({ role }: { role?: ClinicRole }) {
       safe(supabase.from("stock_items").select("id, name, quantity").eq("clinic_id", clinicId).ilike("name", like).limit(5)),
       safe(supabase.from("treatment_templates").select("id, name").eq("clinic_id", clinicId).ilike("name", like).limit(4)),
       safe(supabase.from("clinic_tasks").select("id, title, status").eq("clinic_id", clinicId).ilike("title", like).limit(4)),
+      safe(supabase.from("treatment_sittings").select("id, label, status, due_amount, clinic_patients(name)").eq("clinic_id", clinicId).ilike("label", like).limit(5)),
     ]);
     if (my !== seq.current) return;      // an older search finishing late must not overwrite a newer one
     const seen = new Set<string>(); const people: any[] = [];
@@ -80,6 +81,7 @@ export default function GlobalSearch({ role }: { role?: ClinicRole }) {
       ...stk.map((s: any) => ({ group: "Stock", icon: "💊", title: s.name, sub: `${s.quantity ?? 0} in stock`, href: "/stock" })),
       ...tpl.map((t: any) => ({ group: "Treatments", icon: "🦷", title: t.name, href: "/treatments" })),
       ...tsk.map((t: any) => ({ group: "Tasks", icon: "✅", title: t.title, sub: String(t.status ?? "").replace("_", " "), href: "/tasks" })),
+      ...sit.map((t: any) => ({ group: "Sittings", icon: "🪥", title: t.label, sub: `${t.clinic_patients?.name ?? ""} · ₹${t.due_amount ?? 0}`, href: "/lists/sittings" })),
     ]);
     setBusy(false);
   }, []);

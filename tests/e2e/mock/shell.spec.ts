@@ -3,14 +3,14 @@ import { bare, expect as bareExpect, App } from "./fixture";
 
 const TABS: [string, string, string | null, string][] = [
   ["Patients", "/patients", "/lists/patients", "New"], ["Appointments", "/appointments", "/lists/appointments", "New"],
-  ["Treatments", "/treatments", "/lists/treatments", "New"], ["Billing", "/billing", "/lists/invoices", "New"],
+  ["Treatments", "/treatments", "/lists/treatments", "New"], ["Sittings", "/sittings", "/lists/sittings", "New"], ["Billing", "/billing", "/lists/invoices", "New"],
 ];
 
 test.describe("Layout and navigation", () => {
-  test("the five main tabs run across the top and each opens its page", async ({ page }) => {
+  test("the main tabs (including Sittings) run across the top and each opens its page", async ({ page }) => {
     await page.goto("/patients");
     const nav = page.getByRole("navigation", { name: "Main tabs" });
-    for (const t of ["Home", "Patients", "Appointments", "Treatments", "Billing"]) await expect(nav.getByRole("link", { name: t, exact: true })).toBeVisible();
+    for (const t of ["Home", "Patients", "Appointments", "Treatments", "Sittings", "Billing"]) await expect(nav.getByRole("link", { name: t, exact: true })).toBeVisible();
   });
 
   test("Home has + New booking", async ({ page }) => {

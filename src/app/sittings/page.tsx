@@ -26,7 +26,7 @@ export default function SittingsPage() {
   const [rk, setRk] = useState(0);        // a new sitting was added: reload the list
   return (
     <>
-      <ListView key={rk} entity="sittings" />
+      <ListView entity="sittings" refreshKey={rk} />
       <Suspense fallback={null}><NewSitting onAdded={() => setRk((n) => n + 1)} /></Suspense>
     </>
   );

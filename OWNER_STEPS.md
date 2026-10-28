@@ -28,3 +28,7 @@
 2. Book an appointment: the patient receives WhatsApp automatically, with an "Add a reminder to your phone" link.
 3. Open the visit, pick a treatment, "Add to this visit", complete the sitting, bill opens, send on WhatsApp, mark paid, lands on Home.
 4. Open the patient: related lists and balance show.
+
+## Sittings and invoice stamp
+- Run `supabase/RUN_ME_ALL_MIGRATIONS.sql` again in the Supabase SQL editor (it includes 032 flexible sittings and 033 clinic stamp; safe to re-run), then run `notify pgrst, 'reload schema';`.
+- Setup has an optional step "Add your clinic stamp". The stamp prints at the bottom right of every invoice.

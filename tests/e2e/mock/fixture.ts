@@ -20,7 +20,7 @@ export function seed(): Record<string, Row[]> {
   return {
     clinics: [{ id: CID, name: "Demo Dental Clinic", brand_name: "Demo Dental", specialty: "Dentistry", phone: "", address: "", city: "", email: "", website: "", gst_number: "", primary_color: "#0ea5e9", enabled_apps: [], ai_name: "Assistant", working_hours: { days: ["Monday"], open: "09:00", close: "18:00" }, settings: { setup: {} } }],
     clinic_staff: [{ id: CID, clinic_id: CID, user_id: CID, role: "admin", is_active: true, name: "Dr. Demo", specialty: "Dentistry" }],
-    doctors: [], doctor_schedules: [], stock_items: [], price_list: [], treatment_templates: [],
+    doctors: [], doctor_schedules: [], stock_items: [{ id: "66666666-6666-4666-8666-666666666666", clinic_id: CID, name: "Gloves", quantity: 10, unit: "pcs" }], price_list: [], treatment_templates: [],
     clinic_patients: [{ id: PID, clinic_id: CID, name: "Abdul Rahim", phone: "9187983647", email: "", allergies: "", is_active: true }],
     appointments: [{ id: AID, clinic_id: CID, clinic_patient_id: PID, appointment_date: "2026-10-27", appointment_time: "10:00:00", status: "completed", doctors: { name: "Dr. Anil" } }],
     invoices: [{ id: IID, clinic_id: CID, clinic_patient_id: PID, appointment_id: AID, invoice_number: "INV-2026-0003", status: "sent", total: 15200, subtotal: 15200, discount: 0, gst_percent: 0, gst_amount: 0, paid_amount: 0, created_at: "2026-10-27T10:00:00Z",

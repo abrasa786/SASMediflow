@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase as sb } from "@/lib/supabase";
+import { planBadge, planTotals } from "@/lib/treatments";
 
 const supabase = sb as any;
 const inr = (n: number) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
@@ -18,7 +19,7 @@ export default function InvoiceTreatments({ clinicId, invoiceId }: { clinicId: s
       if (l.error || !l.data?.length) return;                                            // no treatment on this invoice, or migration 025 not run
       setOnThis(Object.fromEntries(l.data.map((x: any) => [x.sitting_id, Number(x.amount)])));
       const planIds = Array.from(new Set(l.data.map((x: any) => x.treatment_sittings?.plan_id).filter(Boolean)));
-      const p = await supabase.from("treatment_plans").select("id, title, total_amount, discount, treatment_sittings(id, seq, label, due_amount, paid_amount, status, appointment_id)").eq("clinic_id", clinicId).in("id", planIds);
+      const p = await supabase.from("treatment_plans").select("id, title, total_amount, discount, status, payment_status, mode, treatment_sittings(id, seq, label, due_amount, paid_amount, status, appointment_id)").eq("clinic_id", clinicId).in("id", planIds);
       setPlans(p.data ?? []);
     })();
   }, [clinicId, invoiceId]);
@@ -29,7 +30,9 @@ export default function InvoiceTreatments({ clinicId, invoiceId }: { clinicId: s
       <h2 className="font-semibold text-slate-900 text-sm">Treatments</h2>
       {plans.map((p) => (
         <div key={p.id} className="mt-3">
-          <p className="text-sm font-medium text-slate-800">{p.title} <span className="text-xs font-normal text-slate-500">· total {inr(p.total_amount - p.discount)}</span></p>
+          <p className="text-sm font-medium text-slate-800">{p.title} <span className="text-xs font-normal text-slate-500">· {p.mode === "flexible" ? `estimate ${inr(p.total_amount - p.discount)}` : `total ${inr(p.total_amount - p.discount)}`}</span>
+            <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${planBadge(p).cls}`}>{planBadge(p).text}</span></p>
+          {p.mode === "flexible" && (() => { const t = planTotals({ ...p, total_amount: 0 }); return <p className="text-xs text-slate-500">Billed so far {inr(t.billed)} · paid {inr(t.paid)}{t.due > 0 ? ` · ${inr(t.due)} due` : ""}. Only the sittings on an invoice are charged. You can change a sitting&apos;s price on the invoice.</p>; })()}
           <ul className="mt-1 divide-y divide-slate-50">
             {(p.treatment_sittings ?? []).sort((a: any, b: any) => a.seq - b.seq).map((t: any) => (
               <li key={t.id} className="flex items-start justify-between gap-3 py-2 text-sm">

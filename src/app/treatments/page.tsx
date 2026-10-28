@@ -4,6 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import SlotPicker from "@/components/SlotPicker";
+import SittingForm from "@/components/SittingForm";
+import { planBadge, planTotals } from "@/lib/treatments";
+import { toast } from "@/lib/toast";
 import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
 import { supabase as sb } from "@/lib/supabase";
@@ -19,7 +22,7 @@ const inputCls = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm 
 const labelCls = "text-xs font-medium text-slate-600 block mb-1";
 
 interface Sitting { id: string; seq: number; label: string; target_date: string; amount: number; due_amount: number; paid_amount: number; status: string; invoice_id: string | null; appointments?: { appointment_date: string; appointment_time: string; status: string } | null }
-interface Plan { id: string; title: string; total_amount: number; discount: number; status: string; created_at: string; clinic_patients?: { name: string; phone?: string } | null; doctors?: { name: string } | null; treatment_sittings: Sitting[] }
+interface Plan { id: string; clinic_patient_id?: string; payment_status?: string; mode?: string; title: string; total_amount: number; discount: number; status: string; created_at: string; clinic_patients?: { name: string; phone?: string } | null; doctors?: { name: string } | null; treatment_sittings: Sitting[] }
 interface Template { id: string; name: string; description?: string; total_amount: number; sittings: { label: string; gap_days: number; share: number; duration_minutes?: number; consumables?: { item: string; qty: number }[] }[] }
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
@@ -53,6 +56,17 @@ export default function TreatmentsPage() {
   }, []);
   const [payFor, setPayFor] = useState<{ plan: Plan; s: Sitting } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [addFor, setAddFor] = useState<Plan | null>(null);
+  async function finishPlan(p: Plan, finish: boolean) {
+    if (!clinicId) return;
+    setBusy("f" + p.id);
+    try {
+      const r = await authFetch("/api/treatments/sitting", { body: { clinicId, action: "finish", planId: p.id, finish } });
+      toast(finish ? (r?.status === "completed" ? "Treatment fully paid and closed" : "Treatment finished. It closes once every sitting is paid.") : "Treatment reopened");
+      load(clinicId);
+    } catch (e: any) { setNotice({ tone: "warn", lines: [e.message || "That did not save. Please try again."] }); }
+    setBusy(null);
+  }
 
   const load = useCallback(async (id: string) => {
     const [p, t, d] = await Promise.all([
@@ -141,7 +155,16 @@ export default function TreatmentsPage() {
                       <div className="min-w-0">
                         <p className="font-bold text-slate-900">{p.title}</p>
                         <p className="text-sm text-slate-500">{p.clinic_patients?.name ?? "Patient"} · {p.doctors?.name ?? "Unassigned"}
-                          <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${p.status === "completed" ? "bg-emerald-100 text-emerald-700" : p.status === "cancelled" ? "bg-red-100 text-red-700" : "bg-sky-100 text-sky-700"}`}>{p.status}</span></p>
+                          <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${p.status === "completed" ? "bg-emerald-100 text-emerald-700" : p.status === "cancelled" ? "bg-red-100 text-red-700" : "bg-sky-100 text-sky-700"}`}>{p.status}</span>
+                          <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${planBadge(p).cls}`}>{planBadge(p).text}</span></p>
+                        {p.mode === "flexible" && (() => { const t = planTotals(p); return <p className="text-xs text-slate-500 mt-1">Estimated {inr(t.estimate)} · billed so far {inr(t.billed)} · paid {inr(t.paid)}{t.due > 0 ? ` · ${inr(t.due)} due` : ""}</p>; })()}
+                        {canComplete && p.status !== "cancelled" && (
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            <button onClick={() => setAddFor(p)} className="px-3 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold">+ Add sitting</button>
+                            {p.mode === "flexible" && (p.status === "completed"
+                              ? <button disabled={busy === "f" + p.id} onClick={() => finishPlan(p, false)} className="px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold disabled:opacity-60">Reopen treatment</button>
+                              : <button disabled={busy === "f" + p.id} onClick={() => finishPlan(p, true)} className="px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold disabled:opacity-60">This was the last sitting</button>)}
+                          </div>)}
                       </div>
                       <div className="text-right text-sm tabular-nums">
                         <p className="text-slate-500">Plan total {inr(p.total_amount)}{Number(p.discount) > 0 && <> − discount {inr(p.discount)}</>}</p>
@@ -195,6 +218,12 @@ export default function TreatmentsPage() {
       {newOpen && clinicId && (
         <NewPlanModal clinicId={clinicId} templates={templates} doctors={doctors} onClose={() => setNewOpen(false)}
           onCreated={(lines) => { setNewOpen(false); setNotice({ tone: "ok", lines }); load(clinicId); }} />
+      )}
+      {addFor && clinicId && (
+        <Modal title={`Add a sitting: ${addFor.title}`} onClose={() => setAddFor(null)}>
+          <SittingForm clinicId={clinicId} patientId={addFor.clinic_patient_id} planId={addFor.id} onCancel={() => setAddFor(null)}
+            onDone={() => { setAddFor(null); load(clinicId); }} />
+        </Modal>
       )}
       {payFor && clinicId && (
         <PayModal clinicId={clinicId} s={payFor.s} onClose={() => setPayFor(null)}
