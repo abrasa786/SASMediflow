@@ -10,6 +10,7 @@ import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
 import { getSetupStatus, setSetupFlag, type SetupItem } from "@/lib/setup";
 import { supabase } from "@/lib/supabase";
+import LogoPicker from "@/components/LogoPicker";
 
 const SPECIALTIES = ["Dentistry", "General Practice", "Dermatology", "Gynaecology", "Orthopaedics", "Paediatrics", "Ophthalmology", "ENT", "Cardiology", "Other"];
 const field = "w-full px-3 py-3 rounded-xl border border-slate-300 text-base focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white";
@@ -30,6 +31,7 @@ export default function SetupPage() {
   const [error, setError] = useState<{ step: string; text: string } | null>(null);
   const [prof, setProf] = useState({ phone: "", address: "", city: "", specialty: "Dentistry" });
   const [doc, setDoc] = useState({ name: "", specialty: "" });
+  const [stamp, setStamp] = useState<string | null>(null);
   const router = useRouter();
   const clinicId = typeof window !== "undefined" ? getActiveClinicId() : null;
 
@@ -77,6 +79,11 @@ export default function SetupPage() {
     await authFetch("/api/clinic/setup", { body: { clinicId, action: "doctor", me, name: doc.name, specialty: doc.specialty } });
     setDoc({ name: "", specialty: "" });
   }, me ? "You are now listed as a doctor." : "Doctor added.");
+
+  const saveStamp = () => run("stamp", async () => {
+    if (!stamp) throw new Error("Choose your stamp image first.");
+    await authFetch("/api/clinic/branding", { body: { clinicId, action: "save", stampDataUrl: stamp } });
+  }, "Stamp saved. It will appear at the bottom right of your invoices.");
 
   const mark = (step: string, flag: string, text: string) => run(step, () => setSetupFlag(clinicId!, flag, true), text);
 
@@ -137,6 +144,13 @@ export default function SetupPage() {
             {err}
           </div>);
       }
+      case "stamp": return (
+        <div className="space-y-3">
+          <p className="text-sm text-slate-600">Upload your clinic seal or stamp. It is printed at the <b>bottom right</b> of every invoice. A PNG with a transparent background looks best. You can skip this and add it later in Settings.</p>
+          <LogoPicker label="Clinic stamp" icon="🔏" uploadText="Upload stamp" hint="PNG, JPG or WebP, under 1 MB." value={stamp} onChange={setStamp} />
+          {err}
+          <button disabled={busy || !stamp} onClick={saveStamp} className={primary + " w-full sm:w-auto"}>{busy ? "Saving…" : "Save stamp"}</button>
+        </div>);
       case "whatsapp": return (
         <div className="space-y-3">
           <p className="text-sm text-slate-600">Mediflow sends confirmations and reminders from its own WhatsApp number. Nothing for you to connect. Mark this done when you are ready.</p>

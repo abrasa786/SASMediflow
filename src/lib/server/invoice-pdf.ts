@@ -27,7 +27,7 @@ async function loadLogo(pdf: PDFDocument, url?: string | null): Promise<PDFImage
 }
 
 export interface InvoiceData {
-  clinic: { name: string; address?: string | null; city?: string | null; phone?: string | null; email?: string | null; gst_number?: string | null; logo_url?: string | null; color?: string | null };
+  clinic: { name: string; address?: string | null; city?: string | null; phone?: string | null; email?: string | null; gst_number?: string | null; logo_url?: string | null; stamp_url?: string | null; color?: string | null };
   invoice: { number: string; date: string; status: string; items: { name: string; qty: number; unit_price: number; amount: number }[]; subtotal: number; discount: number; gst_percent: number; gst_amount: number; total: number; paid: number; method?: string | null };
   patient: { name: string; phone?: string | null };
 }
@@ -118,6 +118,15 @@ export async function buildInvoicePdf(d: InvoiceData): Promise<Uint8Array> {
   const due = Math.max(0, d.invoice.total - d.invoice.paid);
   if (due > 0) row("Balance due", rs(due), bold, 11);
   if (d.invoice.method) text(`Payment method: ${d.invoice.method}`, M, y + 17, 9, reg, mute);
+
+  // the clinic's stamp, bottom right under the totals
+  const stamp = await loadLogo(pdf, d.clinic.stamp_url);
+  if (stamp) {
+    const s = Math.min(120 / stamp.width, 120 / stamp.height), w = stamp.width * s, h = stamp.height * s;
+    let top = y - 4;
+    if (top - h < 75) { page = pdf.addPage([W, H]); top = H - 60; }
+    page.drawImage(stamp, { x: W - M - w, y: top - h, width: w, height: h });
+  }
 
   center(`Thank you for choosing ${d.clinic.name}.`, 60, 10, reg, mute);
   center("This is a computer generated invoice.", 46, 8, reg, mute);

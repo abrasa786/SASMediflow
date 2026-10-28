@@ -4569,6 +4569,10 @@ grant execute on function plan_refresh(uuid), tx_add_sitting(jsonb), tx_update_s
 select plan_refresh(id) from treatment_plans;
 create index if not exists treatment_sittings_clinic_status_idx on treatment_sittings (clinic_id, status, target_date);
 
+-- ===== 033_clinic_stamp.sql =====
+-- Clinic stamp / seal image, printed at the bottom right of every invoice.
+alter table clinics add column if not exists stamp_url text;
+
 -- ===== security sweep: no table in the public schema may be left open =====
 -- Switches Row-Level Security on for any public table that still has it off (the app's server uses the service role, which is not affected).
 do $$

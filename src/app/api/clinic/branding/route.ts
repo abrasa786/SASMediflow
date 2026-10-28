@@ -14,7 +14,8 @@ export async function GET(req: NextRequest) {
     const { db } = await requireClinicMember(req, req.nextUrl.searchParams.get("clinicId"));
     const { data, error } = await db.from("clinics").select(COLS).eq("id", req.nextUrl.searchParams.get("clinicId")).maybeSingle();
     if (error) throw new HttpError(500, /does not exist/.test(error.message) ? "Branding is not installed yet. Run supabase/migrations/007_branding_and_domains.sql in the Supabase SQL editor." : error.message);
-    return { branding: view(data ?? {}) };
+    const stamp = await db.from("clinics").select("stamp_url").eq("id", req.nextUrl.searchParams.get("clinicId")).maybeSingle();   // separate, so a database without the stamp column still loads
+    return { branding: { ...view(data ?? {}), stamp_url: stamp.data?.stamp_url ?? null } };
   });
 }
 
@@ -35,8 +36,11 @@ export async function POST(req: NextRequest) {
       if (b.slug && b.slug !== cur.slug) patch.slug = checkSlug(b.slug);
       if (b.removeLogo) patch.logo_url = null;
       if (b.logoDataUrl) patch.logo_url = await saveLogo(db, b.clinicId, b.logoDataUrl);
+      if (b.removeStamp) patch.stamp_url = null;
+      if (b.stampDataUrl) patch.stamp_url = await saveLogo(db, b.clinicId, b.stampDataUrl, "stamp");
       if (!Object.keys(patch).length) throw new HttpError(400, "Nothing to save.");
       const { error } = await db.from("clinics").update(patch).eq("id", b.clinicId);
+      if (error && /stamp_url/.test(error.message)) throw new HttpError(500, "The stamp needs a database update. Run supabase/RUN_ME_ALL_MIGRATIONS.sql in Supabase, then try again.");
       if (error) throw new HttpError(error.code === "23505" ? 409 : 400, error.code === "23505" ? "That web address is already taken. Try another." : error.message);
     } else if (b.action === "set_domain") {
       const d = checkDomain(b.domain);

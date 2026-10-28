@@ -15,7 +15,7 @@ async function toDataUrl(file: File): Promise<string> {
   return png.length < 900_000 ? png : c.toDataURL("image/jpeg", 0.85);
 }
 
-export default function LogoPicker({ value, onChange, label = "Clinic logo" }: { value: string | null; onChange: (dataUrl: string | null) => void; label?: string }) {
+export default function LogoPicker({ value, onChange, label = "Clinic logo", hint = "PNG, JPG or WebP. Square works best.", icon = "🏥", uploadText = "Upload logo" }: { value: string | null; onChange: (dataUrl: string | null) => void; label?: string; hint?: string; icon?: string; uploadText?: string }) {
   const ref = useRef<HTMLInputElement>(null);
   const [err, setErr] = useState("");
   return (
@@ -24,14 +24,14 @@ export default function LogoPicker({ value, onChange, label = "Clinic logo" }: {
       <div className="flex items-center gap-3">
         <div className="w-16 h-16 rounded-2xl border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          {value ? <img src={value} alt="Logo preview" className="w-full h-full object-contain" /> : <span className="text-2xl text-gray-300">🏥</span>}
+          {value ? <img src={value} alt="Logo preview" className="w-full h-full object-contain" /> : <span className="text-2xl text-gray-300">{icon}</span>}
         </div>
         <div className="text-sm">
           <input ref={ref} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" aria-label="Upload logo"
             onChange={async (e) => { const f = e.target.files?.[0]; e.target.value = ""; if (!f) return; setErr(""); try { onChange(await toDataUrl(f)); } catch (x: any) { setErr(x.message); } }} />
-          <button type="button" onClick={() => ref.current?.click()} className="px-3 py-1.5 rounded-lg border border-gray-300 text-xs font-semibold hover:bg-gray-50">{value ? "Change" : "Upload logo"}</button>
+          <button type="button" onClick={() => ref.current?.click()} className="px-3 py-1.5 rounded-lg border border-gray-300 text-xs font-semibold hover:bg-gray-50">{value ? "Change" : uploadText}</button>
           {value && <button type="button" onClick={() => onChange(null)} className="ml-2 text-xs text-red-600 hover:underline">Remove</button>}
-          <p className="text-xs text-gray-400 mt-1">PNG, JPG or WebP. Square works best.</p>
+          <p className="text-xs text-gray-400 mt-1">{hint}</p>
           {err && <p className="text-xs text-red-600 mt-1" role="alert">{err}</p>}
         </div>
       </div>

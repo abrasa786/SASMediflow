@@ -7,10 +7,11 @@ export async function loadInvoiceData(db: any, invoiceId: string, clinicId?: str
   const { data: inv } = await q.maybeSingle();
   if (!inv) return null;
   const { data: c } = await db.from("clinics").select("name, brand_name, address, city, phone, email, gst_number, logo_url, primary_color").eq("id", inv.clinic_id).maybeSingle();
+  const st = await db.from("clinics").select("stamp_url").eq("id", inv.clinic_id).maybeSingle();   // separate: invoices still work before the stamp column exists
   const pat: any = inv.clinic_patients ?? {};
   const method: Record<string, string> = { physical: "Paid at the desk", cash: "Cash", upi: "UPI", qr: "QR", card: "Card", online: "Online", insurance: "Insurance", other: "Other" };
   return {
-    clinic: { name: c?.brand_name || c?.name || "Clinic", address: c?.address, city: c?.city, phone: c?.phone, email: c?.email, gst_number: c?.gst_number, logo_url: c?.logo_url, color: c?.primary_color },
+    clinic: { name: c?.brand_name || c?.name || "Clinic", address: c?.address, city: c?.city, phone: c?.phone, email: c?.email, gst_number: c?.gst_number, logo_url: c?.logo_url, stamp_url: st.data?.stamp_url ?? null, color: c?.primary_color },
     invoice: {
       number: inv.invoice_number ?? "", date: new Date(inv.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Kolkata" }),
       status: inv.status ?? "", items: Array.isArray(inv.items) ? inv.items.map((i: any) => ({ name: String(i.name ?? i.description ?? ""), qty: Number(i.qty || 1), unit_price: Number(i.unit_price ?? i.price ?? i.amount ?? 0), amount: Number(i.amount ?? (Number(i.qty || 1) * Number(i.unit_price ?? i.price ?? 0))) })) : [],
