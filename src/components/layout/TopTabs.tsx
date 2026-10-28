@@ -14,6 +14,7 @@ const MAIN: Tab[] = [
   { key: "patients", label: "Patients", href: "/patients", newHref: "/patients?new=1", listHref: "/lists/patients" },
   { key: "appointments", label: "Appointments", href: "/appointments", newHref: "/appointments?new=1", listHref: "/lists/appointments" },
   { key: "treatments", label: "Treatments", href: "/treatments", newHref: "/treatments?new=1", listHref: "/lists/treatments" },
+  { key: "sittings", label: "Sittings", href: "/sittings", newHref: "/sittings?new=1", listHref: "/lists/sittings" },
   { key: "billing", label: "Billing", href: "/billing", newHref: "/billing?new=1", listHref: "/lists/invoices" },
 ];
 

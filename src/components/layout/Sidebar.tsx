@@ -19,6 +19,8 @@ export const NAV = [
   { href: "/recall",       icon: "📣", label: "Recall", roles: ["admin", "doctor", "nurse", "receptionist"] as ClinicRole[] },
   { href: "/treatments",   icon: "🦷", label: "Treatments", roles: ["admin", "doctor", "nurse", "receptionist"] as ClinicRole[] },
   { href: "/lists/treatments", icon: "📋", label: "All treatments" },
+  { href: "/sittings", icon: "🪥", label: "Sittings", roles: ["admin", "doctor", "nurse", "receptionist"] as ClinicRole[] },
+  { href: "/lists/sittings", icon: "📋", label: "All sittings" },
   { href: "/offers",       icon: "📨", label: "Offers", roles: ["admin", "doctor"] as ClinicRole[] },
   { href: "/lists/invoices", icon: "📃", label: "All bills" },
   { href: "/billing",      icon: "🧾", label: "Billing" },

@@ -149,6 +149,38 @@ export const LISTS: Record<string, ListConfig> = {
       { key: "priority", label: "Priority", column: "priority", kind: "select", options: [["high", "High"], ["medium", "Medium"], ["low", "Low"]] },
     ],
   },
+  sittings: {
+    entity: "sittings", title: "All sittings", subtitle: "Newest first. Each sitting is billed and paid on its own", table: "treatment_sittings",
+    select: "id, seq, label, status, due_amount, paid_amount, target_date, created_at, invoice_id, appointment_id, plan_id, treatment_plans(id, title, status, payment_status, total_amount, clinic_patients(id, name, phone))",
+    searchCols: ["label"], order: { col: "created_at", asc: false }, href: (r) => (r.appointment_id ? `/appointments/${r.appointment_id}` : r.plan_id ? `/treatments` : "/sittings"), newHref: "/sittings?new=1", newLabel: "+ New sitting",
+    cols: [
+      { key: "sitting", label: "Sitting", sort: "label", defaultOn: true, render: (r) => <><p className="font-medium text-slate-900">{r.seq}. {r.label}</p><p className="text-xs text-slate-500">{r.treatment_plans?.title ?? "—"}</p></> },
+      { key: "patient", label: "Patient", defaultOn: true, render: (r) => (r.treatment_plans?.clinic_patients ? link(`/patients/${r.treatment_plans.clinic_patients.id}`, r.treatment_plans.clinic_patients.name) : dash) },
+      { key: "when", label: "Date", sort: "target_date", defaultOn: true, render: (r) => date(r.target_date) },
+      { key: "cost", label: "Cost", sort: "due_amount", defaultOn: true, render: (r) => inr(r.due_amount) },
+      { key: "paid", label: "Paid", sort: "paid_amount", defaultOn: true, render: (r) => inr(r.paid_amount) },
+      { key: "pay", label: "Payment", defaultOn: true, render: (r) => { const d = Number(r.due_amount || 0), p = Number(r.paid_amount || 0); const v = d > 0 && p >= d ? "paid" : p > 0 ? "part_paid" : "unpaid"; return pill({ paid: "bg-emerald-100 text-emerald-700", part_paid: "bg-amber-100 text-amber-700", unpaid: "bg-slate-100 text-slate-600" })(v); } },
+      { key: "status", label: "Status", sort: "status", defaultOn: true, render: (r) => pill({ pending: "bg-sky-100 text-sky-700", done: "bg-emerald-100 text-emerald-700", missed: "bg-amber-100 text-amber-700", cancelled: "bg-red-100 text-red-600" })(r.status) },
+      { key: "invoice", label: "Invoice", defaultOn: true, render: (r) => (r.invoice_id ? link(`/billing/${r.invoice_id}`, "Open") : dash) },
+      { key: "treatment", label: "Treatment status", defaultOn: false, render: (r) => String(r.treatment_plans?.payment_status ?? "").replace("_", " ") || "—" },
+    ],
+    filters: [
+      { key: "status", label: "Status", column: "status", kind: "select", options: [["pending", "Pending"], ["done", "Done"], ["missed", "Missed"], ["cancelled", "Cancelled"]] },
+      { key: "from", label: "Date from", column: "target_date", kind: "from" },
+      { key: "to", label: "Date to", column: "target_date", kind: "to" },
+    ],
+    extraSearch: async (db, clinicId, term) => {
+      const t = clean(term), like = `%${t}%`, digits = t.replace(/\D/g, "");
+      const pats = await db.from("clinic_patients").select("id").eq("clinic_id", clinicId).or(digits.length >= 4 ? `name.ilike.${like},phone_norm.ilike.%${digits}%` : `name.ilike.${like}`).limit(200);
+      const pids = (pats.data ?? []).map((x: any) => x.id);
+      const [byPatient, byTitle] = await Promise.all([
+        pids.length ? db.from("treatment_plans").select("id").eq("clinic_id", clinicId).in("clinic_patient_id", pids).limit(300) : Promise.resolve({ data: [] }),
+        db.from("treatment_plans").select("id").eq("clinic_id", clinicId).ilike("title", like).limit(300),
+      ]);
+      const ids = Array.from(new Set([...(byPatient.data ?? []), ...(byTitle.data ?? [])].map((x: any) => x.id)));
+      return ids.length ? [`plan_id.in.(${ids.join(",")})`] : [];
+    },
+  },
   treatments: {
     entity: "treatments", title: "Treatment templates", subtitle: "A to Z", table: "treatment_templates",
     select: "id, name, description, total_amount, sittings, is_active, created_at",
