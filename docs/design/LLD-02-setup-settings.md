@@ -48,3 +48,11 @@ Phone under 10 digits, address under 5 characters, bad colour, taken web address
 
 ## Tests
 `tests/e2e/mock/setup.spec.ts`, `settings.spec.ts`; unit `branding.test.ts`; SQL `branding_test.sql`.
+
+## Data import (migration 034)
+Optional Setup step "Bring your patients from another app", also at ☰ → Import data (`/import`, admin only).
+- **Screen:** `PatientImport` takes a CSV (up to 5 MB, 2,000 patients at a time), guesses the column mapping from the headers (`guessMapping`), lets the admin correct it, then **Check the file** (preview, nothing saved) and **Import N patients**. A sample file can be downloaded. **Undo this import** removes the batch.
+- **Pure rules** (`src/lib/import/patients.ts`, shared by screen and server): CSV reader (quotes, line breaks in quotes, `,` `;` tab, byte-order mark), phone (last 10 digits, same as the database's `phone_norm`), dates (day/month/year, ISO, "12 Mar 1985"; impossible dates refused), gender words, per-row problems (no name = skipped) and warnings (bad phone, email or date = imported without it).
+- **API** `POST /api/import/patients` (admin): `preview`, `commit`, `undo`, `list`. Duplicates are matched by mobile (or name plus date of birth when there is none) against the clinic and inside the file, and are skipped, never overwritten. Inserts run in chunks of 200 under one `import_batches` row; `clinic_patients.import_batch_id` links each patient to it. Undo removes only batch patients with no appointments, invoices, treatment plans or visit notes and reports how many were kept.
+- **Not covered yet:** appointment history, bills and balances, treatments, stock and price list (planned in this order).
+- **Tests:** unit `tests/unit/import.test.ts`; Playwright `tests/e2e/mock/import.spec.ts`.

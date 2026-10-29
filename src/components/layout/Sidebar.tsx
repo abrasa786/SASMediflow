@@ -34,6 +34,7 @@ export const NAV = [
   { href: "/tasks",        icon: "✅", label: "Tasks" },
   { href: "/lists/tasks", icon: "📋", label: "All tasks" },
   { href: "/analytics",   icon: "📊", label: "Analytics" },
+  { href: "/import",       icon: "📥", label: "Import data", roles: ["admin"] as ClinicRole[] },
   { href: "/staff",        icon: "👤", label: "Staff",    roles: ["admin"] as ClinicRole[] },
   { href: "/users",        icon: "🔐", label: "Users" },
   { href: "/profile",      icon: "🙍", label: "My profile" },

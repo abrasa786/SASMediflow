@@ -34,6 +34,8 @@ Status words: **Built** (in the product and tested), **Partial**, **Planned** (s
 | AI assistant and privacy layer | Built | 10 |
 | AI Builder, apps, flows, reports, pinned tabs | Built | 11 |
 | Dashboard, analytics, tasks, visit notes, patient summary | Built | 12 |
+| Import patients from another app (CSV, preview, undo) | Built (patients only) | 02 |
+| Import of appointments, bills, treatments, stock | Planned | ROADMAP |
 | Offline use | Planned | ROADMAP |
 | Meta ads integration | Planned | ROADMAP |
 

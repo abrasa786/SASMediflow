@@ -32,3 +32,7 @@
 ## Sittings and invoice stamp
 - Run `supabase/RUN_ME_ALL_MIGRATIONS.sql` again in the Supabase SQL editor (it includes 032 flexible sittings and 033 clinic stamp; safe to re-run), then run `notify pgrst, 'reload schema';`.
 - Setup has an optional step "Add your clinic stamp". The stamp prints at the bottom right of every invoice.
+
+## Import patients from another app
+- Run `supabase/RUN_ME_ALL_MIGRATIONS.sql` again (it now includes 034 data import), then `notify pgrst, 'reload schema';`.
+- In Setup, open "Bring your patients from another app", or use the menu: Import data. Export the patient list from the old app as CSV first.

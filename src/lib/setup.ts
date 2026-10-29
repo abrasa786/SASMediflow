@@ -31,6 +31,8 @@ export async function getSetupStatus(clinicId: string): Promise<{ items: SetupIt
   ]);
   const stampRes: any = await supabase.from("clinics").select("stamp_url").eq("id", clinicId).maybeSingle();   // separate, so setup still loads before the column exists
   const hasStamp = !!stampRes.data?.stamp_url;
+  const impRes: any = await supabase.from("import_batches").select("id", { count: "exact", head: true }).eq("clinic_id", clinicId).is("undone_at", null);   // separate, so setup still loads before the table exists
+  const hasImport = (impRes.count ?? 0) > 0;
   const s = (clinic?.settings ?? {}) as any;
   const items: SetupItem[] = [
     { id: "profile",   title: "Add your clinic's phone and address", hint: "Shown on invoices and in every WhatsApp confirmation.", href: "/settings", done: !!(clinic?.phone && clinic?.address) },
@@ -38,6 +40,7 @@ export async function getSetupStatus(clinicId: string): Promise<{ items: SetupIt
     { id: "hours",     title: "Set each doctor's weekly hours", hint: "Working days, breaks and slot length decide which times can be booked.", href: "/availability", done: schedules > 0 },
     { id: "prices",    title: "Review your price list", hint: "A starter list was added for your specialty. Change the amounts to yours.", href: "/settings", done: prices > 0 && !!s?.setup?.prices_reviewed },
     { id: "templates", title: "Check your treatment templates", hint: "Multi-sitting treatments (like root canals) with gaps and amounts. Edit to match your practice.", href: "/treatments", done: templates > 0 && !!s?.setup?.templates_reviewed },
+    { id: "import",    title: "Bring your patients from another app (optional)", hint: "Moving from Practo or another app? Import your patient list from a file.", href: "/import", done: hasImport, optional: true },
     { id: "stamp",     title: "Add your clinic stamp (optional)", hint: "Your seal is printed at the bottom right of every invoice.", href: "/settings", done: hasStamp, optional: true },
     { id: "stock",     title: "Enter your stock quantities", hint: "Shelves are ready with the usual items. Add real quantities so usage can be deducted.", href: "/stock", done: stockWithQty > 0, optional: true },
     { id: "whatsapp",  title: "Connect WhatsApp (optional)", hint: "Without it, Mediflow opens WhatsApp with the message ready to send.", href: "/settings", done: !!s?.setup?.whatsapp_done, optional: true },

@@ -11,6 +11,7 @@ import { authFetch } from "@/lib/api";
 import { getSetupStatus, setSetupFlag, type SetupItem } from "@/lib/setup";
 import { supabase } from "@/lib/supabase";
 import LogoPicker from "@/components/LogoPicker";
+import PatientImport from "@/components/PatientImport";
 
 const SPECIALTIES = ["Dentistry", "General Practice", "Dermatology", "Gynaecology", "Orthopaedics", "Paediatrics", "Ophthalmology", "ENT", "Cardiology", "Other"];
 const field = "w-full px-3 py-3 rounded-xl border border-slate-300 text-base focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white";
@@ -144,6 +145,7 @@ export default function SetupPage() {
             {err}
           </div>);
       }
+      case "import": return clinicId ? <PatientImport clinicId={clinicId} onDone={() => load(true)} /> : null;
       case "stamp": return (
         <div className="space-y-3">
           <p className="text-sm text-slate-600">Upload your clinic seal or stamp. It is printed at the <b>bottom right</b> of every invoice. A PNG with a transparent background looks best. You can skip this and add it later in Settings.</p>
