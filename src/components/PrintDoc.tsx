@@ -2,7 +2,7 @@
 
 export const inr = (n: number) => "₹" + (Math.round((Number(n) || 0) * 100) / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-export default function PrintDoc({ clinic, title, number, meta, children }: { clinic: any; title: string; number: string; meta: [string, string][]; children: React.ReactNode }) {
+export default function PrintDoc({ clinic, title, number, meta, children, showStamp = false }: { clinic: any; title: string; number: string; meta: [string, string][]; children: React.ReactNode; showStamp?: boolean }) {
   return (
     <div className="min-h-screen bg-slate-100 print:bg-white py-6 print:py-0">
       <style>{`@media print { .no-print { display: none !important } @page { margin: 14mm } }`}</style>
@@ -25,6 +25,12 @@ export default function PrintDoc({ clinic, title, number, meta, children }: { cl
           </div>
         </div>
         {children}
+        {showStamp && clinic?.stamp_url && (
+          <div className="mt-6 flex justify-end">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={clinic.stamp_url} alt="Clinic stamp" className="max-h-32 max-w-[10rem] object-contain" />
+          </div>
+        )}
       </div>
     </div>
   );

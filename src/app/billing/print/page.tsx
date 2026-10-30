@@ -26,7 +26,7 @@ function Inner() {
   const due = Math.max(0, Number(inv.total || 0) - Number(inv.paid_amount || 0));
   const dt = inv.created_at ? new Date(inv.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "–";
   return (
-    <PrintDoc clinic={clinic} title="Tax invoice" number={inv.invoice_number ?? "–"} meta={[["Date", dt], ["Status", String(inv.status ?? "").replace("_", " ")]]}>
+    <PrintDoc showStamp clinic={clinic} title="Tax invoice" number={inv.invoice_number ?? "–"} meta={[["Date", dt], ["Status", String(inv.status ?? "").replace("_", " ")]]}>
       <div className="py-4 border-b border-slate-200">
         <p className="text-xs uppercase tracking-wide text-slate-400">Billed to</p>
         <p className="font-semibold">{p.name ?? "–"}</p>

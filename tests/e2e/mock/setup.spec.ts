@@ -71,3 +71,27 @@ test.describe("Setup", () => {
     expect(over).toBeLessThanOrEqual(1);
   });
 });
+
+test.describe("Clinic stamp in Setup", () => {
+  test("positive: choose a stamp image, save, the image is sent to the server and a toast shows", async ({ page, app }) => {
+    app.api("POST /api/clinic/branding", () => ({ json: { branding: { stamp_url: "https://example.com/stamp.png" } } }));
+    await page.goto("/setup");
+    await page.getByText("Add your clinic stamp").click();
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+    await page.getByLabel("Upload logo").setInputFiles({ name: "stamp.png", mimeType: "image/png", buffer: png });
+    await page.getByRole("button", { name: "Save stamp" }).click();
+    await expect.poll(() => app.called("/api/clinic/branding").length).toBe(1);
+    expect(app.called("/api/clinic/branding")[0].body.stampDataUrl).toMatch(/^data:image\/png;base64,/);
+    await expect(page.getByRole("status").filter({ hasText: "Stamp saved" })).toBeVisible();
+  });
+
+  test("negative: a server refusal is shown to the user", async ({ page, app }) => {
+    app.api("POST /api/clinic/branding", () => ({ status: 500, json: { error: "The stamp needs a database update. Run supabase/RUN_ME_ALL_MIGRATIONS.sql in Supabase, then try again." } }));
+    await page.goto("/setup");
+    await page.getByText("Add your clinic stamp").click();
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+    await page.getByLabel("Upload logo").setInputFiles({ name: "stamp.png", mimeType: "image/png", buffer: png });
+    await page.getByRole("button", { name: "Save stamp" }).click();
+    await expect(page.locator("[role=alert]:not(#__next-route-announcer__)")).toContainText("database update");
+  });
+});
