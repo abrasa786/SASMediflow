@@ -95,3 +95,51 @@ test.describe("Clinic stamp in Setup", () => {
     await expect(page.locator("[role=alert]:not(#__next-route-announcer__)")).toContainText("database update");
   });
 });
+
+test.describe("Stamp from a phone camera photo", () => {
+  test("positive: a large JPEG photo of a stamp on white paper is shrunk and the paper made see-through", async ({ page, app }) => {
+    app.api("POST /api/clinic/branding", () => ({ json: { branding: { stamp_url: "https://example.com/s.png" } } }));
+    await page.goto("/setup");
+    await page.getByText("Add your clinic stamp").click();
+    // build a 3000x2000 "camera photo": white paper with a dark blue ring, and hand it to the file input like a phone would
+    await page.evaluate(async () => {
+      const c = document.createElement("canvas"); c.width = 3000; c.height = 2000; const g = c.getContext("2d")!;
+      g.fillStyle = "#fff"; g.fillRect(0, 0, 3000, 2000); g.strokeStyle = "#1e3a8a"; g.lineWidth = 80; g.beginPath(); g.arc(1500, 1000, 700, 0, 7); g.stroke();
+      const blob: Blob = await new Promise((r) => c.toBlob((b) => r(b!), "image/jpeg", 0.9));
+      const dt = new DataTransfer(); dt.items.add(new File([blob], "IMG_20261031_121500.jpg", { type: "image/jpeg" }));
+      const input = document.querySelector('input[type=file][aria-label="Upload logo"]') as HTMLInputElement;
+      input.files = dt.files; input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    await expect(page.getByAltText("Logo preview")).toBeVisible();
+    await page.getByRole("button", { name: "Save stamp" }).click();
+    await expect.poll(() => app.called("/api/clinic/branding").length).toBe(1);
+    const url: string = app.called("/api/clinic/branding")[0].body.stampDataUrl;
+    expect(url).toMatch(/^data:image\/png;base64,/);
+    const px = await page.evaluate(async (u) => {
+      const img = new Image(); img.src = u; await img.decode();
+      const c = document.createElement("canvas"); c.width = img.width; c.height = img.height; const g = c.getContext("2d")!; g.drawImage(img, 0, 0);
+      return { w: img.width, h: img.height, corner: g.getImageData(2, 2, 1, 1).data[3], ring: g.getImageData(Math.round(img.width / 2 + (700 / 3000) * img.width), Math.round(img.height / 2), 1, 1).data[3] };
+    }, url);
+    expect(Math.max(px.w, px.h)).toBeLessThanOrEqual(512);
+    expect(px.corner).toBe(0);            // the white paper is see-through
+    expect(px.ring).toBeGreaterThan(150); // the ink stays
+  });
+});
+
+test.describe("Stamp validation", () => {
+  test("negative: a file that is not an image shows a clear message and nothing is saved", async ({ page, app }) => {
+    await page.goto("/setup");
+    await page.getByText("Add your clinic stamp").click();
+    await page.getByLabel("Upload logo").setInputFiles({ name: "notes.pdf", mimeType: "application/pdf", buffer: Buffer.from("x") });
+    await expect(page.locator("[role=alert]:not(#__next-route-announcer__)")).toContainText("Choose a photo or image");
+    await expect(page.getByRole("button", { name: "Save stamp" })).toBeDisabled();
+    expect(app.called("/api/clinic/branding")).toHaveLength(0);
+  });
+
+  test("negative: an image the browser cannot open shows how to fix it", async ({ page }) => {
+    await page.goto("/setup");
+    await page.getByText("Add your clinic stamp").click();
+    await page.getByLabel("Upload logo").setInputFiles({ name: "IMG_0001.heic", mimeType: "image/heic", buffer: Buffer.from("not really an image") });
+    await expect(page.locator("[role=alert]:not(#__next-route-announcer__)")).toContainText("Most compatible");
+  });
+});

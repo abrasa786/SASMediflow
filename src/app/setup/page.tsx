@@ -149,7 +149,7 @@ export default function SetupPage() {
       case "stamp": return (
         <div className="space-y-3">
           <p className="text-sm text-slate-600">Upload your clinic seal or stamp. It is printed at the <b>bottom right</b> of every invoice. A PNG with a transparent background looks best. You can skip this and add it later in Settings.</p>
-          <LogoPicker label="Clinic stamp" icon="🔏" uploadText="Upload stamp" hint="PNG, JPG or WebP, under 1 MB." value={stamp} onChange={setStamp} />
+          <LogoPicker transparentBg label="Clinic stamp" icon="🔏" uploadText="Upload stamp" hint="PNG, JPG or WebP, under 1 MB." value={stamp} onChange={setStamp} />
           {err}
           <button disabled={busy || !stamp} onClick={saveStamp} className={primary + " w-full sm:w-auto"}>{busy ? "Saving…" : "Save stamp"}</button>
         </div>);

@@ -39,7 +39,7 @@ export default function BrandingCard({ clinicId }: { clinicId: string }) {
       <div className="grid md:grid-cols-2 gap-6">
         <div className="space-y-4">
           <LogoPicker value={logo} onChange={(v) => { setLogo(v); setLogoChanged(true); }} />
-          <LogoPicker label="Clinic stamp (printed on invoices)" icon="🔏" uploadText="Upload stamp" hint="Shown at the bottom right of every invoice. A PNG with a transparent background looks best." value={stamp} onChange={(v) => { setStamp(v); setStampChanged(true); }} />
+          <LogoPicker transparentBg label="Clinic stamp (printed on invoices)" icon="🔏" uploadText="Upload stamp" hint="Shown at the bottom right of every invoice. A PNG with a transparent background looks best." value={stamp} onChange={(v) => { setStamp(v); setStampChanged(true); }} />
           <div><label className={lbl}>AI assistant name</label><input className={inp} maxLength={24} placeholder="e.g. Mira" value={f.aiName} onChange={(e) => setF({ ...f, aiName: e.target.value })} /><p className="text-xs text-slate-400 mt-1">Shown on the assistant, the builder and your public page.</p></div>
           <div><label className={lbl}>Tagline</label><input className={inp} maxLength={120} value={f.tagline} onChange={(e) => setF({ ...f, tagline: e.target.value })} /></div>
           <div className="grid grid-cols-[1fr_auto] gap-3 items-end">
