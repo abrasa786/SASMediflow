@@ -18,11 +18,11 @@ async function loadLogo(pdf: PDFDocument, url?: string | null): Promise<PDFImage
   if (!url) return null;
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
-    if (!res.ok) return null;
+    if (!res.ok) { console.error("invoice image fetch failed:", res.status, url.slice(0, 80)); return null; }
     const buf = new Uint8Array(await res.arrayBuffer());
     if (buf[0] === 0x89 && buf[1] === 0x50) return await pdf.embedPng(buf);
     if (buf[0] === 0xff && buf[1] === 0xd8) return await pdf.embedJpg(buf);
-  } catch { /* the invoice is fine without a logo */ }
+  } catch (e: any) { console.error("invoice image could not be loaded:", url.slice(0, 80), e?.message); /* the invoice is fine without it */ }
   return null;
 }
 
