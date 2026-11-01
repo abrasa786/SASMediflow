@@ -7,6 +7,7 @@ import AppShell from "@/components/layout/AppShell";
 import { getActiveClinicId } from "@/lib/auth";
 import { getMyRoleInClinic } from "@/lib/clinic";
 import type { ClinicRole } from "@/types";
+import { Ico } from "@/components/Icon";
 
 interface Member { key: string; userId: string | null; doctorId: string | null; name: string; role: string; email: string; specialty: string; active: boolean; isMe: boolean; hasLogin: boolean; phone: string; fee: number | null; experience: number | null; shift: { start: string; end: string; breakStart: string; breakEnd: string; days: number[] } | null }
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -101,8 +102,8 @@ export default function StaffPage() {
         ...(isDoc ? { experienceYears: exp, phone, fee, shiftStart, shiftEnd, breakStart, breakEnd, days } : {}),
       } });
       setInviteMsg(isDoc
-        ? `✅ ${inviteName} added${data.hoursSaved ? " with their weekly hours" : ""}.${inviteEmail ? (data.invited ? ` Login created for ${inviteEmail}. Give them the password you set.` : " Linked to the existing login.") : " No login created (they can still be booked)."}`
-        : `✅ ${data.invited ? "Login created for" : "Added"} ${inviteEmail}${data.invited ? ". Give them the password you set." : ""}`);
+        ? `${inviteName} added${data.hoursSaved ? " with their weekly hours" : ""}.${inviteEmail ? (data.invited ? ` Login created for ${inviteEmail}. Give them the password you set.` : " Linked to the existing login.") : " No login created (they can still be booked)."}`
+        : `${data.invited ? "Login created for" : "Added"} ${inviteEmail}${data.invited ? ". Give them the password you set." : ""}`);
       setInvitePw(""); setInviteEmail(""); setInviteName(""); setInviteSpecialty(""); setExp(""); setPhone(""); setFee(""); setBreakStart(""); setBreakEnd("");
       await reload(clinicId);
     } catch (e: any) {
@@ -133,7 +134,7 @@ export default function StaffPage() {
           ) : listErr ? (
             <div className="py-12 text-center text-red-600 text-sm px-4">{listErr}</div>
           ) : staff.length === 0 ? (
-            <div className="py-16 text-center text-slate-400 text-sm"><div className="text-4xl mb-3">👥</div>No staff members yet</div>
+            <div className="py-16 text-center text-slate-400 text-sm"><div className="text-4xl mb-3"><Ico e="👥" /></div>No staff members yet</div>
           ) : (
             <div className="divide-y divide-slate-50">
               {staff.map(member => (

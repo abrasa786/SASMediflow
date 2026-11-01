@@ -9,6 +9,7 @@ import { authFetch } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { getInvoices, createInvoice, searchClinicPatients } from "@/lib/clinic";
 import type { Invoice, ClinicPatient, InvoiceStatus, PaymentMethod } from "@/types";
+import { Ico } from "@/components/Icon";
 
 const STATUS_COLORS: Record<string, string> = {
   draft:          "bg-gray-100 text-gray-600",
@@ -272,7 +273,7 @@ export default function BillingPage() {
           {loading ? (
             <div className="py-16 text-center text-slate-400 text-sm">Loading…</div>
           ) : filtered.length === 0 ? (
-            <div className="py-16 text-center text-slate-400 text-sm"><div className="text-4xl mb-3">🧾</div>No invoices</div>
+            <div className="py-16 text-center text-slate-400 text-sm"><div className="text-4xl mb-3"><Ico e="🧾" /></div>No invoices</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -332,9 +333,9 @@ export default function BillingPage() {
               <div className="space-y-4">
                 <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
                   <p className="font-semibold text-emerald-800">Invoice {created.number} ready · ₹{created.total.toLocaleString("en-IN")}</p>
-                  {created.whatsapp?.status === "sent" && <p className="text-xs text-emerald-700 mt-1">✅ Sent to the patient on WhatsApp.</p>}
+                  {created.whatsapp?.status === "sent" && <p className="text-xs text-emerald-700 mt-1"><Ico e="✅" /> Sent to the patient on WhatsApp.</p>}
                   {created.whatsapp && created.whatsapp.status !== "sent" && (
-                    <p className="text-xs text-amber-700 mt-1">⚠️ {created.whatsapp.error ?? "Could not send on WhatsApp."} {created.whatsapp.link && <a href={created.whatsapp.link} target="_blank" rel="noreferrer" className="underline font-medium">Send it from my WhatsApp</a>}</p>
+                    <p className="text-xs text-amber-700 mt-1"><Ico e="⚠" /> {created.whatsapp.error ?? "Could not send on WhatsApp."} {created.whatsapp.link && <a href={created.whatsapp.link} target="_blank" rel="noreferrer" className="underline font-medium">Send it from my WhatsApp</a>}</p>
                   )}
                 </div>
                 {err && <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{err}</p>}

@@ -30,7 +30,7 @@ test.describe("Stamp status in Settings", () => {
   test("positive: a saved stamp is shown as saved; a newly chosen one says it is not saved yet", async ({ page, app }) => {
     app.api("GET /api/clinic/branding", () => ({ json: { branding: { slug: "demo", logo_url: null, stamp_url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", primary_color: "#2563eb", tagline: "", ai_name: "", website: "", custom_domain: null, domain_verified: false, domain_token: null } } }));
     await page.goto("/settings");
-    await expect(page.getByText("✓ Saved. This stamp prints")).toBeVisible();
+    await expect(page.getByText("Saved. This stamp prints")).toBeVisible();
     const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
     await page.getByLabel("Upload logo").nth(1).setInputFiles({ name: "stamp.png", mimeType: "image/png", buffer: png });
     await expect(page.getByText("Not saved yet. Press Save branding")).toBeVisible();

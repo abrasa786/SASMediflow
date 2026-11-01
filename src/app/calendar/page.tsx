@@ -8,6 +8,7 @@ import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
 import { getAppointments, getClinic, todayIso } from "@/lib/clinic";
 import type { Appointment, Clinic } from "@/types";
+import { Ico } from "@/components/Icon";
 
 interface Doc { id: string; name: string; specialty?: string; speciality?: string; is_active?: boolean }
 interface Sched { doctor_id: string; weekday: number; start_time: string; end_time: string; break_start: string | null; break_end: string | null; is_active: boolean }
@@ -172,7 +173,7 @@ export default function CalendarPage() {
                     <p className="text-sm text-slate-600">{hhmm(toMin(sel.start_time))}{sel.end_time ? ` – ${hhmm(toMin(sel.end_time))}` : ""} · {sel.doctor_name}</p>
                     {sel.symptoms && <p className="text-sm text-slate-700 mt-2">{sel.symptoms}</p>}
                     <p className="text-xs mt-2"><span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{sel.status}</span></p>
-                    {how(sel) && <p className="text-xs text-slate-600 mt-3 bg-sky-50 rounded-lg px-2.5 py-2">🧭 {how(sel)}</p>}
+                    {how(sel) && <p className="text-xs text-slate-600 mt-3 bg-sky-50 rounded-lg px-2.5 py-2"><Ico e="🧭" /> {how(sel)}</p>}
                     <Link href={`/appointments/${sel.id}`} className="mt-3 inline-block px-4 py-2 rounded-xl bg-sky-600 text-white text-sm font-semibold">Open full details →</Link>
                     <Link href="/appointments" className="mt-3 ml-3 inline-block text-sm text-sky-700 hover:underline">Move, cancel or message</Link>
                   </>

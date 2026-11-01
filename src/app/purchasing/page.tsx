@@ -12,6 +12,7 @@ import { getMyRoleInClinic } from "@/lib/clinic";
 import type { ClinicRole } from "@/types";
 import { inr, todayIso, dayLabel as day } from "@/lib/format";
 import { inputCls as inp, labelCls as lbl } from "@/components/ui";
+import { Ico } from "@/components/Icon";
 
 const supabase = sb as any;
 const STATUS: Record<string, string> = { ordered: "bg-sky-100 text-sky-700", partially_received: "bg-amber-100 text-amber-800", received: "bg-emerald-100 text-emerald-700", cancelled: "bg-slate-100 text-slate-500", draft: "bg-slate-100 text-slate-600", unpaid: "bg-red-100 text-red-700", partial: "bg-amber-100 text-amber-800", paid: "bg-emerald-100 text-emerald-700" };
@@ -150,7 +151,7 @@ export default function PurchasingPage() {
 }
 
 function Empty({ icon, title, text, action, onAction }: { icon: string; title: string; text: string; action?: string; onAction?: () => void }) {
-  return <div className="rounded-2xl border border-dashed border-slate-300 p-10 text-center"><p className="text-3xl mb-2">{icon}</p><p className="font-semibold text-slate-800">{title}</p><p className="text-sm text-slate-500 mt-1 max-w-md mx-auto">{text}</p>{action && <button onClick={onAction} className="mt-4 px-4 py-2.5 rounded-xl bg-sky-600 text-white text-sm font-semibold">{action}</button>}</div>;
+  return <div className="rounded-2xl border border-dashed border-slate-300 p-10 text-center"><p className="mb-2 flex justify-center text-slate-400"><Ico e={icon} size={32} /></p><p className="font-semibold text-slate-800">{title}</p><p className="text-sm text-slate-500 mt-1 max-w-md mx-auto">{text}</p>{action && <button onClick={onAction} className="mt-4 px-4 py-2.5 rounded-xl bg-sky-600 text-white text-sm font-semibold">{action}</button>}</div>;
 }
 
 interface Line { stock_item_id: string; name: string; unit: string; qty: string; unit_price: string; gst_percent: string }

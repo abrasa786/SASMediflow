@@ -10,6 +10,7 @@ import { authFetch } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/lib/toast";
 import InvoiceTreatments from "@/components/InvoiceTreatments";
+import { Ico } from "@/components/Icon";
 
 interface Line { name: string; qty: number; unit_price: number; amount: number }
 const inp = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:bg-slate-50";
@@ -103,7 +104,7 @@ export default function InvoiceRecord({ params }: { params: { id: string } }) {
         authFetch<{ status: string; error?: string; link?: string }>("/api/invoices/send", { body: { clinicId, invoiceId: inv.id } }),
         new Promise<never>((_, no) => setTimeout(() => no(new Error("Sending is taking too long. Check your internet and press Send again.")), 35000)),
       ]);
-      if (r.status === "sent") { setMsg("✅ Sent to the patient on WhatsApp as a PDF."); toast("Invoice sent on WhatsApp."); }
+      if (r.status === "sent") { setMsg("Sent to the patient on WhatsApp as a PDF."); toast("Invoice sent on WhatsApp."); }
       else setWaFail({ error: r.error ?? "Could not send automatically.", link: r.link });   // a real link the person taps: phones block pop-ups opened after a wait
     } catch (e: any) { setErr(e.message); toast(e.message, false); }
     setBusy("");
@@ -148,7 +149,7 @@ export default function InvoiceRecord({ params }: { params: { id: string } }) {
                 <input aria-label="Item" value={it.name} placeholder="Item or service" onFocus={() => setActive(i)} onBlur={() => setTimeout(() => setActive((a) => (a === i ? null : a)), 150)} onChange={(e) => { edit(i, "name", e.target.value); setActive(i); }} className={`${inp} col-span-12 sm:col-span-6`} />
                 <input aria-label="Quantity" type="number" min={1} value={it.qty} onChange={(e) => edit(i, "qty", Number(e.target.value))} className={`${inp} col-span-3 sm:col-span-2`} />
                 <input aria-label="Price" type="number" value={it.unit_price} onChange={(e) => edit(i, "unit_price", Number(e.target.value))} className={`${inp} col-span-5 sm:col-span-3`} />
-                <button type="button" aria-label="Remove item" onClick={() => setItems((q) => q.filter((_, k) => k !== i))} disabled={items.length === 1} className="col-span-1 text-slate-400 hover:text-red-600 disabled:opacity-30">✕</button>
+                <button type="button" aria-label="Remove item" onClick={() => setItems((q) => q.filter((_, k) => k !== i))} disabled={items.length === 1} className="col-span-1 text-slate-400 hover:text-red-600 disabled:opacity-30"><Ico e="✕" /></button>
                 {active === i && sugg(it.name).length > 0 && (
                   <div className="absolute z-10 left-0 top-11 w-full sm:w-1/2 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden">
                     {sugg(it.name).map((c) => <button key={c.kind + c.name} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { setItems((q) => q.map((x, k) => (k === i ? { ...x, name: c.name, unit_price: c.price, amount: Number(x.qty) * c.price } : x))); setActive(null); }} className="w-full flex justify-between px-3 py-1.5 text-sm text-left hover:bg-sky-50"><span>{c.name} <span className="text-slate-400 text-xs">{c.kind}</span></span><span>{inr(c.price)}</span></button>)}

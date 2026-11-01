@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { authFetch } from "@/lib/api";
 import { toast } from "@/lib/toast";
 import { FIELDS, MAX_IMPORT_ROWS, SAMPLE_CSV, guessMapping, parseCsv, type Mapping } from "@/lib/import/patients";
+import { Ico } from "@/components/Icon";
 
 const sel = "w-full px-3 py-2.5 rounded-xl border border-slate-300 text-base sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky-500";
 const btn = "px-4 py-3 rounded-xl bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white font-semibold";
@@ -103,13 +104,13 @@ export default function PatientImport({ clinicId, onDone }: { clinicId: string; 
 
       {result && (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 space-y-2" role="status">
-          <p className="font-semibold text-emerald-900">✓ {result.added} patients imported</p>
+          <p className="font-semibold text-emerald-900"><Ico e="✓" /> {result.added} patients imported</p>
           <p className="text-sm text-emerald-900">{result.duplicates} skipped as duplicates · {result.invalid} had problems{result.failed ? ` · ${result.failed} could not be saved` : ""}</p>
           <button type="button" disabled={busy} onClick={undo} className={btn2}>{busy ? "Undoing…" : "Undo this import"}</button>
         </div>
       )}
 
-      {err && <div role="alert" className="flex gap-2 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm px-3.5 py-3"><span aria-hidden>⚠️</span><span>{err}</span></div>}
+      {err && <div role="alert" className="flex gap-2 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm px-3.5 py-3"><span aria-hidden><Ico e="⚠" /></span><span>{err}</span></div>}
     </div>
   );
 }

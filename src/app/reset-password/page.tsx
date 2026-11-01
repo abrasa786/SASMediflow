@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { setNewPassword } from "@/lib/auth";
+import { Ico } from "@/components/Icon";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -40,7 +41,7 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
         <h1 className="text-2xl font-bold text-slate-900">Choose a new password</h1>
         {done ? (
-          <p className="mt-4 text-emerald-700">✓ Password updated. Taking you to sign in…</p>
+          <p className="mt-4 text-emerald-700"><Ico e="✓" /> Password updated. Taking you to sign in…</p>
         ) : !ready ? (
           <p className="mt-4 text-sm text-slate-600">Open this page from the link in your reset email. If it has expired, <a className="text-sky-700 underline" href="/login">request a new one</a>.</p>
         ) : (

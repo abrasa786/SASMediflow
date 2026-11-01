@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Ico } from "@/components/Icon";
 
 export const metadata = {
   title: "Mediflow Clinic — Smart Clinic Management",
@@ -57,7 +58,7 @@ export default function LandingPage() {
         </div>
         <div className="max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6 border border-blue-100">
-            🦷 Live dentist demo — try it free, no signup needed
+            <Ico e="🦷" /> Live dentist demo — try it free, no signup needed
           </div>
           <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-6 leading-[1.1]" style={{ fontFamily: "Sora, Inter, system-ui, sans-serif" }}>
             Run your clinic<br />
@@ -75,7 +76,7 @@ export default function LandingPage() {
             </Link>
             <Link href="/login"
               className="inline-flex items-center justify-center bg-gray-50 border border-gray-200 text-gray-700 font-semibold px-8 py-4 rounded-2xl text-lg hover:bg-gray-100 transition-colors">
-              🦷 Try Dentist Demo
+              <Ico e="🦷" /> Try Dentist Demo
             </Link>
             <a href="/demo"
               className="inline-flex items-center justify-center gap-2 bg-white border border-blue-200 text-blue-700 font-semibold px-8 py-4 rounded-2xl text-lg hover:bg-blue-50 transition-colors">
@@ -108,7 +109,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {FEATURES.map((f) => (
               <div key={f.title} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
-                <div className="text-3xl mb-3">{f.icon}</div>
+                <div className="mb-3 text-sky-600"><Ico e={f.icon} size={28} /></div>
                 <h3 className="font-bold text-gray-900 mb-2">{f.title}</h3>
                 <p className="text-gray-500 text-sm leading-relaxed">{f.desc}</p>
               </div>
@@ -158,7 +159,7 @@ export default function LandingPage() {
                 <ul className="space-y-3 mb-8">
                   {p.features.map((f) => (
                     <li key={f} className="flex items-center gap-2 text-sm text-gray-700">
-                      <span className="text-green-500 font-bold">✓</span> {f}
+                      <span className="text-green-500 font-bold"><Ico e="✓" /></span> {f}
                     </li>
                   ))}
                 </ul>
@@ -174,7 +175,7 @@ export default function LandingPage() {
       {/* DEMO CTA */}
       <section id="demo" className="py-24 px-6 bg-gradient-to-br from-blue-50 to-violet-50">
         <div className="max-w-2xl mx-auto text-center">
-          <div className="text-5xl mb-6">🦷</div>
+          <div className="text-5xl mb-6"><Ico e="🦷" /></div>
           <h2 className="text-3xl md:text-4xl font-extrabold mb-4" style={{ fontFamily: "Sora, Inter, sans-serif" }}>Try Bright Smile Dental</h2>
           <p className="text-gray-500 text-lg mb-8">
             A pre-loaded dentist clinic with real patients, appointments, billing, stock, and staff. Try every feature — no setup needed.
@@ -214,7 +215,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="border-t border-gray-800 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs">
-            <p>© 2026 Mediflow. Made with ❤️ for Indian clinics.</p>
+            <p>© 2026 Mediflow. Made with <Ico e="❤" /> for Indian clinics.</p>
             <p className="text-gray-600">Backed by Supabase · Gemini AI · Meta WhatsApp</p>
           </div>
         </div>

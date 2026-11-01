@@ -12,6 +12,7 @@ import { getSession, getActiveClinicId } from "@/lib/auth";
 import { getClinic, getMyRoleInClinic } from "@/lib/clinic";
 import { applyBrand, applyIdentity } from "@/lib/theme";
 import type { Clinic, ClinicRole } from "@/types";
+import { Ico } from "@/components/Icon";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -90,10 +91,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex-1 min-w-0">
         {/* Top bar: menu (left), clinic name, main tabs, search */}
         <header className="sticky top-0 z-30 flex items-center gap-2 px-3 h-14 bg-slate-900 text-white">
-          <button onClick={() => setMenu(true)} aria-label="Open menu" aria-controls="app-menu" aria-expanded={menu} className="w-10 h-10 -ml-1 flex items-center justify-center rounded-lg hover:bg-slate-800 text-2xl shrink-0">☰</button>
+          <button onClick={() => setMenu(true)} aria-label="Open menu" aria-controls="app-menu" aria-expanded={menu} className="w-10 h-10 -ml-1 flex items-center justify-center rounded-lg hover:bg-slate-800 text-2xl shrink-0"><Ico e="☰" /></button>
           <p className="hidden md:block font-semibold text-sm truncate max-w-[10rem] shrink-0">{clinic?.brand_name ?? clinic?.name ?? "Clinic"}</p>
           <TopTabs />
-          <button onClick={() => window.dispatchEvent(new Event("mf:search"))} aria-label="Search" className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-slate-800 text-lg shrink-0">🔍</button>
+          <button onClick={() => window.dispatchEvent(new Event("mf:search"))} aria-label="Search" className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-slate-800 text-lg shrink-0"><Ico e="🔍" /></button>
         </header>
         <main className="min-h-screen overflow-x-hidden">
           {children}

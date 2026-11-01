@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { signInWithEmail, setActiveClinicId, getSession, sendPasswordReset } from "@/lib/auth";
 import { getMyClinics } from "@/lib/clinic";
 import type { Clinic } from "@/types";
+import { Ico } from "@/components/Icon";
 
 const POINTS = [
   { icon: "📅", t: "Appointments that never clash", d: "Doctor schedules, breaks and leave are checked for every slot." },
@@ -105,7 +106,7 @@ export default function LoginPage() {
           <ul className="mt-8 space-y-5">
             {POINTS.map((p) => (
               <li key={p.t} className="flex gap-3.5">
-                <span className="text-2xl leading-none mt-0.5">{p.icon}</span>
+                <span className="mt-0.5"><Ico e={p.icon} size={22} /></span>
                 <span><b className="block">{p.t}</b><span className="text-sky-100 text-sm">{p.d}</span></span>
               </li>
             ))}
@@ -130,7 +131,7 @@ export default function LoginPage() {
               <h1 className="text-2xl font-bold text-slate-900" style={{ fontFamily: "Sora, Inter, sans-serif" }}>Sign in to your clinic</h1>
               <p className="text-slate-500 mt-1.5 text-sm">Admins, doctors, nurses and receptionists all sign in here. What you see depends on your role.</p>
 
-              {justConfirmed && <div className="mt-5 text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3.5 py-2.5">✓ Email confirmed. You can sign in now.</div>}
+              {justConfirmed && <div className="mt-5 text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3.5 py-2.5"><Ico e="✓" /> Email confirmed. You can sign in now.</div>}
 
               <form onSubmit={handleLogin} className="mt-6 space-y-4" noValidate={false}>
                 <div>

@@ -7,6 +7,7 @@ import { getActiveClinicId, getSession } from "@/lib/auth";
 import { getClinic } from "@/lib/clinic";
 import AiHistoryPanel from "@/components/AiHistoryPanel";
 import type { Plan, Schema } from "@/lib/builder/types";
+import { Ico } from "@/components/Icon";
 
 interface Msg {
   id: number;
@@ -165,7 +166,7 @@ export default function BuilderPage() {
                             <button disabled={busy} onClick={() => setMsgs((x) => x.map((y) => (y.id === m.id ? { ...y, state: "discarded" } : y)))} className="px-3.5 py-2 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600">Discard</button>
                           </div>
                         )}
-                        {m.state === "applied" && <p className="mt-3 text-xs font-semibold text-emerald-600">✓ Applied</p>}
+                        {m.state === "applied" && <p className="mt-3 text-xs font-semibold text-emerald-600"><Ico e="✓" /> Applied</p>}
                         {m.state === "discarded" && <p className="mt-3 text-xs text-gray-400">Discarded. Nothing was changed.</p>}
                       </div>
                     )}
@@ -205,7 +206,7 @@ export default function BuilderPage() {
                 <>
                   {schema.apps.map((a) => (
                     <div key={a.api_name} className="mb-3 rounded-xl bg-sky-50 p-3">
-                      <p className="font-semibold text-gray-800">{a.icon} {a.label}</p>
+                      <p className="font-semibold text-gray-800"><Ico e={a.icon ?? ""} fallback="puzzle" /> {a.label}</p>
                       <div className="mt-1.5 flex flex-wrap gap-1.5">
                         {a.tabs.map((t) => <a key={t.label} href={t.object ? `/builder/data?table=${t.object}` : `/apps/${a.api_name}`} className="text-xs px-2 py-1 rounded-lg bg-white border border-sky-100 text-sky-800">{t.label}</a>)}
                         {!a.tabs.length && <span className="text-xs text-gray-500">No tabs yet</span>}
@@ -215,7 +216,7 @@ export default function BuilderPage() {
                   ))}
                   {schema.objects.map((o) => (
                     <details key={o.api_name} className="mb-2 rounded-xl border border-gray-100 p-2.5">
-                      <summary className="cursor-pointer font-medium text-gray-800">{o.icon ?? "📄"} {o.label} <span className="text-xs text-gray-400">({o.fields.length} fields)</span></summary>
+                      <summary className="cursor-pointer font-medium text-gray-800"><Ico e={o.icon ?? "📄"} fallback="file" /> {o.label} <span className="text-xs text-gray-400">({o.fields.length} fields)</span></summary>
                       <ul className="mt-2 space-y-1 text-xs text-gray-600">
                         {o.fields.map((f) => (
                           <li key={f.api_name} className="flex justify-between gap-2"><span>{f.label}{f.required ? " *" : ""}</span><span className="text-gray-400">{f.data_type}</span></li>

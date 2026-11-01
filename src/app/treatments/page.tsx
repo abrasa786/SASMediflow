@@ -13,6 +13,7 @@ import { supabase as sb } from "@/lib/supabase";
 import { getClinicDoctors, getMyRoleInClinic, searchClinicPatients } from "@/lib/clinic";
 import { setSetupFlag } from "@/lib/setup";
 import type { ClinicPatient, ClinicRole, Doctor } from "@/types";
+import { Ico } from "@/components/Icon";
 
 const supabase = sb as any;
 const inr = (n: number) => "₹" + Math.round(Number(n) || 0).toLocaleString("en-IN");
@@ -98,7 +99,7 @@ export default function TreatmentsPage() {
     try {
       const r = await authFetch("/api/treatments/complete", { body: { clinicId, sittingId: s.id } });
       const lines = [`Sitting ${s.seq} done. Invoice raised for ${inr(r.amount)}.`];
-      (r.stock ?? []).forEach((x: any) => lines.push(x.missing ? `Stock: “${x.name}” is not on your shelf list, so nothing was deducted.` : `Stock: ${x.name} −${x.used} (left ${x.left})${x.low ? " ⚠ below minimum" : ""}${x.used < x.wanted ? ` (needed ${x.wanted})` : ""}`));
+      (r.stock ?? []).forEach((x: any) => lines.push(x.missing ? `Stock: “${x.name}” is not on your shelf list, so nothing was deducted.` : `Stock: ${x.name} −${x.used} (left ${x.left})${x.low ? " (below minimum)" : ""}${x.used < x.wanted ? ` (needed ${x.wanted})` : ""}`));
       lines.push(r.plan_done ? "That was the last sitting. The plan is complete." : `Next: sitting ${r.next.seq} (${r.next.label}) on ${nice(r.next.date)}${r.next.time ? " at " + r.next.time : ""}.`);
       setNotice({ tone: (r.stock ?? []).some((x: any) => x.low || x.missing) ? "warn" : "ok", lines });
       await load(clinicId);
@@ -137,7 +138,7 @@ export default function TreatmentsPage() {
         {loading ? <p className="text-slate-400 text-sm">Loading…</p> : tab === "plans" ? (
           plans.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-300 p-10 text-center">
-              <p className="text-3xl mb-2">🦷</p>
+              <p className="text-3xl mb-2"><Ico e="🦷" /></p>
               <p className="font-semibold text-slate-800">No treatment plans yet</p>
               <p className="text-sm text-slate-500 mt-1 max-w-md mx-auto">Create a plan for a procedure that needs several visits, like a root canal. All the sittings are booked at once and billed one by one.</p>
               {canCreate && <button onClick={() => setNewOpen(true)} className="mt-4 px-4 py-2.5 rounded-xl bg-sky-600 text-white text-sm font-semibold">Create the first plan</button>}
@@ -442,7 +443,7 @@ function TemplateEditor({ t, clinicId, onClose, onSaved }: { t: Template; clinic
             <div><label className={labelCls}>Sitting {i + 1}</label><input className={inputCls} value={r.label} onChange={(e) => set(i, "label", e.target.value)} /></div>
             <div><label className={labelCls}>Days after</label><input className={inputCls} inputMode="numeric" value={r.gap_days} disabled={i === 0} onChange={(e) => set(i, "gap_days", e.target.value)} /></div>
             <div><label className={labelCls}>Share %</label><input className={inputCls} inputMode="decimal" value={r.share} onChange={(e) => set(i, "share", e.target.value)} /></div>
-            <button type="button" onClick={() => remove(i)} disabled={rows.length <= 1} aria-label={`Remove sitting ${i + 1}`} className="h-[42px] text-slate-400 hover:text-red-600 disabled:opacity-30">✕</button>
+            <button type="button" onClick={() => remove(i)} disabled={rows.length <= 1} aria-label={`Remove sitting ${i + 1}`} className="h-[42px] text-slate-400 hover:text-red-600 disabled:opacity-30"><Ico e="✕" /></button>
           </div>
         ))}
         <div className="flex items-center justify-between">

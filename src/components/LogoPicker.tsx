@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { Ico } from "@/components/Icon";
 
 const OK_TYPE = /^image\/(png|jpe?g|webp|gif|bmp|heic|heif|avif)$/i;
 const OK_EXT = /\.(png|jpe?g|webp|gif|bmp|heic|heif|avif)$/i;
@@ -52,7 +53,7 @@ export default function LogoPicker({ value, onChange, label = "Clinic logo", hin
       <div className="flex items-center gap-3">
         <div className="w-16 h-16 rounded-2xl border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0" style={transparentBg ? { backgroundImage: "repeating-conic-gradient(#e5e7eb 0% 25%, #fff 0% 50%)", backgroundSize: "12px 12px" } : undefined}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          {value ? <img src={value} alt="Logo preview" className="w-full h-full object-contain" /> : <span className="text-2xl text-gray-300">{icon}</span>}
+          {value ? <img src={value} alt="Logo preview" className="w-full h-full object-contain" /> : <span className="text-gray-300"><Ico e={icon} size={28} /></span>}
         </div>
         <div className="text-sm">
           {/* image/* shows every photo on a phone, including ones taken a moment ago with the camera */}
@@ -67,7 +68,7 @@ export default function LogoPicker({ value, onChange, label = "Clinic logo", hin
               Make the white paper around the stamp see-through
             </label>
           )}
-          {err && <div className="mt-2 flex gap-2 rounded-lg bg-red-50 border border-red-200 text-red-800 text-xs px-3 py-2" role="alert"><span aria-hidden>⚠️</span><span>{err}</span></div>}
+          {err && <div className="mt-2 flex gap-2 rounded-lg bg-red-50 border border-red-200 text-red-800 text-xs px-3 py-2" role="alert"><span aria-hidden><Ico e="⚠" /></span><span>{err}</span></div>}
         </div>
       </div>
     </div>

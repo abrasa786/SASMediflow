@@ -8,6 +8,7 @@ import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
 import { getDashboardStats, getAppointments, todayIso } from "@/lib/clinic";
 import type { DashboardStats, Appointment } from "@/types";
+import { Ico } from "@/components/Icon";
 
 const STATUS_COLORS = {
   confirmed: "bg-sky-100 text-sky-700",
@@ -73,7 +74,7 @@ export default function DashboardPage() {
                 { label: "Low Stock Items", value: stats?.lowStockCount ?? 0, icon: "⚠️", color: "from-amber-500 to-amber-600" },
               ].map((s) => (
                 <div key={s.label} className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
-                  <div className="text-2xl mb-2">{s.icon}</div>
+                  <div className="mb-2"><Ico e={s.icon} size={24} /></div>
                   <div className="text-2xl font-bold text-slate-900">{s.value}</div>
                   <div className="text-xs text-slate-500 mt-1">{s.label}</div>
                 </div>
@@ -134,7 +135,7 @@ export default function DashboardPage() {
             {/* Low stock alert */}
             {(stats?.lowStockCount ?? 0) > 0 && (
               <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-6 flex items-center gap-3">
-                <span className="text-amber-600">⚠️</span>
+                <span className="text-amber-600"><Ico e="⚠" /></span>
                 <p className="text-amber-800 text-sm font-medium">
                   {stats?.lowStockCount} item{stats!.lowStockCount > 1 ? "s are" : " is"} running low.{" "}
                   <a href="/stock" className="underline">Check stock →</a>

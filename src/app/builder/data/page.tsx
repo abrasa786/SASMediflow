@@ -9,6 +9,7 @@ import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
 import { getMyRoleInClinic } from "@/lib/clinic";
 import { inputCls as inp } from "@/components/ui";
+import { Ico } from "@/components/Icon";
 
 interface Field { api: string; label: string; type: string; required?: boolean; picklist_values?: string[]; lookup_object?: string }
 interface Table { api_name: string; label: string; plural_label: string; icon?: string; access: { read: boolean; create: boolean; edit: boolean; delete: boolean; read_scope: string; edit_scope: string }; fields: Field[] }
@@ -87,13 +88,13 @@ export default function DataPage() {
         {err && <p className="mb-4 text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2" role="alert">{err}</p>}
         {tables.length === 0 && !loading ? (
           <div className="rounded-2xl border border-dashed border-slate-300 p-10 text-center">
-            <p className="text-3xl mb-2">🗂️</p><p className="font-semibold text-slate-800">No tables to show yet</p>
+            <p className="text-3xl mb-2"><Ico e="🗂" /></p><p className="font-semibold text-slate-800">No tables to show yet</p>
             <p className="text-sm text-slate-500 mt-1 max-w-md mx-auto">{isAdmin ? "Ask the AI Builder to create a table, for example “Create a Laboratory app with Lab Test”. Then give staff access under Access control." : "Your admin has not given you access to any custom tables yet."}</p>
             {isAdmin && <a href="/builder" className="inline-block mt-4 px-4 py-2.5 rounded-xl bg-sky-600 text-white text-sm font-semibold">Open the AI Builder</a>}
           </div>
         ) : (<>
           <div className="flex flex-wrap items-center gap-3 mb-4">
-            <div className="flex gap-1.5 flex-wrap">{tables.map((t) => <button key={t.api_name} onClick={() => { setCur(t.api_name); setQ(""); }} className={`px-3 py-1.5 rounded-lg text-sm font-medium ${cur === t.api_name ? "bg-slate-900 text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"}`}>{t.icon ?? "📄"} {t.plural_label}</button>)}</div>
+            <div className="flex gap-1.5 flex-wrap">{tables.map((t) => <button key={t.api_name} onClick={() => { setCur(t.api_name); setQ(""); }} className={`px-3 py-1.5 rounded-lg text-sm font-medium ${cur === t.api_name ? "bg-slate-900 text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"}`}><Ico e={t.icon ?? "📄"} fallback="file" /> {t.plural_label}</button>)}</div>
             <form className="ml-auto flex gap-2" onSubmit={(e) => { e.preventDefault(); loadRows(clinicId!, cur, q); }}>
               <input className={inp + " w-52"} placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search" />
               {table?.access.create && <button type="button" onClick={() => setEdit({ values: {} })} className="px-4 py-2.5 rounded-xl bg-sky-600 text-white text-sm font-semibold whitespace-nowrap">+ New {table.label.toLowerCase()}</button>}

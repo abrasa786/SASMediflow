@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { applyBrand, applyIdentity } from "@/lib/theme";
+import { Ico } from "@/components/Icon";
 
 interface PublicClinic { slug: string; name: string; tagline?: string; ai_name?: string; logo_url?: string; primary_color?: string; address?: string; city?: string; phone?: string; email?: string; website?: string; specialty?: string; doctors: { name: string; specialty?: string; experience_years?: number }[] }
 
@@ -22,7 +23,7 @@ export default function PublicClinicPage() {
   if (c === undefined) return <div className="min-h-screen flex items-center justify-center text-slate-400 text-sm">Loading…</div>;
   if (c === null) return (
     <div className="min-h-screen flex items-center justify-center p-6 text-center">
-      <div><p className="text-4xl mb-3">🏥</p><h1 className="text-xl font-bold text-slate-900">We couldn&apos;t find that clinic</h1><p className="text-sm text-slate-500 mt-1">Check the address, or <a className="text-sky-700 underline" href="/login">sign in</a>.</p></div>
+      <div><p className="text-4xl mb-3"><Ico e="🏥" /></p><h1 className="text-xl font-bold text-slate-900">We couldn&apos;t find that clinic</h1><p className="text-sm text-slate-500 mt-1">Check the address, or <a className="text-sky-700 underline" href="/login">sign in</a>.</p></div>
     </div>
   );
   const color = c.primary_color || "#0ea5e9";
@@ -63,8 +64,8 @@ export default function PublicClinicPage() {
             </> : !online?.open && <p className="text-slate-500">Contact the clinic to book.</p>}
           </div>
           {(c.address || c.email || c.website) && <div className="bg-white rounded-xl border border-slate-200 p-4 text-sm space-y-1.5">
-            {c.address && <p>📍 {c.address}</p>}{c.email && <p>✉️ {c.email}</p>}
-            {c.website && <p>🌐 <a className="text-sky-700 underline break-all" href={c.website} target="_blank" rel="noreferrer">{c.website.replace(/^https?:\/\//, "")}</a></p>}
+            {c.address && <p><Ico e="📍" /> {c.address}</p>}{c.email && <p><Ico e="✉" /> {c.email}</p>}
+            {c.website && <p><Ico e="🌐" /> <a className="text-sky-700 underline break-all" href={c.website} target="_blank" rel="noreferrer">{c.website.replace(/^https?:\/\//, "")}</a></p>}
           </div>}
           <a href={`/login${slug === "_host" ? "" : `?clinic=${c.slug}`}`} className="block text-center text-sm text-slate-500 hover:text-slate-800 underline">Staff sign in</a>
         </aside>

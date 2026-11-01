@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Script from "next/script";
 import { applyBrand, applyIdentity } from "@/lib/theme";
+import { Ico } from "@/components/Icon";
 
 interface Doctor { id: string; name: string; specialty: string | null; experience: number | null; fee: number }
 interface Cfg {
@@ -122,7 +123,7 @@ export default function BookPage() {
 
   // ---------- states ----------
   if (cfg === undefined) return <div className="min-h-[100dvh] flex items-center justify-center text-slate-400 text-sm">Loading…</div>;
-  if (cfg === null) return <div className="min-h-[100dvh] flex items-center justify-center p-6 text-center"><div><p className="text-4xl mb-3">🏥</p><h1 className="text-xl font-bold text-slate-900">We couldn&apos;t find that clinic</h1><p className="text-sm text-slate-500 mt-1">Check the address and try again.</p></div></div>;
+  if (cfg === null) return <div className="min-h-[100dvh] flex items-center justify-center p-6 text-center"><div><p className="text-4xl mb-3"><Ico e="🏥" /></p><h1 className="text-xl font-bold text-slate-900">We couldn&apos;t find that clinic</h1><p className="text-sm text-slate-500 mt-1">Check the address and try again.</p></div></div>;
 
   const header = (
     <header style={{ background: `linear-gradient(135deg, ${color}, #1e1b4b)` }} className="text-white">
@@ -144,7 +145,7 @@ export default function BookPage() {
       <div className="min-h-[100dvh] bg-slate-50">{header}
         <main className="max-w-2xl mx-auto px-4 sm:px-6 py-6 space-y-4">
           <div className="bg-white rounded-2xl border border-slate-200 p-6 text-center">
-            <div className="w-14 h-14 mx-auto rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl">✓</div>
+            <div className="w-14 h-14 mx-auto rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl"><Ico e="✓" /></div>
             <h2 className="mt-3 text-xl font-bold text-slate-900">You&apos;re booked{done.patient ? `, ${done.patient.split(" ")[0]}` : ""}!</h2>
             <p className="text-sm text-slate-500 mt-1">We&apos;ve sent the details to your WhatsApp.</p>
             <dl className="mt-5 text-left text-sm divide-y divide-slate-100 border border-slate-100 rounded-xl">
@@ -165,7 +166,7 @@ export default function BookPage() {
 
   if (!cfg.booking.open) return (
     <div className="min-h-[100dvh] bg-slate-50">{header}
-      <main className="max-w-2xl mx-auto px-4 py-10 text-center"><p className="text-4xl mb-3">📞</p><h2 className="text-lg font-bold text-slate-900">Online booking isn&apos;t available right now</h2>
+      <main className="max-w-2xl mx-auto px-4 py-10 text-center"><p className="text-4xl mb-3"><Ico e="📞" /></p><h2 className="text-lg font-bold text-slate-900">Online booking isn&apos;t available right now</h2>
         <p className="text-sm text-slate-500 mt-1">Please call {cfg.clinic.phone ? <a className="underline" href={`tel:${cfg.clinic.phone}`}>{cfg.clinic.phone}</a> : "the clinic"} to book.</p><a href={home} className="inline-block mt-4 text-sm underline text-slate-500">Back</a></main></div>
   );
 

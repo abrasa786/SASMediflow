@@ -7,6 +7,7 @@ import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
 import { getInvoices } from "@/lib/clinic";
 import type { Invoice } from "@/types";
+import { Ico } from "@/components/Icon";
 
 const METHOD: Record<string, string> = { physical: "Physical", cash: "Cash", qr: "QR", upi: "UPI", online: "Online link", card: "Card", insurance: "Insurance", other: "Other" };
 
@@ -61,7 +62,7 @@ export default function PaymentsPage() {
         {err && <p className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2 mb-3" role="alert">{err}</p>}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           {loading ? <div className="py-16 text-center text-slate-400 text-sm">Loading…</div> : list.length === 0 ? (
-            <div className="py-16 text-center text-slate-400 text-sm"><div className="text-4xl mb-3">💳</div>{tab === "pending" ? "No payments waiting" : "Nothing here"}</div>
+            <div className="py-16 text-center text-slate-400 text-sm"><div className="text-4xl mb-3"><Ico e="💳" /></div>{tab === "pending" ? "No payments waiting" : "Nothing here"}</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

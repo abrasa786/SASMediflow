@@ -6,6 +6,7 @@ import { supabase as sb } from "@/lib/supabase";
 import { getActiveClinicId } from "@/lib/auth";
 import { NAV } from "./layout/Sidebar";
 import type { ClinicRole } from "@/types";
+import { Ico } from "@/components/Icon";
 
 const supabase = sb as any;
 interface Hit { group: string; icon: string; title: string; sub?: string; href: string }
@@ -102,7 +103,7 @@ export default function GlobalSearch({ role }: { role?: ClinicRole }) {
     <div className="fixed inset-0 z-[80] flex items-start justify-center p-3 pt-[10vh] bg-slate-900/50" onMouseDown={(e) => { if (e.target === e.currentTarget) setOpen(false); }} role="dialog" aria-modal="true" aria-label="Search">
       <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden">
         <div className="flex items-center gap-2 px-4 border-b border-slate-100">
-          <span aria-hidden>🔍</span>
+          <span aria-hidden><Ico e="🔍" /></span>
           <input ref={inputRef} value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={onKey} placeholder="Search patients, phone, bills, screens, apps, stock…" aria-label="Search everything" className="flex-1 min-w-0 py-3.5 text-sm outline-none bg-transparent" />
           <button onClick={() => setOpen(false)} className="text-xs text-slate-400 border border-slate-200 rounded px-1.5 py-0.5">Esc</button>
         </div>
@@ -113,7 +114,7 @@ export default function GlobalSearch({ role }: { role?: ClinicRole }) {
               <li key={h.group + h.href + h.title + i} role="option" aria-selected={i === cur}>
                 {head && <p className="px-4 pt-2.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">{h.group}</p>}
                 <button onClick={() => go(h)} onMouseEnter={() => setCur(i)} className={`w-full text-left px-4 py-2 flex items-center gap-3 ${i === cur ? "bg-sky-50" : ""}`}>
-                  <span className="w-6 text-center" aria-hidden>{h.icon}</span>
+                  <span className="w-6 flex justify-center text-slate-500" aria-hidden><Ico e={h.icon} fallback="puzzle" /></span>
                   <span className="flex-1 min-w-0"><span className="block text-sm text-slate-900 truncate">{h.title}</span>{h.sub && <span className="block text-xs text-slate-500 truncate">{h.sub}</span>}</span>
                 </button>
               </li>
@@ -121,7 +122,7 @@ export default function GlobalSearch({ role }: { role?: ClinicRole }) {
           })}
           {!all.length && <li className="px-4 py-8 text-center text-sm text-slate-500">{busy ? "Searching…" : term.length < 2 ? "Type at least 2 letters or digits." : "Nothing found. Try a name, a phone number or a bill number."}</li>}
         </ul>
-        <p className="px-4 py-2 text-[11px] text-slate-400 border-t border-slate-100">↑↓ to move · Enter to open · Ctrl+K or / to search from anywhere</p>
+        <p className="px-4 py-2 text-[11px] text-slate-400 border-t border-slate-100"><Ico e="↑" />↓ to move · Enter to open · Ctrl+K or / to search from anywhere</p>
       </div>
     </div>
   );

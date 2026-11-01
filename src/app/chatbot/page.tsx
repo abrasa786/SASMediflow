@@ -8,6 +8,7 @@ import { authFetch } from "@/lib/api";
 import { getClinic } from "@/lib/clinic";
 import AiHistoryPanel from "@/components/AiHistoryPanel";
 import InvoiceCard, { type InvoiceForm } from "@/components/InvoiceCard";
+import { Ico } from "@/components/Icon";
 
 interface Action { label: string; url: string }
 interface Message { role: "user" | "assistant"; content: string; ts: Date; actions?: Action[]; slots?: string[]; form?: InvoiceForm }
@@ -98,7 +99,7 @@ export default function ChatbotPage() {
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 bg-white shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-sky-400 to-sky-700 rounded-xl flex items-center justify-center text-white text-lg">🤖</div>
+            <div className="w-10 h-10 bg-gradient-to-br from-sky-400 to-sky-700 rounded-xl flex items-center justify-center text-white text-lg"><Ico e="🤖" /></div>
             <div>
               <h1 className="font-bold text-slate-900">{botName}</h1>
               <p className="text-xs text-emerald-600 font-medium">● Books appointments · Live clinic data</p>
@@ -111,7 +112,7 @@ export default function ChatbotPage() {
           {messages.map((msg, i) => (
             <div key={i} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
               <div className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-sm font-bold ${msg.role === "user" ? "bg-sky-500 text-white" : "bg-white border border-slate-200 text-xl"}`}>
-                {msg.role === "user" ? "U" : "🤖"}
+                {msg.role === "user" ? "U" : <Ico e="🤖" />}
               </div>
               <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${msg.role === "user" ? "bg-sky-500 text-white rounded-tr-sm" : "bg-white border border-slate-100 shadow-sm text-slate-800 rounded-tl-sm"}`}>
                 <div className="space-y-1">{renderContent(msg.content)}</div>
@@ -123,7 +124,7 @@ export default function ChatbotPage() {
                 {msg.form && <InvoiceCard clinicId={clinicId} form={msg.form} accent="#0ea5e9" />}
                 {msg.actions && msg.actions.length > 0 && (
                   <div className="flex flex-col gap-1.5 mt-2">
-                    {msg.actions.map(a => <a key={a.url} href={a.url} target="_blank" rel="noreferrer" className="text-xs px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg border border-emerald-200 font-medium">{a.label} ↗</a>)}
+                    {msg.actions.map(a => <a key={a.url} href={a.url} target="_blank" rel="noreferrer" className="text-xs px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg border border-emerald-200 font-medium">{a.label} <Ico e="↗" /></a>)}
                   </div>
                 )}
                 <p className={`text-xs mt-1.5 ${msg.role === "user" ? "text-sky-200" : "text-slate-400"}`}>{formatTime(msg.ts)}</p>
@@ -132,7 +133,7 @@ export default function ChatbotPage() {
           ))}
           {loading && (
             <div className="flex gap-3">
-              <div className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-lg shrink-0">🤖</div>
+              <div className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-lg shrink-0"><Ico e="🤖" /></div>
               <div className="bg-white border border-slate-100 shadow-sm rounded-2xl rounded-tl-sm px-4 py-3">
                 <div className="flex gap-1.5 items-center">
                   <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
@@ -176,7 +177,7 @@ export default function ChatbotPage() {
               disabled={loading || !input.trim()}
               className="px-4 py-3 bg-sky-500 hover:bg-sky-600 disabled:opacity-40 text-white rounded-xl text-sm font-semibold transition-colors"
             >
-              ↑
+              <Ico e="↑" />
             </button>
           </form>
         </div>

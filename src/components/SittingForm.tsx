@@ -7,6 +7,7 @@ import { searchClinicPatients } from "@/lib/clinic";
 import { toast } from "@/lib/toast";
 import { inr, planBadge, planTotals } from "@/lib/treatments";
 import EquipmentPicker, { type Mat, type StockOpt } from "@/components/EquipmentPicker";
+import { Ico } from "@/components/Icon";
 
 const supabase = sb as any;
 const field = "w-full px-3 py-3 rounded-xl border border-slate-300 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white disabled:bg-slate-50";
@@ -159,7 +160,7 @@ export default function SittingForm({ clinicId, patientId, appointmentId, planId
         <EquipmentPicker stock={stock} value={mats} onChange={setMats} />
       </>)}
 
-      {err && <div role="alert" className="flex gap-2 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm px-3.5 py-3"><span aria-hidden>⚠️</span><span>{err}</span></div>}
+      {err && <div role="alert" className="flex gap-2 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm px-3.5 py-3"><span aria-hidden><Ico e="⚠" /></span><span>{err}</span></div>}
       <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         {onCancel && <button type="button" onClick={onCancel} className="px-5 py-3 rounded-xl border border-slate-300 font-medium text-slate-800">Cancel</button>}
         <button disabled={busy || !pid} className="px-5 py-3 rounded-xl bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white font-semibold">{busy ? "Saving…" : submitLabel ?? "Save sitting"}</button>

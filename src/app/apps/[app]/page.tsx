@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
+import { Ico } from "@/components/Icon";
 
 function Widget({ w }: { w: any }) {
   const r = w.result;
@@ -48,7 +49,7 @@ export default function AppHomePage() {
         {d && (
           <>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-slate-900">{d.app.icon} {d.app.label}</h1>
+              <h1 className="text-2xl font-bold text-slate-900"><Ico e={d.app.icon ?? ""} fallback="puzzle" /> {d.app.label}</h1>
               {d.app.description && <p className="text-slate-500 text-sm mt-1">{d.app.description}</p>}
             </div>
             {d.cards.length > 0 && (

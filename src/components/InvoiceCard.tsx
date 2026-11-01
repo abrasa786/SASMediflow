@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { authFetch } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { createInvoice } from "@/lib/clinic";
+import { Ico } from "@/components/Icon";
 
 interface Line { name: string; qty: number; unit_price: number; amount: number }
 export interface InvoiceForm { patientId: string; patientName: string; phone: string | null; appointmentId: string | null; items: Line[]; creditIds: string[] }
@@ -73,7 +74,7 @@ export default function InvoiceCard({ clinicId, form, accent }: { clinicId: stri
       }
       if (send) {
         const r = await authFetch<{ status: string; error?: string; link?: string }>("/api/invoices/send", { body: { clinicId, invoiceId: made.id } }).catch((e: any) => ({ status: "failed", error: e.message, link: undefined }));
-        note += `${note ? " " : ""}${r.status === "sent" ? "✅ Sent to the patient on WhatsApp." : r.status === "link" ? "WhatsApp isn't automatic yet; use the button below (the PDF link is included)." : r.status === "skipped" ? "No phone number, so nothing was sent." : `⚠️ WhatsApp failed (${r.error ?? "unknown error"}).`}`;
+        note += `${note ? " " : ""}${r.status === "sent" ? "Sent to the patient on WhatsApp." : r.status === "link" ? "WhatsApp isn't automatic yet; use the button below (the PDF link is included)." : r.status === "skipped" ? "No phone number, so nothing was sent." : `WhatsApp failed (${r.error ?? "unknown error"}).`}`;
         link = r.link;
       }
       authFetch("/api/flows/process", { body: { clinicId } }).catch(() => null);
@@ -85,7 +86,7 @@ export default function InvoiceCard({ clinicId, form, accent }: { clinicId: stri
   if (done) {
     return (
       <div className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">
-        <p className="font-semibold">✅ Invoice {done.number} created · {inr(done.total)}</p>
+        <p className="font-semibold"><Ico e="✅" /> Invoice {done.number} created · {inr(done.total)}</p>
         {done.note && <p className="mt-1">{done.note}</p>}
         {done.link && <a href={done.link} target="_blank" rel="noreferrer" className="inline-block mt-2 px-2.5 py-1 rounded-lg bg-white border border-emerald-300">Send on WhatsApp</a>}
         <button type="button" onClick={async () => { try { const r = await authFetch<{ pdfUrl: string }>("/api/invoices/send", { body: { clinicId, invoiceId: done.id, linkOnly: true } }); window.open(r.pdfUrl, "_blank"); } catch { /* ignore */ } }} className="inline-block mt-2 ml-2 px-2.5 py-1 rounded-lg bg-white border border-emerald-300">PDF</button>
@@ -102,7 +103,7 @@ export default function InvoiceCard({ clinicId, form, accent }: { clinicId: stri
         <div key={i} className="relative space-y-1">
           <div className="flex gap-1">
             <input value={it.name} placeholder="Item or service" onFocus={() => setActive(i)} onBlur={() => setTimeout(() => setActive((a) => (a === i ? null : a)), 150)} onChange={(e) => { edit(i, "name", e.target.value); setActive(i); }} className={field} />
-            {items.length > 1 && <button type="button" aria-label="Remove item" onClick={() => setItems((p) => p.filter((_, k) => k !== i))} className="px-1 text-slate-400 hover:text-red-600">✕</button>}
+            {items.length > 1 && <button type="button" aria-label="Remove item" onClick={() => setItems((p) => p.filter((_, k) => k !== i))} className="px-1 text-slate-400 hover:text-red-600"><Ico e="✕" /></button>}
           </div>
           {active === i && sugg(it.name).length > 0 && (
             <div className="absolute z-10 left-0 right-6 top-7 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden">

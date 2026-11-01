@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { authFetch } from "@/lib/api";
 import LogoPicker from "@/components/LogoPicker";
 import { inputCls as inp, labelCls as lbl } from "@/components/ui";
+import { Ico } from "@/components/Icon";
 
 
 export default function BrandingCard({ clinicId }: { clinicId: string }) {
@@ -41,7 +42,7 @@ export default function BrandingCard({ clinicId }: { clinicId: string }) {
           <LogoPicker value={logo} onChange={(v) => { setLogo(v); setLogoChanged(true); }} />
           <LogoPicker transparentBg label="Clinic stamp (printed on invoices)" icon="🔏" uploadText="Upload stamp" hint="Shown at the bottom right of every invoice. A PNG with a transparent background looks best." value={stamp} onChange={(v) => { setStamp(v); setStampChanged(true); }} />
           <p className={`text-xs -mt-2 ${stampChanged ? "text-amber-700" : b.stamp_url ? "text-emerald-700" : "text-slate-400"}`} role="status">
-            {stampChanged ? "Not saved yet. Press Save branding below to put this stamp on your invoices." : b.stamp_url ? "✓ Saved. This stamp prints at the bottom right of every new invoice." : "No stamp saved yet."}</p>
+            {stampChanged ? "Not saved yet. Press Save branding below to put this stamp on your invoices." : b.stamp_url ? "Saved. This stamp prints at the bottom right of every new invoice." : "No stamp saved yet."}</p>
           <div><label className={lbl}>AI assistant name</label><input className={inp} maxLength={24} placeholder="e.g. Mira" value={f.aiName} onChange={(e) => setF({ ...f, aiName: e.target.value })} /><p className="text-xs text-slate-400 mt-1">Shown on the assistant, the builder and your public page.</p></div>
           <div><label className={lbl}>Tagline</label><input className={inp} maxLength={120} value={f.tagline} onChange={(e) => setF({ ...f, tagline: e.target.value })} /></div>
           <div className="grid grid-cols-[1fr_auto] gap-3 items-end">
@@ -51,7 +52,7 @@ export default function BrandingCard({ clinicId }: { clinicId: string }) {
           <div><label className={lbl}>Web address</label>
             <div className="flex items-center rounded-xl border border-slate-200 focus-within:ring-2 focus-within:ring-sky-500"><span className="pl-3 text-xs text-slate-400 whitespace-nowrap">{origin.replace(/^https?:\/\//, "")}/c/</span>
               <input className="flex-1 min-w-0 px-1.5 py-2.5 text-sm bg-transparent focus:outline-none" value={f.slug} onChange={(e) => setF({ ...f, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") })} aria-label="Web address" /></div>
-            {b.slug && <a className="text-xs text-sky-700 hover:underline" href={`/c/${b.slug}`} target="_blank" rel="noreferrer">Open your public page ↗</a>}</div>
+            {b.slug && <a className="text-xs text-sky-700 hover:underline" href={`/c/${b.slug}`} target="_blank" rel="noreferrer">Open your public page <Ico e="↗" /></a>}</div>
           <button disabled={busy} onClick={() => call({ action: "save", tagline: f.tagline, aiName: f.aiName, website: f.website, primaryColor: f.primaryColor, slug: f.slug, ...(logoChanged ? (logo ? { logoDataUrl: logo } : { removeLogo: true }) : {}), ...(stampChanged ? (stamp ? { stampDataUrl: stamp } : { removeStamp: true }) : {}) }, "Saved.")}
             className="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold disabled:opacity-60">Save branding</button>
         </div>

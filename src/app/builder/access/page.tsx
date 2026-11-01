@@ -8,6 +8,7 @@ import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
 import { getMyRoleInClinic } from "@/lib/clinic";
 import { inputCls as inp } from "@/components/ui";
+import { Ico } from "@/components/Icon";
 
 const BUILTIN = [{ api_name: "appointments", label: "Appointments" }, { api_name: "invoices", label: "Invoices" }, { api_name: "patients", label: "Patients" }, { api_name: "stock", label: "Stock" }];
 interface Perm { read: boolean; create: boolean; edit: boolean; delete: boolean; read_scope: "all" | "own"; edit_scope: "all" | "own" }
@@ -92,7 +93,7 @@ export default function AccessPage() {
                     <thead><tr className="text-xs uppercase text-slate-500 text-left"><th className="py-2 pr-3 font-medium">Table</th><th className="px-2 font-medium">Read</th><th className="px-2 font-medium">Add</th><th className="px-2 font-medium">Edit</th><th className="px-2 font-medium">Delete</th><th className="px-2 font-medium">Sees</th><th className="px-2 font-medium">Changes</th></tr></thead>
                     <tbody className="divide-y divide-slate-100">
                       {[...data.tables.map((t: any) => ({ ...t, builtin: false })), ...BUILTIN.map((b) => ({ ...b, builtin: true }))].map((t: any) => { const p = draft.perms[t.api_name] ?? none(); return (
-                        <tr key={t.api_name}><td className="py-2.5 pr-3 font-medium text-slate-800">{t.icon ?? ""} {t.plural_label ?? t.label}{t.builtin && <span className="block text-xs font-normal text-slate-400">built-in · read only</span>}</td>
+                        <tr key={t.api_name}><td className="py-2.5 pr-3 font-medium text-slate-800"><Ico e={t.icon ?? ""} fallback="file" /> {t.plural_label ?? t.label}{t.builtin && <span className="block text-xs font-normal text-slate-400">built-in · read only</span>}</td>
                           {(["read", "create", "edit", "delete"] as const).map((k) => <td key={k} className="px-2"><input type="checkbox" aria-label={`${k} ${t.label}`} disabled={t.builtin && k !== "read"} checked={p[k]} onChange={(e) => setPerm(t.api_name, { [k]: e.target.checked, ...(k !== "read" && e.target.checked ? { read: true } : {}) })} /></td>)}
                           <td className="px-2"><select disabled={!p.read || t.builtin} className="text-xs border border-slate-200 rounded-lg px-2 py-1" value={p.read_scope} onChange={(e) => setPerm(t.api_name, { read_scope: e.target.value as any })}><option value="all">All records</option><option value="own">Own records</option></select></td>
                           <td className="px-2"><select disabled={!(p.edit || p.delete) || t.builtin} className="text-xs border border-slate-200 rounded-lg px-2 py-1" value={p.edit_scope} onChange={(e) => setPerm(t.api_name, { edit_scope: e.target.value as any })}><option value="own">Own records</option><option value="all">All records</option></select></td></tr>); })}

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
+import { Ico } from "@/components/Icon";
 
 const REASON: Record<string, string> = { treatment_pending: "Treatment open, nothing booked", lapsed: "Hasn't visited in a while" };
 
@@ -56,10 +57,10 @@ export default function RecallPage() {
             </div>
             {res.length > 0 && (
               <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 mb-3 text-sm space-y-1">
-                {res.map((r) => <p key={r.patient_id}>{r.name || "Patient"}: {r.status === "sent" ? "✅ sent" : r.status === "link" ? <a className="text-sky-700 underline" href={r.link} target="_blank" rel="noreferrer">open WhatsApp</a> : r.status === "failed" ? <>⚠️ {r.error} {r.link && <a className="text-sky-700 underline" href={r.link} target="_blank" rel="noreferrer">send manually</a>}</> : `skipped: ${r.error}`}</p>)}
+                {res.map((r) => <p key={r.patient_id}>{r.name || "Patient"}: {r.status === "sent" ? "sent" : r.status === "link" ? <a className="text-sky-700 underline" href={r.link} target="_blank" rel="noreferrer">open WhatsApp</a> : r.status === "failed" ? <><Ico e="⚠" /> {r.error} {r.link && <a className="text-sky-700 underline" href={r.link} target="_blank" rel="noreferrer">send manually</a>}</> : `skipped: ${r.error}`}</p>)}
               </div>
             )}
-            {!d.candidates.length ? <p className="text-sm text-slate-500 bg-white border border-slate-100 rounded-xl p-5">Nobody is due right now. 🎉</p> : (
+            {!d.candidates.length ? <p className="text-sm text-slate-500 bg-white border border-slate-100 rounded-xl p-5">Nobody is due right now. <Ico e="🎉" /></p> : (
               <ul className="bg-white border border-slate-100 rounded-xl divide-y divide-slate-50">
                 {d.candidates.map((c: any) => (
                   <li key={c.patient_id} className="flex items-center gap-3 px-4 py-3">

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import LogoPicker from "@/components/LogoPicker";
+import { Ico } from "@/components/Icon";
 
 const SPECIALTIES = [
   "General Medicine", "Dental / Oral Care", "Dermatology", "Orthopaedics",
@@ -179,7 +180,7 @@ export default function SignupPage() {
                   <input type="tel" value={clinicPhone} onChange={(e) => setClinicPhone(e.target.value)} maxLength={20} placeholder="Number patients can call" className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                 </div>
                 <div>
-                  <button type="button" onClick={pinHere} className="whitespace-normal text-left max-w-full px-3.5 py-2.5 rounded-xl border border-blue-200 text-blue-700 text-sm font-medium hover:bg-blue-50">📍 {pin ? "Update clinic location" : "Use my location as the clinic's pin"}</button>
+                  <button type="button" onClick={pinHere} className="whitespace-normal text-left max-w-full px-3.5 py-2.5 rounded-xl border border-blue-200 text-blue-700 text-sm font-medium hover:bg-blue-50"><Ico e="📍" /> {pin ? "Update clinic location" : "Use my location as the clinic's pin"}</button>
                   <p className="text-xs text-gray-400 mt-1">{pinMsg || "Lets patients find you by distance in the Mediflow patient app. Your browser will ask for permission. Optional."}</p>
                 </div>
                 <div className="pt-2 border-t border-gray-100">
@@ -282,7 +283,7 @@ export default function SignupPage() {
                   ← Back
                 </button>
                 <button type="submit" disabled={loading} className="flex-[2] py-3 bg-gradient-to-r from-blue-600 to-violet-600 hover:opacity-90 disabled:opacity-60 text-white rounded-xl text-sm font-semibold transition-all shadow-sm">
-                  {loading ? "Creating clinic…" : "Launch my clinic 🚀"}
+                  {loading ? "Creating clinic…" : "Launch my clinic"}
                 </button>
               </div>
             </form>
@@ -291,13 +292,13 @@ export default function SignupPage() {
           {/* STEP 3 — Success */}
           {step === 3 && (
             <div className="text-center py-4">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center text-3xl mx-auto mb-5 shadow-lg">🎉</div>
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center text-3xl mx-auto mb-5 shadow-lg"><Ico e="🎉" /></div>
               <h1 className="text-xl font-bold text-gray-900 mb-2" style={{ fontFamily: "Sora, Inter, sans-serif" }}>Clinic created!</h1>
               {needsConfirm ? (
                 <>
                   <p className="text-sm text-gray-500 mb-6"><strong>{clinicName}</strong> is ready. Confirm your email to sign in.</p>
                   <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-4 text-left text-sm">
-                    <p className="font-semibold text-blue-700 mb-2">📧 Check your email</p>
+                    <p className="font-semibold text-blue-700 mb-2"><Ico e="📧" /> Check your email</p>
                     <p className="text-blue-600 text-xs">We sent a confirmation link to <strong>{email}</strong>. Click it, then sign in. Check spam if it doesn&apos;t arrive within a minute.</p>
                   </div>
                   <button type="button" onClick={resend} disabled={resending} className="w-full mb-3 py-2.5 border border-blue-200 text-blue-700 rounded-xl text-sm font-medium hover:bg-blue-50 disabled:opacity-60">

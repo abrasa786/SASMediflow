@@ -12,6 +12,7 @@ import { suggestDuration, type DurationRow } from "@/lib/durations";
 import { supabase as supabaseClient } from "@/lib/supabase";
 import { getAppointments, getClinicDoctors, searchClinicPatients, todayIso } from "@/lib/clinic";
 import type { Appointment, Doctor, ClinicPatient } from "@/types";
+import { Ico } from "@/components/Icon";
 
 const supabase = supabaseClient as any;
 
@@ -37,12 +38,12 @@ function NotificationList({ items }: { items: Notification[] }) {
       {items.map((n, i) => (
         <div key={i} className="flex items-center justify-between gap-2 text-xs bg-slate-50 rounded-lg px-3 py-2">
           <span className="text-slate-700">
-            {n.status === "sent" && <>✅ WhatsApp sent to the {n.recipient}</>}
-            {n.status === "link" && <>📲 {n.recipient === "patient" ? "Patient" : "Doctor"} message ready</>}
-            {n.status === "failed" && <>⚠️ WhatsApp to the {n.recipient} failed{n.error ? `: ${n.error}` : ""}</>}
+            {n.status === "sent" && <><Ico e="✅" /> WhatsApp sent to the {n.recipient}</>}
+            {n.status === "link" && <><Ico e="📲" /> {n.recipient === "patient" ? "Patient" : "Doctor"} message ready</>}
+            {n.status === "failed" && <><Ico e="⚠" /> WhatsApp to the {n.recipient} failed{n.error ? `: ${n.error}` : ""}</>}
             {n.status === "skipped" && <>ℹ️ {n.error ?? `No phone for the ${n.recipient}`}</>}
           </span>
-          {n.link && <a href={n.link} target="_blank" rel="noreferrer" className="shrink-0 font-semibold text-emerald-700 hover:underline">Send on WhatsApp ↗</a>}
+          {n.link && <a href={n.link} target="_blank" rel="noreferrer" className="shrink-0 font-semibold text-emerald-700 hover:underline">Send on WhatsApp <Ico e="↗" /></a>}
         </div>
       ))}
     </div>
@@ -127,7 +128,7 @@ export default function AppointmentsPage() {
         {outcome && (
           <div className="mb-4 bg-white border border-emerald-200 rounded-2xl p-4 shadow-sm">
             <div className="flex items-start justify-between gap-3 mb-2">
-              <p className="text-sm font-semibold text-slate-900">✅ {outcome.title}</p>
+              <p className="text-sm font-semibold text-slate-900"><Ico e="✅" /> {outcome.title}</p>
               <button onClick={() => setOutcome(null)} className="text-slate-400 hover:text-slate-600 leading-none text-lg" aria-label="Dismiss">×</button>
             </div>
             <NotificationList items={outcome.notifications} />
@@ -144,7 +145,7 @@ export default function AppointmentsPage() {
             <div className="py-16 text-center text-slate-400 text-sm">Loading…</div>
           ) : appointments.length === 0 ? (
             <div className="py-16 text-center text-slate-400 text-sm">
-              <div className="text-4xl mb-3">📅</div>
+              <div className="text-4xl mb-3"><Ico e="📅" /></div>
               No appointments on {niceDate(date)}
               <div><button onClick={() => setShowBook(true)} className="mt-3 text-sky-600 font-medium hover:underline">Book one</button></div>
             </div>
@@ -167,7 +168,7 @@ export default function AppointmentsPage() {
                         {(a.assigned_by === "auto_usual" || a.assigned_by === "auto_free") && <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-medium">{a.assigned_by === "auto_usual" ? "usual doctor" : "auto-assigned"}</span>}
                       </div>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        {a.doctor_name} · {a.symptoms || "General"} · {a.mode === "video" ? "📹 Video" : "🏥 In-clinic"}
+                        {a.doctor_name} · {a.symptoms || "General"} · {a.mode === "video" ? "Video" : "In-clinic"}
                         {a.status === "cancelled" && a.cancel_reason ? ` · Reason: ${a.cancel_reason}` : ""}
                         {a.reschedule_count ? ` · moved ${a.reschedule_count}×` : ""}
                       </p>
@@ -366,9 +367,9 @@ function BookModal({ clinicId, doctors, defaultDate, onClose, onBooked, presetPa
       <Modal title="Appointment booked" onClose={onClose}>
         <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 mb-4 text-sm">
           <p className="font-semibold text-emerald-800">{d.patient?.name}{d.patient_created ? " · new patient record created" : ""}</p>
-          <p className="text-emerald-700 mt-1">📅 {niceDate(a.date)} at {a.time}</p>
-          <p className="text-emerald-700">👨‍⚕️ {d.doctor?.name ?? "Duty doctor"}{d.assigned_how === "auto_usual" ? " (patient's usual doctor)" : d.assigned_how === "auto_free" ? " (auto-assigned: first free doctor)" : ""}</p>
-          {d.assignment?.new && <p className="text-emerald-700">🔗 Added to {d.doctor?.name}&apos;s patients</p>}
+          <p className="text-emerald-700 mt-1"><Ico e="📅" /> {niceDate(a.date)} at {a.time}</p>
+          <p className="text-emerald-700"><Ico e="👨" /> {d.doctor?.name ?? "Duty doctor"}{d.assigned_how === "auto_usual" ? " (patient's usual doctor)" : d.assigned_how === "auto_free" ? " (auto-assigned: first free doctor)" : ""}</p>
+          {d.assignment?.new && <p className="text-emerald-700"><Ico e="🔗" /> Added to {d.doctor?.name}&apos;s patients</p>}
           {d.phone_shared && <p className="text-amber-700 mt-1">ℹ️ This number is shared with another patient, so a separate record was kept.</p>}
         </div>
         <NotificationList items={done.notifications ?? []} />

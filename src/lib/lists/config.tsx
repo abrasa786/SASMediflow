@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Ico } from "@/components/Icon";
 
 export interface Col { key: string; label: string; sort?: string; defaultOn: boolean; render: (r: any) => ReactNode }
 export interface Fil { key: string; label: string; column: string; kind: "select" | "doctor" | "from" | "to"; options?: [string, string][] }
@@ -42,7 +43,7 @@ export const LISTS: Record<string, ListConfig> = {
         // the step this appointment is waiting at: treatment, then the bill, then done
         const btn = "inline-block px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold whitespace-nowrap";
         if (r.status === "cancelled" || r.status === "no_show") return dash;
-        if (r.billing_status === "paid" || r.status === "completed") return <span className="text-emerald-700 text-xs font-semibold whitespace-nowrap">✓ Done</span>;
+        if (r.billing_status === "paid" || r.status === "completed") return <span className="text-emerald-700 text-xs font-semibold whitespace-nowrap"><Ico e="✓" /> Done</span>;
         const inv = r.invoices?.[0];
         if (inv) return <Link href={`/billing/${inv.id}`} onClick={(e) => e.stopPropagation()} className={btn}>Bill →</Link>;
         return <Link href={`/appointments/${r.id}`} onClick={(e) => e.stopPropagation()} className={btn}>Treatment →</Link>;

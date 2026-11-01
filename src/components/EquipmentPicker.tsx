@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Ico } from "@/components/Icon";
 
 export interface Mat { item: string; qty: string }
 export interface StockOpt { name: string; quantity: number; unit?: string | null }
@@ -23,7 +24,7 @@ export default function EquipmentPicker({ stock, value, onChange, disabled }: { 
   return (
     <div>
       <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-medium text-slate-700"><span aria-hidden>🧰</span> Equipment used <span className="font-normal text-slate-400">· taken off the stock when the sitting is completed</span></p>
+        <p className="text-sm font-medium text-slate-700"><span aria-hidden><Ico e="🧰" /></span> Equipment used <span className="font-normal text-slate-400">· taken off the stock when the sitting is completed</span></p>
         {!disabled && <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="shrink-0 px-3 py-2 rounded-xl border border-sky-300 text-sky-800 text-sm font-semibold hover:bg-sky-50">+ Add equipment</button>}
       </div>
 
@@ -47,7 +48,7 @@ export default function EquipmentPicker({ stock, value, onChange, disabled }: { 
           const s = byName.get(m.item.toLowerCase()), n = Number(m.qty) || 0, short = s && n > s.quantity;
           return (
             <li key={m.item + i} className="flex items-center gap-2">
-              <span aria-hidden className="w-9 h-9 shrink-0 rounded-lg bg-sky-50 flex items-center justify-center">🧤</span>
+              <span aria-hidden className="w-9 h-9 shrink-0 rounded-lg bg-sky-50 flex items-center justify-center"><Ico e="🧤" /></span>
               <span className="flex-1 min-w-0"><span className="block font-medium text-slate-800 truncate">{m.item}</span>
                 {short ? <span className="block text-xs text-amber-700">Only {s!.quantity} in stock</span> : !s ? <span className="block text-xs text-slate-400">Not in your stock list</span> : <span className="block text-xs text-slate-400">{s.quantity} in stock</span>}</span>
               <input aria-label={`Quantity of ${m.item}`} type="number" min={1} inputMode="numeric" disabled={disabled} value={m.qty} onChange={(e) => set(i, e.target.value)} className="w-20 shrink-0 px-3 py-2.5 rounded-xl border border-slate-200 text-base sm:text-sm" />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Ico } from "@/components/Icon";
 
 /** Messages such as "Appointment created successfully" appear at the top of every page for a few seconds. Mounted once in AppShell. */
 export default function ToastHost() {
@@ -21,7 +22,7 @@ export default function ToastHost() {
     <div className="fixed top-3 inset-x-3 z-[100] flex flex-col items-center gap-2 pointer-events-none" aria-live="polite">
       {items.map((t) => (
         <div key={t.id} role="status" className={`pointer-events-auto max-w-md w-full sm:w-auto rounded-xl px-4 py-3 text-sm font-medium shadow-lg border ${t.ok ? "bg-emerald-600 text-white border-emerald-700" : "bg-red-600 text-white border-red-700"}`}>
-          {t.ok ? "✓ " : "⚠ "}{t.text}
+          {t.ok ? <Ico e="✓" /> : <Ico e="⚠" />} {t.text}
         </div>
       ))}
     </div>

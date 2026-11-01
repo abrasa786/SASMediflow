@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
+import { Ico } from "@/components/Icon";
 
 const lab = (roles?: string[] | null, sets?: string[] | null) => !roles && !sets ? "Everyone" : [...(roles ?? []).map((r) => r + "s"), ...(sets ?? [])].join(", ") || "Everyone";
 
@@ -45,7 +46,7 @@ export default function ManageAppsPage() {
         {d?.apps.map((a: any) => (
           <div key={a.api_name} className="bg-white border border-slate-100 rounded-xl mb-3">
             <div className="flex items-center justify-between gap-3 px-4 py-3">
-              <div className="min-w-0"><p className="font-semibold text-slate-900">{a.icon} {a.label}{a.is_system && <span className="ml-2 text-[11px] text-slate-400 font-normal">built in</span>}</p><p className="text-xs text-slate-500">Visible to: {lab(a.visible_roles, a.visible_sets?.length ? ["selected permission sets"] : null)}</p></div>
+              <div className="min-w-0"><p className="font-semibold text-slate-900"><Ico e={a.icon ?? ""} fallback="puzzle" /> {a.label}{a.is_system && <span className="ml-2 text-[11px] text-slate-400 font-normal">built in</span>}</p><p className="text-xs text-slate-500">Visible to: {lab(a.visible_roles, a.visible_sets?.length ? ["selected permission sets"] : null)}</p></div>
               <button onClick={() => { setSel({ app: a.api_name }); setRoles(a.visible_roles ?? []); setSets([]); }} className="text-sm px-3 py-1.5 rounded-lg border border-slate-200 hover:border-sky-300">Who can see</button>
             </div>
             <ul className="border-t border-slate-50 divide-y divide-slate-50">

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import { getActiveClinicId } from "@/lib/auth";
 import { supabase as supabaseClient } from "@/lib/supabase";
+import { Ico } from "@/components/Icon";
 
 type TaskStatus = "todo" | "in_progress" | "done";
 type Priority = "low" | "medium" | "high";
@@ -148,7 +149,7 @@ export default function TasksPage() {
         <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
           {COLUMNS.map((col) => (
             <div key={col.key} className="bg-white rounded-xl border border-gray-100 shadow-sm px-3 sm:px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-3">
-              <span className="text-xl">{col.emoji}</span>
+              <span className="text-xl"><Ico e={col.emoji} size={20} /></span>
               <div>
                 <div className={`text-xs font-semibold whitespace-nowrap ${col.color}`}>{col.label}</div>
                 <div className="text-2xl font-bold text-gray-900" style={{ fontFamily: "Sora, Inter, sans-serif" }}>{byStatus(col.key).length}</div>
@@ -177,7 +178,7 @@ export default function TasksPage() {
                 {/* Column header */}
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <span>{col.emoji}</span>
+                    <span><Ico e={col.emoji} /></span>
                     <span className={`text-sm font-bold ${col.color}`}>{col.label}</span>
                   </div>
                   <span className="bg-gray-200 text-gray-600 text-xs font-bold px-2 py-0.5 rounded-full">{byStatus(col.key).length}</span>
@@ -211,7 +212,7 @@ export default function TasksPage() {
                           )}
                           {task.due_date && (
                             <span className={`text-xs px-1.5 py-0.5 rounded-md font-medium ${new Date(task.due_date) < new Date() ? "bg-red-50 text-red-600" : "bg-gray-100 text-gray-500"}`}>
-                              📅 {new Date(task.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                              <Ico e="📅" /> {new Date(task.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                             </span>
                           )}
                         </div>
@@ -223,8 +224,8 @@ export default function TasksPage() {
                           {col.key !== "done" && (
                             <button onClick={() => moveTask(task.id, col.key === "todo" ? "in_progress" : "done")} className="p-1 text-gray-400 hover:text-gray-700 text-xs" title="Move forward">→</button>
                           )}
-                          <button onClick={() => openEdit(task)} className="p-1 text-gray-400 hover:text-sky-600 text-xs">✏️</button>
-                          <button onClick={() => { if (confirm("Delete this task?")) deleteTask(task.id); }} className="p-1 text-gray-400 hover:text-red-500 text-xs">🗑</button>
+                          <button onClick={() => openEdit(task)} className="p-1 text-gray-400 hover:text-sky-600 text-xs"><Ico e="✏" /></button>
+                          <button onClick={() => { if (confirm("Delete this task?")) deleteTask(task.id); }} className="p-1 text-gray-400 hover:text-red-500 text-xs"><Ico e="🗑" /></button>
                         </div>
                       </div>
                     </div>
@@ -232,7 +233,7 @@ export default function TasksPage() {
 
                   {byStatus(col.key).length === 0 && (
                     <div className="text-center py-8 text-gray-400 text-xs">
-                      <div className="text-3xl mb-2 opacity-40">{col.emoji}</div>
+                      <div className="mb-2 opacity-40 flex justify-center"><Ico e={col.emoji} size={32} /></div>
                       No {col.label.toLowerCase()} tasks
                     </div>
                   )}
@@ -277,9 +278,9 @@ export default function TasksPage() {
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Priority</label>
                   <select value={priority} onChange={(e) => setPriority(e.target.value as Priority)} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
-                    <option value="high">🔴 High</option>
-                    <option value="medium">🟡 Medium</option>
-                    <option value="low">🟢 Low</option>
+                    <option value="high"><Ico e="🔴" /> High</option>
+                    <option value="medium"><Ico e="🟡" /> Medium</option>
+                    <option value="low"><Ico e="🟢" /> Low</option>
                   </select>
                 </div>
                 <div>

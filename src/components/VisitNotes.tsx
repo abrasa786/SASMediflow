@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { authFetch } from "@/lib/api";
 import { supabase as sb } from "@/lib/supabase";
 import { suggestOrderItem } from "@/lib/visits/orders";
+import { Ico } from "@/components/Icon";
 
 const supabase = sb as any;
 const inp = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500";
@@ -59,10 +60,10 @@ export default function VisitNotes({ clinicId, patientId, appointmentId, canEdit
             {n.findings && <p className="text-xs text-slate-600">Findings: {n.findings}</p>}
             {n.concerns && <p className="text-xs text-slate-600">Patient concern: {n.concerns}</p>}
             {n.conditions && <p className="text-xs text-slate-600">Condition: {n.conditions}</p>}
-            {n.alert && <p className="text-xs text-red-700 font-medium">⚠ Shown at every future visit: {n.alert}</p>}
+            {n.alert && <p className="text-xs text-red-700 font-medium"><Ico e="⚠" /> Shown at every future visit: {n.alert}</p>}
             {n.follow_up && <p className="text-xs text-slate-600">Follow-up: {n.follow_up}</p>}
             {n.open_points && <p className="text-xs text-amber-800">Open points: {n.open_points}</p>}
-            {n.order_item && <p className="text-xs text-sky-800">📦 To have ready: {n.order_item}{n.needed_by ? ` by ${nice(n.needed_by)}` : ""}</p>}
+            {n.order_item && <p className="text-xs text-sky-800"><Ico e="📦" /> To have ready: {n.order_item}{n.needed_by ? ` by ${nice(n.needed_by)}` : ""}</p>}
             {canEdit && <p className="mt-1 text-xs"><button type="button" onClick={() => edit(n)} className="text-sky-700 underline mr-3">Edit</button><button type="button" onClick={() => remove(n.id)} className="text-red-600">Delete</button></p>}
           </li>
         ))}

@@ -6,6 +6,7 @@ import AppShell from "@/components/layout/AppShell";
 import { getActiveClinicId } from "@/lib/auth";
 import { getClinicPatients, upsertClinicPatient } from "@/lib/clinic";
 import type { ClinicPatient } from "@/types";
+import { Ico } from "@/components/Icon";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
@@ -106,7 +107,7 @@ export default function PatientsPage() {
             <div className="py-16 text-center text-slate-400 text-sm">Loading…</div>
           ) : filtered.length === 0 ? (
             <div className="py-16 text-center text-slate-400 text-sm">
-              <div className="text-4xl mb-3">👥</div>
+              <div className="text-4xl mb-3"><Ico e="👥" /></div>
               {search ? "No patients match your search" : "No patients yet — add the first one"}
             </div>
           ) : (

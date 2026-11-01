@@ -13,6 +13,7 @@ import AiPrivacyCard from "@/components/AiPrivacyCard";
 import Boundary from "@/components/Boundary";
 import OnlineBookingCard from "@/components/OnlineBookingCard";
 import type { Clinic, ClinicRole } from "@/types";
+import { Ico } from "@/components/Icon";
 
 const SPECIALTIES = [
   "General Practice", "Dentistry", "Cardiology", "Dermatology",
@@ -109,7 +110,7 @@ export default function SettingsPage() {
           )}
         </div>
 
-        {err && <div role="alert" className="mb-4 flex gap-2 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm px-3.5 py-3"><span aria-hidden>⚠️</span><span>{err}</span></div>}
+        {err && <div role="alert" className="mb-4 flex gap-2 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm px-3.5 py-3"><span aria-hidden><Ico e="⚠" /></span><span>{err}</span></div>}
         <form onSubmit={handleSave} className="space-y-6">
           {/* Basic info */}
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
@@ -215,7 +216,7 @@ export default function SettingsPage() {
           {isAdmin && (
             <>
               {err && <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{err}</p>}
-              {saved && <p className="text-xs text-emerald-700 bg-emerald-50 px-3 py-2 rounded-lg">✅ Settings saved successfully!</p>}
+              {saved && <p className="text-xs text-emerald-700 bg-emerald-50 px-3 py-2 rounded-lg"><Ico e="✅" /> Settings saved successfully!</p>}
               <button type="submit" disabled={saving} className="w-full py-3 bg-sky-500 hover:bg-sky-600 disabled:opacity-60 text-white rounded-xl text-sm font-semibold">
                 {saving ? "Saving…" : "Save Settings"}
               </button>

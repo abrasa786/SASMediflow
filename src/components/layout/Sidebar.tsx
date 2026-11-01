@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { signOut, clearActiveClinicId, getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
 import type { ClinicRole } from "@/types";
+import { Ico } from "@/components/Icon";
 
 export const NAV = [
   { href: "/dashboard",    icon: "🏠", label: "Dashboard" },
@@ -124,7 +125,7 @@ export default function Sidebar({ clinicName, userEmail, role, logoUrl, brandCol
             <p className="text-white font-semibold text-sm truncate">{clinicName}</p>
             <p className="text-slate-500 text-xs">Mediflow Clinic</p>
           </div>
-          <button onClick={onClose} aria-label="Close menu" className="ml-auto text-slate-400 hover:text-white text-xl px-2 py-1">✕</button>
+          <button onClick={onClose} aria-label="Close menu" className="ml-auto text-slate-400 hover:text-white text-xl px-2 py-1"><Ico e="✕" /></button>
         </div>
       </div>
 
@@ -132,7 +133,7 @@ export default function Sidebar({ clinicName, userEmail, role, logoUrl, brandCol
       <div className="px-3 pt-3">
         <button onClick={() => { onClose?.(); window.dispatchEvent(new Event("mf:search")); }} aria-label="Search everything"
           className="w-full flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm rounded-lg px-3 py-2 border border-slate-700">
-          <span aria-hidden>🔍</span><span className="flex-1 text-left">Search…</span><kbd className="text-[10px] border border-slate-600 rounded px-1 text-slate-400">Ctrl K</kbd>
+          <span aria-hidden><Ico e="🔍" /></span><span className="flex-1 text-left">Search…</span><kbd className="text-[10px] border border-slate-600 rounded px-1 text-slate-400">Ctrl K</kbd>
         </button>
       </div>
 
@@ -143,7 +144,7 @@ export default function Sidebar({ clinicName, userEmail, role, logoUrl, brandCol
           <select id="app-launcher" value={cur ? mode : ""} onChange={(e) => pick(e.target.value)}
             className="w-full bg-slate-800 text-slate-200 text-base md:text-sm rounded-lg px-3 py-2 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500">
             <option value="">▦ All screens</option>
-            {apps.map((a) => <option key={a.api_name} value={a.api_name}>{a.icon ?? "🧩"} {a.label}</option>)}
+            {apps.map((a) => <option key={a.api_name} value={a.api_name}>{a.label}</option>)}
           </select>
         </div>
       )}
@@ -163,7 +164,7 @@ export default function Sidebar({ clinicName, userEmail, role, logoUrl, brandCol
                 </Link>
               );
             })}
-            {role === "admin" && <Link href="/apps/manage" className="block px-3 py-2 mt-2 text-xs text-slate-500 hover:text-white">🧩 Manage apps &amp; access</Link>}
+            {role === "admin" && <Link href="/apps/manage" className="block px-3 py-2 mt-2 text-xs text-slate-500 hover:text-white"><Ico e="🧩" /> Manage apps &amp; access</Link>}
           </>
         ) : (
           <>
@@ -172,7 +173,7 @@ export default function Sidebar({ clinicName, userEmail, role, logoUrl, brandCol
               return (
                 <Link key={item.href} href={item.href} style={active && brandColor ? { background: brandColor } : undefined}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${active ? `${brandColor ? "" : "bg-sky-500 "}text-white shadow-sm` : "text-slate-400 hover:text-white hover:bg-slate-800"}`}>
-                  <span className="text-base">{item.icon}</span>
+                  <span className="w-5 flex justify-center"><Ico e={item.icon} size={18} /></span>
                   {item.label}
                 </Link>
               );
@@ -182,7 +183,7 @@ export default function Sidebar({ clinicName, userEmail, role, logoUrl, brandCol
                 <p className="px-3 pb-1 text-[11px] uppercase tracking-wide text-slate-500">Your apps</p>
                 {apps.filter((a) => !a.is_system).map((a) => (
                   <Link key={a.api_name} href={`/apps/${a.api_name}`} className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800">
-                    <span className="text-base">{a.icon ?? "🧩"}</span>{a.label}
+                    <span className="w-5 flex justify-center"><Ico e={a.icon ?? "🧩"} fallback="puzzle" size={18} /></span>{a.label}
                   </Link>
                 ))}
               </div>

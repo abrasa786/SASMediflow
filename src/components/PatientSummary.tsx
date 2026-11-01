@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getActiveClinicId } from "@/lib/auth";
 import { supabase as sb } from "@/lib/supabase";
 import { buildSummary, type Summary, type VisitNote } from "@/lib/visits/summary";
+import { Ico } from "@/components/Icon";
 
 const supabase = sb as any;
 const nice = (iso?: string | null) => (iso ? new Date(iso + "T00:00:00Z").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }) : "");
@@ -62,7 +63,7 @@ export default function PatientSummary({ patientId, refreshKey = 0 }: { patientI
           {s.alerts.length > 0 && (
             <div className="rounded-xl bg-red-50 border border-red-200 px-3 py-2.5" role="alert">
               <p className="text-xs font-bold text-red-800 uppercase tracking-wide">Please note</p>
-              <ul className="mt-1 space-y-1 text-red-900">{s.alerts.map((a, i) => <li key={i}>⚠ {a.text}{a.tooth ? ` (tooth ${a.tooth})` : ""} <span className="text-xs text-red-700/70">· noted {nice(a.date)}</span></li>)}</ul>
+              <ul className="mt-1 space-y-1 text-red-900">{s.alerts.map((a, i) => <li key={i}><Ico e="⚠" /> {a.text}{a.tooth ? ` (tooth ${a.tooth})` : ""} <span className="text-xs text-red-700/70">· noted {nice(a.date)}</span></li>)}</ul>
             </div>
           )}
           {s.basics.length > 0 && <p className="text-slate-700">{s.basics.join(" · ")}</p>}

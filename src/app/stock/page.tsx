@@ -7,6 +7,7 @@ import { getActiveClinicId } from "@/lib/auth";
 import { getStockItems, upsertStockItem } from "@/lib/clinic";
 import type { StockItem, StockCategory } from "@/types";
 import OrderReminders from "@/components/OrderReminders";
+import { Ico } from "@/components/Icon";
 
 const CATEGORIES: StockCategory[] = ["medicine", "consumable", "equipment", "lab_supply", "other"];
 
@@ -100,7 +101,7 @@ export default function StockPage() {
         {lowCount > 0 && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-5 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-amber-600">⚠️</span>
+              <span className="text-amber-600"><Ico e="⚠" /></span>
               <p className="text-amber-800 text-sm font-medium">{lowCount} item{lowCount > 1 ? "s" : ""} running low or out of stock</p>
             </div>
             <button onClick={() => setShowLowOnly(!showLowOnly)} className={`text-xs font-semibold px-3 py-1 rounded-lg ${showLowOnly ? "bg-amber-600 text-white" : "border border-amber-400 text-amber-700"}`}>
@@ -125,7 +126,7 @@ export default function StockPage() {
           {loading ? (
             <div className="py-16 text-center text-slate-400 text-sm">Loading…</div>
           ) : filtered.length === 0 ? (
-            <div className="py-16 text-center text-slate-400 text-sm"><div className="text-4xl mb-3">📦</div>No items found</div>
+            <div className="py-16 text-center text-slate-400 text-sm"><div className="text-4xl mb-3"><Ico e="📦" /></div>No items found</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

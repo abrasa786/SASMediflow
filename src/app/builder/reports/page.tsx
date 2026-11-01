@@ -9,6 +9,7 @@ import ReportView from "@/components/ReportView";
 import { getActiveClinicId } from "@/lib/auth";
 import { authFetch } from "@/lib/api";
 import { inputCls as inp } from "@/components/ui";
+import { Ico } from "@/components/Icon";
 
 const OPS: [string, string][] = [["eq", "is"], ["neq", "is not"], ["contains", "contains"], ["gt", "greater than"], ["gte", "at least"], ["lt", "less than"], ["lte", "at most"], ["empty", "is empty"], ["notempty", "is filled"]];
 const AGG: [string, string][] = [["count", "Count"], ["sum", "Total"], ["avg", "Average"], ["min", "Lowest"], ["max", "Highest"]];
@@ -67,9 +68,9 @@ export default function ReportsPage() {
           <div className="grid lg:grid-cols-[300px_1fr] gap-6">
             <aside className="space-y-5">
               <section><div className="flex items-center justify-between mb-2"><h2 className="font-semibold text-sm text-slate-900">Dashboards</h2>{d.canEdit && <button onClick={() => setDb({ name: "", description: "", widgets: [] })} className="text-xs text-sky-700 hover:underline">+ New</button>}</div>
-                {d.dashboards.length === 0 ? <p className="text-xs text-slate-400">None yet.</p> : d.dashboards.map((x: any) => <button key={x.id} onClick={() => setView({ kind: "dash", id: x.id })} className={`w-full text-left rounded-lg px-3 py-2 text-sm mb-1 ${view?.id === x.id ? "bg-sky-50 text-sky-800" : "hover:bg-slate-100"}`}>📊 {x.name}<span className="text-xs text-slate-400"> · {x.widgets.length}</span></button>)}</section>
+                {d.dashboards.length === 0 ? <p className="text-xs text-slate-400">None yet.</p> : d.dashboards.map((x: any) => <button key={x.id} onClick={() => setView({ kind: "dash", id: x.id })} className={`w-full text-left rounded-lg px-3 py-2 text-sm mb-1 ${view?.id === x.id ? "bg-sky-50 text-sky-800" : "hover:bg-slate-100"}`}><Ico e="📊" /> {x.name}<span className="text-xs text-slate-400"> · {x.widgets.length}</span></button>)}</section>
               <section><div className="flex items-center justify-between mb-2"><h2 className="font-semibold text-sm text-slate-900">Reports</h2>{d.canEdit && <button onClick={() => { setRep(newRep()); setPreview(null); }} className="text-xs text-sky-700 hover:underline">+ New</button>}</div>
-                {d.reports.length === 0 ? <p className="text-xs text-slate-400">None yet.</p> : d.reports.map((x: any) => <button key={x.id} onClick={() => setView({ kind: "report", id: x.id })} className={`w-full text-left rounded-lg px-3 py-2 text-sm mb-1 ${view?.id === x.id ? "bg-sky-50 text-sky-800" : "hover:bg-slate-100"}`}>📄 {x.name}</button>)}</section>
+                {d.reports.length === 0 ? <p className="text-xs text-slate-400">None yet.</p> : d.reports.map((x: any) => <button key={x.id} onClick={() => setView({ kind: "report", id: x.id })} className={`w-full text-left rounded-lg px-3 py-2 text-sm mb-1 ${view?.id === x.id ? "bg-sky-50 text-sky-800" : "hover:bg-slate-100"}`}><Ico e="📄" /> {x.name}</button>)}</section>
               {!d.canEdit && <p className="text-xs text-slate-400">Your admin creates reports. You can open any of them; you only see data you have access to.</p>}
             </aside>
 

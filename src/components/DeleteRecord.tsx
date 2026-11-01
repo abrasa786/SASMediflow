@@ -6,6 +6,7 @@ import { authFetch } from "@/lib/api";
 import { getMyRoleInClinic } from "@/lib/clinic";
 import { toast } from "@/lib/toast";
 import { DELETABLE } from "@/lib/deleteRules";
+import { Ico } from "@/components/Icon";
 
 /** The dustbin at the bottom right of a record. Asks first, then deletes and returns to the list. Hidden for roles that may not delete. */
 export default function DeleteRecord({ clinicId, entity, id, backHref }: { clinicId: string; entity: string; id: string; backHref: string }) {
@@ -26,7 +27,7 @@ export default function DeleteRecord({ clinicId, entity, id, backHref }: { clini
   return (
     <div className="mt-8 flex justify-end">
       <button type="button" onClick={() => { setAsk(true); setErr(""); }} aria-label={`Delete this ${rule.label}`} title={`Delete this ${rule.label}`}
-        className="w-11 h-11 flex items-center justify-center rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-lg">🗑</button>
+        className="w-11 h-11 flex items-center justify-center rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-lg"><Ico e="🗑" /></button>
       {ask && (
         <div className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4" onClick={() => !busy && setAsk(false)} role="dialog" aria-modal="true" aria-label="Confirm delete">
           <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl" onClick={(e) => e.stopPropagation()}>

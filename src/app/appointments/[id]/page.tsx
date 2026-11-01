@@ -15,6 +15,7 @@ import VisitNotes from "@/components/VisitNotes";
 import AppointmentTreatment from "@/components/AppointmentTreatment";
 import TreatmentFromVisit from "@/components/TreatmentFromVisit";
 import type { Doctor } from "@/types";
+import { Ico } from "@/components/Icon";
 
 const inp = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:bg-slate-50";
 const STATUSES = [["confirmed", "Confirmed"], ["completed", "Completed"], ["cancelled", "Cancelled"], ["no_show", "No-show"]];
@@ -101,8 +102,8 @@ export default function AppointmentRecord({ params }: { params: { id: string } }
         {p && clinicId && <TreatmentFromVisit clinicId={clinicId} appointmentId={a.id} patientId={p.id} canEdit={canNote} onChange={() => setRk((n) => n + 1)} />}
         {a && <div className="mt-5 flex flex-wrap items-center gap-3 rounded-2xl border border-sky-200 bg-sky-50 p-4">
           <ol className="flex-1 min-w-[220px] flex items-center gap-2 text-xs sm:text-sm" aria-label="Visit steps">
-            <li className="font-semibold text-emerald-700">✓ Booked</li><li aria-hidden className="text-slate-300">→</li>
-            <li className={invoice ? "font-semibold text-emerald-700" : "font-semibold text-sky-700"}>{invoice ? "✓" : "●"} Treatment</li><li aria-hidden className="text-slate-300">→</li>
+            <li className="font-semibold text-emerald-700"><Ico e="✓" /> Booked</li><li aria-hidden className="text-slate-300">→</li>
+            <li className={invoice ? "font-semibold text-emerald-700" : "font-semibold text-sky-700"}>{invoice ? <Ico e="✓" /> : "●"} Treatment</li><li aria-hidden className="text-slate-300">→</li>
             <li className={invoice ? "font-semibold text-sky-700" : "text-slate-500"}>{invoice ? `● Bill ${invoice.invoice_number}` : "Bill"}</li>
           </ol>
           <Link href={invoice ? `/billing/${invoice.id}` : `/billing?appointment=${a.id}`} className="px-4 py-2.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold">{invoice ? "Next: open the bill →" : "Next: the bill →"}</Link>

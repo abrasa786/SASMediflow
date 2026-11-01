@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { authFetch } from "@/lib/api";
 import { getActiveClinicId } from "@/lib/auth";
 import InvoiceCard, { type InvoiceForm } from "@/components/InvoiceCard";
+import { Ico } from "@/components/Icon";
 
 interface Msg { role: "user" | "assistant"; content: string; actions?: { label: string; url: string }[]; slots?: string[]; form?: InvoiceForm }
 const KEY = "mf_assistant_";
@@ -51,10 +52,10 @@ export default function AssistantWidget({ botName, color }: { botName: string; c
       {open && (
         <section aria-label={`${botName} chat`} className="fixed z-[60] max-lg:inset-0 max-lg:rounded-none lg:bottom-24 lg:right-5 lg:w-[380px] lg:h-[min(560px,calc(100vh-8rem))] bg-white border border-slate-200 lg:rounded-2xl shadow-2xl flex flex-col overflow-hidden">
           <header className="px-4 py-3 text-white flex items-center justify-between" style={{ background: accent }}>
-            <div className="min-w-0"><p className="font-semibold text-sm truncate">🤖 {botName}</p><p className="text-[11px] opacity-80">Calendar, records and reports, by chat</p></div>
+            <div className="min-w-0"><p className="font-semibold text-sm truncate"><Ico e="🤖" /> {botName}</p><p className="text-[11px] opacity-80">Calendar, records and reports, by chat</p></div>
             <div className="flex items-center gap-1">
               <button onClick={() => { setMsgs([]); draft.current = null; sid.current = undefined; }} className="text-xs px-2 py-1 rounded hover:bg-white/20" aria-label="Start a new chat">New</button>
-              <button onClick={() => setOpen(false)} className="px-2 py-1 rounded hover:bg-white/20" aria-label="Close chat">✕</button>
+              <button onClick={() => setOpen(false)} className="px-2 py-1 rounded hover:bg-white/20" aria-label="Close chat"><Ico e="✕" /></button>
             </div>
           </header>
           <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-slate-50 text-sm">
@@ -84,7 +85,7 @@ export default function AssistantWidget({ botName, color }: { botName: string; c
         </section>
       )}
       <button onClick={() => setOpen((o) => !o)} aria-label={open ? `Close ${botName}` : `Open ${botName}`} aria-expanded={open}
-        className={`fixed z-50 bottom-4 right-4 lg:bottom-5 lg:right-5 w-14 h-14 ${open ? "max-lg:hidden" : ""} rounded-full text-white text-2xl shadow-xl hover:scale-105 transition-transform`} style={{ background: accent }}>{open ? "✕" : "🤖"}</button>
+        className={`fixed z-50 bottom-4 right-4 lg:bottom-5 lg:right-5 w-14 h-14 ${open ? "max-lg:hidden" : ""} rounded-full text-white text-2xl shadow-xl hover:scale-105 transition-transform`} style={{ background: accent }}>{open ? <Ico e="✕" size={22} /> : <Ico e="🤖" size={26} />}</button>
     </>
   );
 }
