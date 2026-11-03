@@ -2,9 +2,9 @@
 
 import type { ComponentType, SVGProps } from "react";
 import {
-  ArrowUp, BadgeCheck, Bot, CalendarCheck, CalendarDays, ChartColumn, Check, CircleCheck, CircleX, Clock, ClipboardCheck, ClipboardList, Compass, CreditCard,
+  ArrowRight, ArrowUp, BadgeCheck, Bot, CalendarCheck, CalendarDays, ChartColumn, Check, ChevronDown, ChevronUp, CircleCheck, CircleX, Clock, ClipboardCheck, ClipboardList, Compass, CreditCard,
   ExternalLink, FileText, FolderTree, Globe, Hammer, Hand, Heart, Hospital, House, Inbox, Link as LinkIcon, Lock, Mail, MapPin, Megaphone, Menu, MessageCircle,
-  Package, PartyPopper, Pencil, Phone, Pill, Puzzle, Receipt, Repeat, Rocket, Search, Send, Settings, SquarePen, Stamp, Stethoscope, Tag, Trash, TreePalm,
+  Package, PartyPopper, Pencil, Phone, Pill, Play, Puzzle, Receipt, Repeat, Rocket, Search, Send, Settings, SquarePen, Stamp, Stethoscope, Tag, Trash, TreePalm,
   TriangleAlert, Truck, UserRound, Users, Video, Wallet, Wrench, X, Zap,
 } from "lucide-react";
 
@@ -26,7 +26,7 @@ export const ICONS: Record<string, Cmp> = {
   file: FileText, pin: MapPin, package: Package, pill: Pill, search: Search, trash: Trash, clock: Clock, chart: ChartColumn, phone: Phone, repeat: Repeat, video: Video,
   stamp: Stamp, rocket: Rocket, card: CreditCard, leave: TreePalm, message: MessageCircle, party: PartyPopper, edit: SquarePen, pencil: Pencil, wallet: Wallet, tools: Wrench,
   glove: Hand, external: ExternalLink, up: ArrowUp, mail: Mail, globe: Globe, link: LinkIcon, compass: Compass, lock: Lock, home: House, settings: Settings,
-  megaphone: Megaphone, inbox: Inbox, send: Send, truck: Truck, build: Hammer, tag: Tag, folder: FolderTree, zap: Zap, heart: Heart, menu: Menu, verified: BadgeCheck,
+  megaphone: Megaphone, inbox: Inbox, send: Send, truck: Truck, build: Hammer, tag: Tag, folder: FolderTree, zap: Zap, heart: Heart, menu: Menu, verified: BadgeCheck, play: Play, "arrow-right": ArrowRight, "chevron-down": ChevronDown, "chevron-up": ChevronUp,
 };
 
 /** The emoji the app used before, mapped to the icon that replaces it. */

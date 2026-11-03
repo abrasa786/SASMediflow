@@ -206,7 +206,7 @@ export default function Sidebar({ clinicName, userEmail, role, logoUrl, brandCol
           onClick={handleLogout}
           className="w-full text-left text-xs text-slate-500 hover:text-red-400 transition-colors py-1"
         >
-          Sign out →
+          Sign out
         </button>
       </div>
     </aside>

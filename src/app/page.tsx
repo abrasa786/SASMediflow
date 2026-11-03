@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Ico } from "@/components/Icon";
+import { Ico, Icon } from "@/components/Icon";
 
 export const metadata = {
   title: "Mediflow Clinic — Smart Clinic Management",
@@ -43,7 +43,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-3">
             <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors">Sign in</Link>
             <Link href="/signup" className="text-sm bg-gradient-to-r from-blue-600 to-violet-600 hover:opacity-90 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-sm">
-              Get started →
+              Get started <Icon name="arrow-right" size={16} className="inline -mt-0.5" />
             </Link>
           </div>
         </div>
@@ -80,7 +80,7 @@ export default function LandingPage() {
             </Link>
             <a href="/demo"
               className="inline-flex items-center justify-center gap-2 bg-white border border-blue-200 text-blue-700 font-semibold px-8 py-4 rounded-2xl text-lg hover:bg-blue-50 transition-colors">
-              ▶ Watch the guided demo
+              <Icon name="play" size={14} className="inline -mt-0.5 mr-1" />Watch the guided demo
             </a>
           </div>
           <p className="text-xs text-gray-400 mt-4">No credit card · Free for small clinics · Upgrade anytime</p>
@@ -164,7 +164,7 @@ export default function LandingPage() {
                   ))}
                 </ul>
                 <Link href="/signup" className={`block text-center py-3 rounded-xl font-semibold text-sm transition-all ${p.highlight ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white hover:opacity-90" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}>
-                  Get started →
+                  Get started <Icon name="arrow-right" size={16} className="inline -mt-0.5" />
                 </Link>
               </div>
             ))}
@@ -191,10 +191,10 @@ export default function LandingPage() {
           </div>
           <Link href="/login"
             className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-violet-600 text-white font-bold px-10 py-4 rounded-2xl text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all">
-            Enter Demo Clinic →
+            Enter Demo Clinic <Icon name="arrow-right" size={16} className="inline -mt-0.5" />
           </Link>
           <p className="mt-5">
-            <a href="/demo" className="text-blue-700 font-semibold hover:underline">▶ Or take the 3-minute guided tour first</a>
+            <a href="/demo" className="text-blue-700 font-semibold hover:underline"><Icon name="play" size={14} className="inline -mt-0.5 mr-1" />Or take the 3-minute guided tour first</a>
           </p>
         </div>
       </section>

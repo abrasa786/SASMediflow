@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
+import { Icon } from "@/components/Icon";
 import { getActiveClinicId, getUser } from "@/lib/auth";
 import { supabase as sb } from "@/lib/supabase";
 import { getClinicDoctors } from "@/lib/clinic";
@@ -158,7 +159,7 @@ export default function ListView({ entity, refreshKey = 0 }: { entity: string; r
             <thead><tr className="text-left text-xs text-slate-500 border-b border-slate-100">
               {visible.map((c) => (
                 <th key={c.key} className="px-4 py-3 font-medium whitespace-nowrap" aria-sort={c.sort && sort === c.sort ? (asc ? "ascending" : "descending") : undefined}>
-                  {c.sort ? <button onClick={() => sortBy(c.sort)} className="hover:text-slate-800">{c.label}{sort === c.sort ? (asc ? " ▲" : " ▼") : ""}</button> : c.label}
+                  {c.sort ? <button onClick={() => sortBy(c.sort)} className="hover:text-slate-800">{c.label}{sort === c.sort ? <Icon name={asc ? "chevron-up" : "chevron-down"} size={12} className="inline ml-0.5 -mt-0.5" /> : null}</button> : c.label}
                 </th>
               ))}
             </tr></thead>

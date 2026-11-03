@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { signInWithEmail, setActiveClinicId, getSession, sendPasswordReset } from "@/lib/auth";
 import { getMyClinics } from "@/lib/clinic";
 import type { Clinic } from "@/types";
-import { Ico } from "@/components/Icon";
+import { Ico, Icon } from "@/components/Icon";
 
 const POINTS = [
   { icon: "📅", t: "Appointments that never clash", d: "Doctor schedules, breaks and leave are checked for every slot." },
@@ -112,7 +112,7 @@ export default function LoginPage() {
             ))}
           </ul>
         </div>
-        <a href="/demo" className="text-sm text-sky-100 hover:text-white underline underline-offset-4">▶ Take the interactive trail first</a>
+        <a href="/demo" className="inline-flex items-center gap-1.5 text-sm text-sky-100 hover:text-white underline underline-offset-4"><Icon name="play" size={14} /> Take the interactive tour first</a>
       </aside>
 
       {/* Right: the form */}
@@ -157,7 +157,7 @@ export default function LoginPage() {
               </form>
 
               <div className="mt-8 pt-6 border-t border-slate-200 text-sm text-slate-600">
-                New to Mediflow? <a href="/signup" className="text-sky-700 font-semibold hover:underline">Set up your clinic in a minute →</a>
+                New to Mediflow? <a href="/signup" className="text-sky-700 font-semibold hover:underline">Set up your clinic in a minute <Icon name="arrow-right" size={14} className="inline -mt-0.5" /></a>
               </div>
             </>
           )}

@@ -8,7 +8,11 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      // Phase 2 visual system: tighter corners everywhere (one scale), calmer cool-grey neutrals.
+      borderRadius: { md: "0.25rem", lg: "0.375rem", xl: "0.5rem", "2xl": "0.625rem", "3xl": "0.75rem" },
       colors: {
+        slate: { 50: "#f7f9fb", 100: "#eef1f5", 200: "#dde2e9", 300: "#c3cad4", 400: "#8f99a8", 500: "#66717f", 600: "#4b5563", 700: "#374151", 800: "#1f2937", 900: "#111827", 950: "#0b1220" },
+        gray: { 50: "#f7f9fb", 100: "#eef1f5", 200: "#dde2e9", 300: "#c3cad4", 400: "#8f99a8", 500: "#66717f", 600: "#4b5563", 700: "#374151", 800: "#1f2937", 900: "#111827", 950: "#0b1220" },
         background: "var(--background)",
         foreground: "var(--foreground)",
         // The accent scale reads CSS variables so each clinic's brand colour can retheme every screen (src/lib/theme.ts).
