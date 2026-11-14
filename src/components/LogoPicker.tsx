@@ -11,17 +11,32 @@ const OK_EXT = /\.(png|jpe?g|webp|gif|bmp|heic|heif|avif)$/i;
  * Phone photos are fine: they are shrunk here, so a big camera picture is not a problem.
  * With `transparentBg` the white paper around a stamp photo is made see-through, so only the ink prints on the invoice.
  */
-async function toDataUrl(file: File, transparentBg = false): Promise<string> {
+/** Opens the photo the way the phone shows it: an <img> honours the camera's "which way is up" flag, so a sideways photo is turned upright. */
+async function openUpright(file: File): Promise<{ src: CanvasImageSource; width: number; height: number }> {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image(); img.src = url; await img.decode();
+    if (img.naturalWidth > 0) return { src: img, width: img.naturalWidth, height: img.naturalHeight };
+  } catch { /* fall back below */ }
+  finally { setTimeout(() => URL.revokeObjectURL(url), 0); }
+  const bmp = await createImageBitmap(file);
+  return { src: bmp, width: bmp.width, height: bmp.height };
+}
+
+async function toDataUrl(file: File, transparentBg = false, turns = 0): Promise<string> {
   if (!(OK_TYPE.test(file.type) || OK_EXT.test(file.name))) throw new Error("Choose a photo or image (JPG, PNG or WebP).");
   if (file.size > 30 * 1024 * 1024) throw new Error("That image is very large. Choose one under 30 MB.");
-  let bmp: ImageBitmap;
-  try { bmp = await createImageBitmap(file); }
+  let bmp: { src: CanvasImageSource; width: number; height: number };
+  try { bmp = await openUpright(file); }
   catch { throw new Error("This phone's photo format cannot be opened here. Take the photo again as JPG (in the camera settings choose 'Most compatible'), or choose a PNG or JPG."); }
   const scale = Math.min(1, 512 / Math.max(bmp.width, bmp.height));
   const c = document.createElement("canvas");
-  c.width = Math.max(1, Math.round(bmp.width * scale)); c.height = Math.max(1, Math.round(bmp.height * scale));
+  const w = Math.max(1, Math.round(bmp.width * scale)), h = Math.max(1, Math.round(bmp.height * scale)), side = turns % 2 === 1;
+  c.width = side ? h : w; c.height = side ? w : h;
   const ctx = c.getContext("2d")!;
-  ctx.drawImage(bmp, 0, 0, c.width, c.height);
+  ctx.translate(c.width / 2, c.height / 2); ctx.rotate((turns % 4) * Math.PI / 2);
+  ctx.drawImage(bmp.src, -w / 2, -h / 2, w, h);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   if (transparentBg) {
     const img = ctx.getImageData(0, 0, c.width, c.height), d = img.data;
     for (let i = 0; i < d.length; i += 4) {
@@ -41,10 +56,11 @@ export default function LogoPicker({ value, onChange, label = "Clinic logo", hin
   const [err, setErr] = useState("");
   const [clear, setClear] = useState(true);              // make the white around a stamp see-through
   const [last, setLast] = useState<File | null>(null);
+  const [turns, setTurns] = useState(0);                 // quarter turns the person asked for with Rotate
 
-  async function load(f: File, makeClear: boolean) {
+  async function load(f: File, makeClear: boolean, t = 0) {
     setErr("");
-    try { onChange(await toDataUrl(f, transparentBg && makeClear)); setLast(f); } catch (x: any) { setErr(x.message); }
+    try { onChange(await toDataUrl(f, transparentBg && makeClear, t)); setLast(f); setTurns(t); } catch (x: any) { setErr(x.message); }
   }
 
   return (
@@ -58,13 +74,14 @@ export default function LogoPicker({ value, onChange, label = "Clinic logo", hin
         <div className="text-sm">
           {/* image/* shows every photo on a phone, including ones taken a moment ago with the camera */}
           <input ref={ref} type="file" accept="image/*,.heic,.heif" className="sr-only" aria-label="Upload logo"
-            onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) load(f, clear); }} />
+            onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) load(f, clear, 0); }} />
           <button type="button" onClick={() => ref.current?.click()} className="px-3 py-1.5 rounded-lg border border-gray-300 text-xs font-semibold hover:bg-gray-50">{value ? "Change" : uploadText}</button>
-          {value && <button type="button" onClick={() => { onChange(null); setLast(null); }} className="ml-2 text-xs text-red-600 hover:underline">Remove</button>}
+          {value && last && <button type="button" onClick={() => load(last, clear, (turns + 1) % 4)} className="ml-2 text-xs text-sky-700 hover:underline">Rotate</button>}
+          {value && <button type="button" onClick={() => { onChange(null); setLast(null); setTurns(0); }} className="ml-2 text-xs text-red-600 hover:underline">Remove</button>}
           <p className="text-xs text-gray-400 mt-1">{hint}</p>
           {transparentBg && (
             <label className="flex items-center gap-2 mt-1.5 text-xs text-gray-600">
-              <input type="checkbox" checked={clear} onChange={(e) => { setClear(e.target.checked); if (last) load(last, e.target.checked); }} className="w-4 h-4" />
+              <input type="checkbox" checked={clear} onChange={(e) => { setClear(e.target.checked); if (last) load(last, e.target.checked, turns); }} className="w-4 h-4" />
               Make the white paper around the stamp see-through
             </label>
           )}
