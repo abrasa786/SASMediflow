@@ -145,12 +145,12 @@ export default function AvailabilityPage() {
                         </label>
                         {r.on ? (
                           <div className="mt-2 sm:mt-0 grid gap-2 min-w-0 flex-1">
-                            <div className="flex items-center gap-2 text-sm text-slate-500 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500 min-w-0">
                               <span className="w-12 shrink-0">Hours</span>
                               <input type="time" value={r.start} onChange={(e) => upd(r.weekday, { start: e.target.value })} className={`${inputCls} min-w-0 flex-1 sm:flex-none sm:w-32`} /> <span>to</span>
                               <input type="time" value={r.end} onChange={(e) => upd(r.weekday, { end: e.target.value })} className={`${inputCls} min-w-0 flex-1 sm:flex-none sm:w-32`} />
                             </div>
-                            <div className="flex items-center gap-2 text-sm text-slate-500 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500 min-w-0">
                               <span className="w-12 shrink-0">Break</span>
                               <input type="time" value={r.break_start} onChange={(e) => upd(r.weekday, { break_start: e.target.value })} className={`${inputCls} min-w-0 flex-1 sm:flex-none sm:w-32`} /> <span>to</span>
                               <input type="time" value={r.break_end} onChange={(e) => upd(r.weekday, { break_end: e.target.value })} className={`${inputCls} min-w-0 flex-1 sm:flex-none sm:w-32`} />

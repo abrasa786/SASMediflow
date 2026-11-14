@@ -103,6 +103,13 @@ export class App {
   private defaults: Record<string, unknown> = {
     "/api/ai/settings": { policy: { external_enabled: false, retention_days: 30 }, provider_configured: false, encrypted_at_rest: true },
     "/api/online-booking": { enabled: false, config: {} },
+    // Realistic answers for the pages that read a lot from the server, so every screen really renders in the device checks
+    "/api/flows": { flows: [{ id: "f1", name: "Confirm every booking on WhatsApp", is_active: true, summary: "When an appointment is booked, send the patient a WhatsApp confirmation" }], runs: [{ id: "r1", flow_name: "Confirm every booking on WhatsApp", created_at: "2026-11-14T08:00:00Z", event: "appointment_booked", status: "success" }] },
+    "/api/recall": { role: "admin", whatsapp: false, chatReady: false, settings: { auto: false, days: 180 }, candidates: [{ patient_id: PID, name: "Abdul Rahim", reason: "treatment_pending", detail: "Root canal, 2 of 3 sittings done" }], log: [] },
+    "/api/staff": { members: [{ key: "m1", userId: CID, doctorId: DID, name: "Dr. Demo", role: "admin", email: "admin@demo.com", specialty: "Dentistry", active: true, isMe: true, hasLogin: true, phone: "9876543210", fee: 500, experience: 8, shift: { start: "09:00", end: "18:00", breakStart: "13:00", breakEnd: "14:00", days: [1, 2, 3, 4, 5, 6] } }] },
+    "/api/doctors/availability": { role: "admin", userId: CID, doctors: [{ id: DID, user_id: CID, name: "Dr. Demo", is_active: true, slot_minutes: 30, consultation_fee: 500, phone: "9876543210" }], schedules: [] },
+    "/api/builder/reports": { reports: [], dashboards: [], tables: [], canEdit: true },
+    "/api/builder/schema": { schema: { objects: [], apps: [] }, changesets: [] },
   };
 
   private async apiRoute(r: Route) {

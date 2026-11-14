@@ -60,7 +60,14 @@
   input[type="date"], input[type="time"], input[type="datetime-local"], select { min-width: 0; max-width: 100%; }
   input[type="date"], input[type="time"], input[type="datetime-local"] { min-height: 2.5rem; }
 }
+@media (max-width: 1023px) {
+  /* A time box needs room for "09:00 AM" and its clock icon, or the time is cut off */
+  input[type="time"] { min-width: 7.75rem; }
+}
 @media (max-width: 420px) {
+  /* Two-up rows of time boxes (Opens / Closes, Break from / to) stack on a folded or small phone */
+  .grid-cols-2:has(input[type="time"]), .grid-cols-2:has(input[type="date"]) { grid-template-columns: minmax(0, 1fr); }
+  input[type="date"] { min-width: 9rem; }
   /* Two-up form rows (date + time, start + end…) get too narrow on a folded phone or a small one: stack them */
   form .grid-cols-2, [role="dialog"] .grid-cols-2, .fixed .grid-cols-2 { grid-template-columns: minmax(0, 1fr); }
   main > div { padding-left: 0.75rem; padding-right: 0.75rem; }
@@ -136,3 +143,10 @@
 
 /* Keyboard users always see where they are */
 :focus-visible { outline: 2px solid var(--accent-dark); outline-offset: 2px; }
+
+@media (max-width: 360px) {
+  /* Folded phones: a dropdown beside another field gets cut off, so give each its own row */
+  .grid-cols-2:has(select) { grid-template-columns: minmax(0, 1fr); }
+  /* Short labels over a number (Casual, Sick, Dentistry…) should not be torn in the middle of a word */
+  main { overflow-wrap: normal; }
+}

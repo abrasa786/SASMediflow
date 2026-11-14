@@ -30,19 +30,19 @@ export default function LandingPage() {
 
       {/* NAV */}
       <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center text-white font-bold text-base shadow-sm">M</div>
-            <span className="font-bold text-lg tracking-tight">Mediflow <span className="text-blue-600">Clinic</span></span>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center text-white font-bold text-base shadow-sm">M</div>
+            <span className="font-bold text-base sm:text-lg tracking-tight whitespace-nowrap max-[340px]:hidden">Mediflow<span className="text-blue-600 max-sm:hidden"> Clinic</span></span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-gray-500">
             <a href="#features" className="hover:text-gray-900 transition-colors">Features</a>
             <a href="#demo" className="hover:text-gray-900 transition-colors">Demo</a>
             <a href="#pricing" className="hover:text-gray-900 transition-colors">Pricing</a>
           </div>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors">Sign in</Link>
-            <Link href="/signup" className="text-sm bg-gradient-to-r from-blue-600 to-violet-600 hover:opacity-90 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-sm">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors whitespace-nowrap px-1">Sign in</Link>
+            <Link href="/signup" className="text-sm bg-gradient-to-r from-blue-600 to-violet-600 hover:opacity-90 text-white font-semibold px-3 sm:px-4 py-2 rounded-xl transition-all shadow-sm whitespace-nowrap">
               Get started <Icon name="arrow-right" size={16} className="inline -mt-0.5" />
             </Link>
           </div>
@@ -71,7 +71,7 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup"
-              className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-violet-600 text-white font-bold px-8 py-4 rounded-2xl text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all">
+              className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-violet-600 text-white font-bold px-5 sm:px-8 py-4 rounded-2xl text-base sm:text-lg text-center whitespace-normal shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all">
               Start free — set up in 2 min
             </Link>
             <Link href="/login"

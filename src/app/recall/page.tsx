@@ -48,8 +48,8 @@ export default function RecallPage() {
               ) : <span className="text-slate-500">{d.settings.auto ? "On" : "Off"} (set by the admin)</span>}
               <span className="text-xs text-slate-400">{d.chatReady ? "Patients can reply on WhatsApp to book." : "Two-way chat is not set up yet."}</span>
             </div>
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="font-semibold text-slate-900">{d.candidates.length} due</h2>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <h2 className="font-semibold text-slate-900 whitespace-nowrap">{d.candidates.length} due</h2>
               <div className="flex gap-2">
                 <button disabled={busy || !pick.length} onClick={() => send(pick)} className="text-sm px-3 py-1.5 rounded-lg bg-slate-900 text-white disabled:opacity-40">Send to selected ({pick.length})</button>
                 <button disabled={busy || !d.candidates.length} onClick={() => send(d.candidates.slice(0, 50).map((c: any) => c.patient_id))} className="text-sm px-3 py-1.5 rounded-lg border border-slate-200 disabled:opacity-40">Send to all (max 50)</button>
