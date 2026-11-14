@@ -34,7 +34,7 @@ const FROM_EMOJI: Record<string, string> = {
   "✓": "check", "✔": "check", "✅": "check-circle", "❌": "x-circle", "✕": "x", "✖": "x", "⚠": "alert", "📅": "calendar", "🗓": "calendar", "📋": "list", "📃": "list",
   "🏥": "hospital", "🧾": "receipt", "🤖": "bot", "🦷": "tooth", "🧩": "puzzle", "👥": "users", "👤": "user", "🙍": "user", "👨": "doctor", "⚕": "doctor", "🩺": "doctor",
   "📄": "file", "📍": "pin", "📦": "package", "💊": "pill", "🔍": "search", "🔎": "search", "🗑": "trash", "⏰": "clock", "🕘": "clock", "📊": "chart", "📈": "chart",
-  "📲": "phone", "📞": "phone", "🔁": "repeat", "📹": "video", "🔏": "stamp", "🚀": "rocket", "💳": "card", "🏖": "leave", "💬": "message", "🎉": "party", "📝": "edit",
+  "📲": "phone", "📞": "phone", "🔁": "repeat", "📹": "video", "🔏": "stamp", "✍": "pencil", "🚀": "rocket", "💳": "card", "🏖": "leave", "💬": "message", "🎉": "party", "📝": "edit",
   "💰": "wallet", "🧰": "tools", "🧤": "glove", "↗": "external", "↑": "up", "✉": "mail", "📧": "mail", "🌐": "globe", "🔗": "link", "🧭": "compass", "🔒": "lock", "🔐": "lock",
   "🏠": "home", "⚙": "settings", "📣": "megaphone", "📥": "inbox", "📨": "send", "🚚": "truck", "🛠": "build", "🏷": "tag", "🗂": "folder", "⚡": "zap", "✏": "pencil",
   "❤": "heart", "☰": "menu", "🪥": "list-check",

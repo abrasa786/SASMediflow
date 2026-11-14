@@ -143,3 +143,30 @@ test.describe("Stamp validation", () => {
     await expect(page.locator("[role=alert]:not(#__next-route-announcer__)")).toContainText("Most compatible");
   });
 });
+
+test.describe("Signature in Setup", () => {
+  async function sign(page: any) {
+    const box = await page.getByTestId("signature-canvas").boundingBox();
+    await page.mouse.move(box.x + 20, box.y + 90); await page.mouse.down();
+    for (let i = 1; i <= 12; i++) await page.mouse.move(box.x + 20 + i * 18, box.y + 90 - Math.sin(i) * 30);
+    await page.mouse.up();
+  }
+  test("positive: draw a signature, use it, save; a transparent PNG is sent and a toast shows", async ({ page, app }) => {
+    app.api("POST /api/clinic/branding", () => ({ json: { branding: { signature_url: "https://example.com/sig.png" } } }));
+    await page.goto("/setup");
+    await page.getByText("Add your signature").click();
+    await sign(page);
+    await page.getByRole("button", { name: "Use this signature" }).click();
+    await page.getByRole("button", { name: "Save signature" }).click();
+    await expect.poll(() => app.called("/api/clinic/branding").length).toBe(1);
+    expect(app.called("/api/clinic/branding")[0].body.signatureDataUrl).toMatch(/^data:image\/png;base64,/);
+    await expect(page.getByRole("status").filter({ hasText: "Signature saved" })).toBeVisible();
+  });
+  test("negative: an empty box cannot be used and nothing is sent", async ({ page, app }) => {
+    await page.goto("/setup");
+    await page.getByText("Add your signature").click();
+    await expect(page.getByRole("button", { name: "Use this signature" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "Save signature" })).toBeDisabled();
+    expect(app.called("/api/clinic/branding").length).toBe(0);
+  });
+});

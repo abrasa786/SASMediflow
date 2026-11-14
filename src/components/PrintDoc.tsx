@@ -25,10 +25,16 @@ export default function PrintDoc({ clinic, title, number, meta, children, showSt
           </div>
         </div>
         {children}
-        {showStamp && clinic?.stamp_url && (
-          <div className="mt-6 flex justify-end">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={clinic.stamp_url} alt="Clinic stamp" className="max-h-32 max-w-[10rem] object-contain" />
+        {showStamp && (clinic?.stamp_url || clinic?.signature_url) && (
+          <div className="mt-6 flex justify-end items-end gap-6">
+            {clinic?.signature_url && (
+              <div className="text-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={clinic.signature_url} alt="Authorised signature" className="max-h-16 max-w-[10rem] object-contain mx-auto" />
+                <p className="border-t border-slate-300 mt-1 pt-0.5 text-[10px] text-slate-500 min-w-[6rem]">Authorised signatory</p>
+              </div>
+            )}
+            {clinic?.stamp_url && /* eslint-disable-next-line @next/next/no-img-element */ <img src={clinic.stamp_url} alt="Clinic stamp" className="max-h-32 max-w-[10rem] object-contain" />}
           </div>
         )}
       </div>

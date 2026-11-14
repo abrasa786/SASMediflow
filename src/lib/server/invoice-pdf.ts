@@ -27,7 +27,7 @@ async function loadLogo(pdf: PDFDocument, url?: string | null): Promise<PDFImage
 }
 
 export interface InvoiceData {
-  clinic: { name: string; address?: string | null; city?: string | null; phone?: string | null; email?: string | null; gst_number?: string | null; logo_url?: string | null; stamp_url?: string | null; color?: string | null };
+  clinic: { name: string; address?: string | null; city?: string | null; phone?: string | null; email?: string | null; gst_number?: string | null; logo_url?: string | null; signature_url?: string | null; stamp_url?: string | null; color?: string | null };
   invoice: { number: string; date: string; status: string; items: { name: string; qty: number; unit_price: number; amount: number }[]; subtotal: number; discount: number; gst_percent: number; gst_amount: number; total: number; paid: number; method?: string | null };
   patient: { name: string; phone?: string | null };
 }
@@ -119,13 +119,21 @@ export async function buildInvoicePdf(d: InvoiceData): Promise<Uint8Array> {
   if (due > 0) row("Balance due", rs(due), bold, 11);
   if (d.invoice.method) text(`Payment method: ${d.invoice.method}`, M, y + 17, 9, reg, mute);
 
-  // the clinic's stamp, bottom right under the totals
-  const stamp = await loadLogo(pdf, d.clinic.stamp_url);
-  if (stamp) {
-    const s = Math.min(120 / stamp.width, 120 / stamp.height), w = stamp.width * s, h = stamp.height * s;
+  // the authorised signature and the clinic's stamp, bottom right under the totals (signature beside the stamp)
+  const [stamp, sig] = [await loadLogo(pdf, d.clinic.stamp_url), await loadLogo(pdf, d.clinic.signature_url)];
+  if (stamp || sig) {
+    const fit = (im: PDFImage, mw: number, mh: number) => { const k = Math.min(mw / im.width, mh / im.height); return { w: im.width * k, h: im.height * k }; };
+    const st = stamp ? fit(stamp, 120, 120) : { w: 0, h: 0 }, sg = sig ? fit(sig, 150, 60) : { w: 0, h: 0 };
+    const rowH = Math.max(st.h, sig ? sg.h + 16 : 0);
     let top = y - 4;
-    if (top - h < 75) { page = pdf.addPage([W, H]); top = H - 60; }
-    page.drawImage(stamp, { x: W - M - w, y: top - h, width: w, height: h });
+    if (top - rowH < 75) { page = pdf.addPage([W, H]); top = H - 60; }
+    if (stamp) page.drawImage(stamp, { x: W - M - st.w, y: top - st.h, width: st.w, height: st.h });
+    if (sig) {
+      const x = W - M - st.w - (stamp ? 18 : 0) - Math.max(sg.w, 90), base = top - rowH + 16;
+      page.drawImage(sig, { x: x + (Math.max(sg.w, 90) - sg.w) / 2, y: base, width: sg.w, height: sg.h });
+      page.drawLine({ start: { x, y: base - 2 }, end: { x: x + Math.max(sg.w, 90), y: base - 2 }, thickness: 0.6, color: line });
+      text("Authorised signatory", x, base - 12, 8, reg, mute);
+    }
   }
 
   center(`Thank you for choosing ${d.clinic.name}.`, 60, 10, reg, mute);

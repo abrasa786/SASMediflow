@@ -31,6 +31,8 @@ export async function getSetupStatus(clinicId: string): Promise<{ items: SetupIt
   ]);
   const stampRes: any = await supabase.from("clinics").select("stamp_url").eq("id", clinicId).maybeSingle();   // separate, so setup still loads before the column exists
   const hasStamp = !!stampRes.data?.stamp_url;
+  const sigRes: any = await supabase.from("clinics").select("signature_url").eq("id", clinicId).maybeSingle();   // separate, so setup still loads before the column exists
+  const hasSignature = !!sigRes.data?.signature_url;
   const impRes: any = await supabase.from("import_batches").select("id", { count: "exact", head: true }).eq("clinic_id", clinicId).is("undone_at", null);   // separate, so setup still loads before the table exists
   const hasImport = (impRes.count ?? 0) > 0;
   const s = (clinic?.settings ?? {}) as any;
@@ -42,6 +44,7 @@ export async function getSetupStatus(clinicId: string): Promise<{ items: SetupIt
     { id: "templates", title: "Check your treatment templates", hint: "Multi-sitting treatments (like root canals) with gaps and amounts. Edit to match your practice.", href: "/treatments", done: templates > 0 && !!s?.setup?.templates_reviewed },
     { id: "import",    title: "Bring your patients from another app (optional)", hint: "Moving from Practo or another app? Import your patient list from a file.", href: "/import", done: hasImport, optional: true },
     { id: "stamp",     title: "Add your clinic stamp (optional)", hint: "Your seal is printed at the bottom right of every invoice.", href: "/settings", done: hasStamp, optional: true },
+    { id: "signature", title: "Add your signature (optional)", hint: "Draw it with your finger. It is printed on every invoice with the stamp.", href: "/settings", done: hasSignature, optional: true },
     { id: "stock",     title: "Enter your stock quantities", hint: "Shelves are ready with the usual items. Add real quantities so usage can be deducted.", href: "/stock", done: stockWithQty > 0, optional: true },
     { id: "whatsapp",  title: "Connect WhatsApp (optional)", hint: "Without it, Mediflow opens WhatsApp with the message ready to send.", href: "/settings", done: !!s?.setup?.whatsapp_done, optional: true },
     { id: "team",      title: "Invite your team", hint: "Receptionists, nurses and other doctors get their own logins.", href: "/staff", done: staff > 1, optional: true },

@@ -65,7 +65,7 @@ const TYPES: Record<string, { ext: string; magic: (b: Buffer) => boolean }> = {
 export const MAX_LOGO_BYTES = 1024 * 1024;
 
 /** Stores a logo (PNG/JPG/WebP up to 1 MB; SVG is refused because it can carry scripts) and returns its public URL. */
-export async function saveLogo(db: any, clinicId: string, dataUrl: string, kind: "logo" | "stamp" = "logo"): Promise<string> {
+export async function saveLogo(db: any, clinicId: string, dataUrl: string, kind: "logo" | "stamp" | "signature" = "logo"): Promise<string> {
   const m = /^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl ?? "");
   if (!m) throw new HttpError(400, `The ${kind} must be a PNG, JPG or WebP image.`);
   const buf = Buffer.from(m[2], "base64");

@@ -11,6 +11,7 @@ import { authFetch } from "@/lib/api";
 import { getSetupStatus, setSetupFlag, type SetupItem } from "@/lib/setup";
 import { supabase } from "@/lib/supabase";
 import LogoPicker from "@/components/LogoPicker";
+import SignaturePad from "@/components/SignaturePad";
 import PatientImport from "@/components/PatientImport";
 import { Ico } from "@/components/Icon";
 
@@ -34,6 +35,7 @@ export default function SetupPage() {
   const [prof, setProf] = useState({ phone: "", address: "", city: "", specialty: "Dentistry" });
   const [doc, setDoc] = useState({ name: "", specialty: "" });
   const [stamp, setStamp] = useState<string | null>(null);
+  const [signature, setSignature] = useState<string | null>(null);
   const router = useRouter();
   const clinicId = typeof window !== "undefined" ? getActiveClinicId() : null;
 
@@ -86,6 +88,11 @@ export default function SetupPage() {
     if (!stamp) throw new Error("Choose your stamp image first.");
     await authFetch("/api/clinic/branding", { body: { clinicId, action: "save", stampDataUrl: stamp } });
   }, "Stamp saved. It will appear at the bottom right of your invoices.");
+
+  const saveSignature = () => run("signature", async () => {
+    if (!signature) throw new Error("Draw or upload your signature first.");
+    await authFetch("/api/clinic/branding", { body: { clinicId, action: "save", signatureDataUrl: signature } });
+  }, "Signature saved. It will print on your invoices beside the stamp.");
 
   const mark = (step: string, flag: string, text: string) => run(step, () => setSetupFlag(clinicId!, flag, true), text);
 
@@ -153,6 +160,14 @@ export default function SetupPage() {
           <LogoPicker transparentBg label="Clinic stamp" icon="🔏" uploadText="Upload stamp" hint="PNG, JPG or WebP, under 1 MB." value={stamp} onChange={setStamp} />
           {err}
           <button disabled={busy || !stamp} onClick={saveStamp} className={primary + " w-full sm:w-auto"}>{busy ? "Saving…" : "Save stamp"}</button>
+        </div>);
+      case "signature": return (
+        <div className="space-y-3">
+          <p className="text-sm text-slate-600">Draw your signature with your finger (or mouse), then tap <b>Use this signature</b>. It is printed on every invoice, beside the stamp. You can skip this and add it later in Settings.</p>
+          <SignaturePad onUse={setSignature} />
+          <LogoPicker transparentBg label="Your signature" icon="✍" uploadText="Or upload a photo" hint="A photo of your signature on white paper also works." value={signature} onChange={setSignature} />
+          {err}
+          <button disabled={busy || !signature} onClick={saveSignature} className={primary + " w-full sm:w-auto"}>{busy ? "Saving…" : "Save signature"}</button>
         </div>);
       case "whatsapp": return (
         <div className="space-y-3">

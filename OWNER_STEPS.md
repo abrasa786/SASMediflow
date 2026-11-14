@@ -36,3 +36,6 @@
 ## Import patients from another app
 - Run `supabase/RUN_ME_ALL_MIGRATIONS.sql` again (it now includes 034 data import), then `notify pgrst, 'reload schema';`.
 - In Setup, open "Bring your patients from another app", or use the menu: Import data. Export the patient list from the old app as CSV first.
+
+## Signature on invoices
+Run `supabase/RUN_ME_ALL_MIGRATIONS.sql` again (it adds `clinics.signature_url`), then run `notify pgrst, 'reload schema';`. Then in Setup (Add your signature) or Settings, draw the signature and save.

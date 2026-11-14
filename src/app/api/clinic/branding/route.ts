@@ -12,7 +12,8 @@ const COLS = "slug, logo_url, primary_color, tagline, ai_name, website, custom_d
 /** The branding plus the stamp. The stamp is read on its own, so a database without the stamp column still works. */
 async function full(db: any, clinicId: string, c: any) {
   const r = await db.from("clinics").select("stamp_url").eq("id", clinicId).maybeSingle();
-  return { ...view(c ?? {}), stamp_url: r.data?.stamp_url ?? null };
+  const g = await db.from("clinics").select("signature_url").eq("id", clinicId).maybeSingle();   // separate, so a database without the signature column still works
+  return { ...view(c ?? {}), stamp_url: r.data?.stamp_url ?? null, signature_url: g.data?.signature_url ?? null };
 }
 
 /** Current branding + domain status. Any staff member (the sidebar uses it). */
@@ -22,7 +23,8 @@ export async function GET(req: NextRequest) {
     const { data, error } = await db.from("clinics").select(COLS).eq("id", req.nextUrl.searchParams.get("clinicId")).maybeSingle();
     if (error) throw new HttpError(500, /does not exist/.test(error.message) ? "Branding is not installed yet. Run supabase/migrations/007_branding_and_domains.sql in the Supabase SQL editor." : error.message);
     const stamp = await db.from("clinics").select("stamp_url").eq("id", req.nextUrl.searchParams.get("clinicId")).maybeSingle();   // separate, so a database without the stamp column still loads
-    return { branding: { ...view(data ?? {}), stamp_url: stamp.data?.stamp_url ?? null } };
+    const sig = await db.from("clinics").select("signature_url").eq("id", req.nextUrl.searchParams.get("clinicId")).maybeSingle();
+    return { branding: { ...view(data ?? {}), stamp_url: stamp.data?.stamp_url ?? null, signature_url: sig.data?.signature_url ?? null } };
   });
 }
 
@@ -45,8 +47,11 @@ export async function POST(req: NextRequest) {
       if (b.logoDataUrl) patch.logo_url = await saveLogo(db, b.clinicId, b.logoDataUrl);
       if (b.removeStamp) patch.stamp_url = null;
       if (b.stampDataUrl) patch.stamp_url = await saveLogo(db, b.clinicId, b.stampDataUrl, "stamp");
+      if (b.removeSignature) patch.signature_url = null;
+      if (b.signatureDataUrl) patch.signature_url = await saveLogo(db, b.clinicId, b.signatureDataUrl, "signature");
       if (!Object.keys(patch).length) throw new HttpError(400, "Nothing to save.");
       const { error } = await db.from("clinics").update(patch).eq("id", b.clinicId);
+      if (error && /signature_url/.test(error.message)) throw new HttpError(500, "The signature needs a database update. Run supabase/RUN_ME_ALL_MIGRATIONS.sql in Supabase, then try again.");
       if (error && /stamp_url/.test(error.message)) throw new HttpError(500, "The stamp needs a database update. Run supabase/RUN_ME_ALL_MIGRATIONS.sql in Supabase, then try again.");
       if (error) throw new HttpError(error.code === "23505" ? 409 : 400, error.code === "23505" ? "That web address is already taken. Try another." : error.message);
     } else if (b.action === "set_domain") {

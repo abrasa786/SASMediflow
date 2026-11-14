@@ -4596,6 +4596,10 @@ create policy import_batches_admin on import_batches for select using (is_clinic
 alter table clinic_patients add column if not exists import_batch_id uuid references import_batches(id) on delete set null;
 create index if not exists clinic_patients_batch_idx on clinic_patients (import_batch_id) where import_batch_id is not null;
 
+-- ===== 035_clinic_signature.sql =====
+-- Authorised signature, printed beside the stamp at the bottom right of every invoice.
+alter table clinics add column if not exists signature_url text;
+
 -- ===== security sweep: no table in the public schema may be left open =====
 -- Switches Row-Level Security on for any public table that still has it off (the app's server uses the service role, which is not affected).
 do $$
