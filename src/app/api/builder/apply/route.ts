@@ -20,7 +20,27 @@ export async function POST(req: NextRequest) {
     const bSteps = v.plan.steps.filter(isB) as any[];
     // Pinning a screen to the main tab bar is a clinic setting (settings.main_tabs), not a table change.
     const pinSteps = v.plan.steps.filter((s) => s.tool === "pin_tab") as any[];
-    const rest = { ...v.plan, steps: v.plan.steps.filter((s) => !isB(s) && s.tool !== "pin_tab") };
+    const homeSteps = v.plan.steps.filter((s) => s.tool === "home_layout") as any[];
+    const rest = { ...v.plan, steps: v.plan.steps.filter((s) => !isB(s) && s.tool !== "pin_tab" && s.tool !== "home_layout") };
+    // The Home dashboard layout is a clinic setting too (settings.home_hidden, settings.home_dashboard). Hidden cards are only not shown; nothing is deleted.
+    const applyHome = async () => {
+      if (!homeSteps.length) return;
+      const { data: cl } = await db.from("clinics").select("settings").eq("id", clinicId).maybeSingle();
+      const settings = ((cl?.settings ?? {}) as any);
+      let hidden: string[] = Array.isArray(settings.home_hidden) ? settings.home_hidden.filter((x: any) => typeof x === "string") : [];
+      let dash: string | null = typeof settings.home_dashboard === "string" ? settings.home_dashboard : null;
+      for (const s of homeSteps) {
+        for (const k of s.args.hide ?? []) if (!hidden.includes(k)) hidden.push(k);
+        for (const k of s.args.show ?? []) hidden = hidden.filter((h) => h !== k);
+        if (s.args.dashboard !== undefined) dash = s.args.dashboard;
+      }
+      if (dash) {
+        const { data: d } = await db.from("saved_dashboards").select("id").eq("clinic_id", clinicId).eq("name", dash).maybeSingle();
+        if (!d) throw new HttpError(400, `There is no dashboard called “${dash}” to show on Home.`);
+      }
+      const { error: he } = await db.from("clinics").update({ settings: { ...settings, home_hidden: hidden, home_dashboard: dash } }).eq("id", clinicId);
+      if (he) throw new HttpError(400, he.message);
+    };
     if (pinSteps.length) {
       const { data: cl } = await db.from("clinics").select("settings").eq("id", clinicId).maybeSingle();
       const settings = ((cl?.settings ?? {}) as any);
@@ -46,7 +66,7 @@ export async function POST(req: NextRequest) {
       }
       n++;
     }
-    if (!rest.steps.length) { if (pinSteps.length) n += pinSteps.length; await rememberPlan(db, clinicId, "builder", String(prompt ?? ""), v.plan); return { changesetId: null, schema: await loadSchemaWithBuiltins(db, clinicId, await loadSchema(db, clinicId)), builtinChanges: n }; }
+    if (!rest.steps.length) { await applyHome(); if (pinSteps.length) n += pinSteps.length; await rememberPlan(db, clinicId, "builder", String(prompt ?? ""), v.plan); return { changesetId: null, schema: await loadSchemaWithBuiltins(db, clinicId, await loadSchema(db, clinicId)), builtinChanges: n }; }
 
     const { data, error } = await db.rpc("builder_apply_plan", {
       p_clinic: clinicId, p_actor: userId, p_prompt: String(prompt ?? ""), p_plan: rest,
@@ -56,6 +76,7 @@ export async function POST(req: NextRequest) {
       for (const s of bSteps) if (s.tool === "add_field") await db.from("custom_field_defs").delete().eq("clinic_id", clinicId).eq("entity", s.args.object).eq("api_name", s.args.field.api_name);
       throw new HttpError(400, `Nothing was changed. ${error.message}`);
     }
+    await applyHome();
     await rememberPlan(db, clinicId, "builder", String(prompt ?? ""), v.plan);
     return { changesetId: data, schema: await loadSchemaWithBuiltins(db, clinicId, await loadSchema(db, clinicId)), builtinChanges: n };
   });

@@ -72,9 +72,9 @@ export function fieldsOf(object: string, schema: Schema): Record<string, string>
 
 /* ───────────────────────── validation ───────────────────────── */
 
-export function normalizeAgentStep(s: any, schema: Schema, where: string, errors: string[], reports: Set<string>, surface: Surface = "builder"): AgentStep | null {
+export function normalizeAgentStep(s: any, schema: Schema, where: string, errors: string[], reports: Set<string>, surface: Surface = "builder", allowReports = false): AgentStep | null {
   const a = s?.args ?? {};
-  if (surface === "builder" && ASSISTANT_TOOLS.includes(s?.tool)) { errors.push(`${where}: reports and dashboards are made in the AI Assistant chat (everyone can use it), not in the Builder`); return null; }
+  if (surface === "builder" && !allowReports && ASSISTANT_TOOLS.includes(s?.tool)) { errors.push(`${where}: reports and dashboards are made in the AI Assistant chat (everyone can use it), not in the Builder`); return null; }
   if (surface === "assistant" && !ASSISTANT_TOOLS.includes(s?.tool)) { errors.push(`${where}: the assistant can only save reports and dashboards. Ask an admin to use the Builder for that`); return null; }
   switch (s?.tool) {
     case "create_report": {

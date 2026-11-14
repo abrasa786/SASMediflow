@@ -1,4 +1,5 @@
 import { resolvePin } from "./pins";
+import { HOME_CARDS } from "./home";
 import { describeAgentStep, normalizeAgentStep, SYSTEM_APPS, VIS_ROLES } from "./agent-tools";
 import { FIELD_TYPES, type FieldSpec, type FieldType, type Plan, type Schema, type Step } from "./types";
 
@@ -51,6 +52,7 @@ export function validatePlan(raw: any, schema: Schema): { ok: true; plan: Plan }
 
   const steps: Step[] = [];
   const reportNames = new Set<string>();
+  const homeChart = raw.steps.some((x: any) => x?.tool === "home_layout" && x?.args?.dashboard);   // a chart for Home may be made here
   raw.steps.forEach((s: any, i: number) => {
     const where = `Step ${i + 1}`;
     const a = s?.args ?? {};
@@ -124,8 +126,16 @@ export function validatePlan(raw: any, schema: Schema): { ok: true; plan: Plan }
         steps.push({ tool: "create_app", args: { api_name: api, label: String(a.label || titleCase(api)).slice(0, 80), icon: a.icon ? String(a.icon).slice(0, 8) : undefined, description: a.description ? String(a.description).slice(0, 300) : undefined, objects: objs } });
         return;
       }
+      case "home_layout": {
+        const pick = (x: unknown) => (Array.isArray(x) ? x.map(String).filter((k) => Object.prototype.hasOwnProperty.call(HOME_CARDS, k)) : []);
+        const hide = pick(a.hide), show = pick(a.show);
+        const dashboard = a.dashboard === null ? null : a.dashboard ? String(a.dashboard).trim().slice(0, 80) : undefined;
+        if (!hide.length && !show.length && dashboard === undefined) { errors.push(`${where}: say which Home card to hide or show, or which dashboard to show on Home. Cards: ${Object.values(HOME_CARDS).map((c) => c.label).join(", ")}`); return; }
+        steps.push({ tool: "home_layout", args: { ...(hide.length ? { hide } : {}), ...(show.length ? { show } : {}), ...(dashboard !== undefined ? { dashboard } : {}) } });
+        return;
+      }
       case "pin_tab": {
-        const r = resolvePin(String(a.target ?? ""), schema.apps.map((x) => ({ api_name: x.api_name, label: x.label })));
+        const r = resolvePin(String(a.target ?? ""), [...schema.apps.map((x) => ({ api_name: x.api_name, label: x.label })), ...Array.from(apps.keys()).map((k) => ({ api_name: k, label: titleCase(k) }))]);
         if (!r) { errors.push(`${where}: I can't put “${a.target}” in the main tabs. Try a screen name like Stock, Tasks or Calendar, or one of your apps.`); return; }
         steps.push({ tool: "pin_tab", args: { target: r.key, label: a.label ? String(a.label).slice(0, 40) : undefined, remove: !!a.remove } });
         return;
@@ -161,7 +171,7 @@ export function validatePlan(raw: any, schema: Schema): { ok: true; plan: Plan }
         return;
       }
       default: {
-        const ag = normalizeAgentStep(s, schema, where, errors, reportNames);
+        const ag = normalizeAgentStep(s, schema, where, errors, reportNames, "builder", homeChart);
         if (!ag && !errors.some((e) => e.startsWith(where))) errors.push(`${where}: "${s?.tool ?? "(missing)"}" is not a tool the builder can run`);
         if (ag) steps.push(ag);
       }
@@ -193,6 +203,10 @@ export function describeStep(s: Step): string {
     case "add_field": return `Add field ${describeField(s.args.field)} to “${s.args.object}”`;
     case "hide_field": return `Hide field “${s.args.field}” on “${s.args.object}” (data is kept)`;
     case "create_app": return `Create app “${s.args.label}”${s.args.objects?.length ? " with tabs: " + s.args.objects.join(", ") : ""}`;
+    case "home_layout": {
+      const nm = (ks?: string[]) => (ks ?? []).map((k) => HOME_CARDS[k]?.label ?? k).join(", ");
+      return [s.args.hide?.length ? `Hide on Home: ${nm(s.args.hide)}` : "", s.args.show?.length ? `Show on Home: ${nm(s.args.show)}` : "", s.args.dashboard ? `Show the “${s.args.dashboard}” dashboard (charts) on Home` : s.args.dashboard === null ? "Stop showing a dashboard on Home" : ""].filter(Boolean).join(". ");
+    }
     case "pin_tab": return s.args.remove ? `Remove “${s.args.target.replace("app:", "")}” from the main tabs at the top` : `Show “${s.args.label ?? s.args.target.replace("app:", "")}” as a main tab at the top`;
     case "add_tab": return `Add ${s.args.kind ?? "object"} tab${s.args.object ? ` “${s.args.object}”` : ""} to app “${s.args.app}”`;
     default: return describeAgentStep(s);

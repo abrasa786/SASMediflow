@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { Icon } from "@/components/Icon";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { getActiveClinicId } from "@/lib/auth";
+import { authFetch } from "@/lib/api";
 import { PIN_TARGETS, type PinTarget } from "@/lib/builder/pins";
 
 interface Tab extends PinTarget { key: string }
@@ -31,11 +33,20 @@ export default function TopTabs() {
         const keys: string[] = Array.isArray(r.data?.settings?.main_tabs) ? r.data.settings.main_tabs : [];
         let appList = apps;
         try { const c = JSON.parse(sessionStorage.getItem("mf_apps_" + id) ?? "null"); if (c?.apps) { appList = c.apps; setApps(c.apps); } } catch { /* optional */ }
-        setPins(keys.map((k): Tab | null => {
+        const build = (list: { api_name: string; label: string }[]) => keys.map((k): Tab | null => {
           if (PIN_TARGETS[k]) return { key: k, ...PIN_TARGETS[k] };
-          if (k.startsWith("app:")) { const a = appList.find((x) => x.api_name === k.slice(4)); return a ? { key: k, label: a.label, href: `/apps/${a.api_name}` } : null; }
+          if (k.startsWith("app:")) { const a = list.find((x) => x.api_name === k.slice(4)); return a ? { key: k, label: a.label, href: `/apps/${a.api_name}` } : null; }
           return null;
-        }).filter(Boolean) as Tab[]);
+        }).filter(Boolean) as Tab[];
+        setPins(build(appList));
+        // A pinned app that the saved list does not know yet (just created) would silently not show: ask the server for the current apps once.
+        if (keys.some((k) => k.startsWith("app:") && !appList.some((x) => x.api_name === k.slice(4)))) {
+          authFetch(`/api/apps?clinicId=${id}`).then((ar: any) => {
+            const fresh = ar?.apps ?? [];
+            setApps(fresh); setPins(build(fresh));
+            try { sessionStorage.setItem("mf_apps_" + id, JSON.stringify({ apps: fresh, t: Date.now() })); } catch { /* optional */ }
+          }).catch(() => null);
+        }
       });
     };
     read();
@@ -63,7 +74,7 @@ export default function TopTabs() {
         </ul>
       </nav>
       <div className="flex items-center gap-1.5 shrink-0">
-        {cur?.listHref && <Link href={cur.listHref} aria-label="List view" title="List view" className="px-2.5 sm:px-3 py-1.5 rounded-lg text-sm font-medium text-slate-200 border border-white/20 hover:bg-white/10 whitespace-nowrap"><span aria-hidden className="sm:hidden">≣</span><span className="hidden sm:inline">List view</span></Link>}
+        {cur?.listHref && <Link href={cur.listHref} aria-label="List view" title="List view" className="px-2.5 sm:px-3 py-1.5 rounded-lg text-sm font-medium text-slate-200 border border-white/20 hover:bg-white/10 whitespace-nowrap"><span aria-hidden className="sm:hidden"><Icon name="list" size={18} /></span><span className="hidden sm:inline">List view</span></Link>}
         {newHref && <Link href={newHref} className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-sky-500 hover:bg-sky-400 text-white whitespace-nowrap"><span aria-hidden>+ </span>{newLabel}</Link>}
       </div>
     </div>

@@ -2,6 +2,8 @@ import { BUILDER_TOOLS_PROMPT, parseAssistantRequest, parseAudience, parseBuilde
 import { recommendFields } from "./recommend";
 import { toApiName, validatePlan } from "./validate";
 import { PIN_TARGETS, resolvePin } from "./pins";
+import { HOME_CARDS, resolveHomeCard } from "./home";
+import { parseReportPhrase } from "./agent-tools";
 import type { FieldSpec, FieldType, Plan, Schema, Step } from "./types";
 
 export interface PlannerResult {
@@ -32,6 +34,9 @@ TOOLS (the only steps allowed):
 - create_app     {api_name, label, icon?, description?, objects?: string[]}  -> an app whose tabs are those objects
 - pin_tab        {target: "stock"|"tasks"|"calendar"|an app name, remove?: boolean}  (show or remove a screen as a main tab in the top tab bar)
 - add_tab        {app, kind?: "object"|"dashboard"|"report"|"page", object?, label?}
+- home_layout    {hide?: string[], show?: string[], dashboard?: string|null}  -> change the Home dashboard. hide/show use card keys: appointments, completed, patients, stock, collections, dues, utilisation, noshows, trend, doctors, schedule. dashboard = the name of a saved dashboard (made with create_report + create_dashboard) whose charts are shown on Home.
+A NEW TAB the admin can see: when the admin asks for "a new tab for X" (or "a tab called X"), the plan MUST be create_object (X), create_app (an app with that object as its tab), then pin_tab {target: "app:<the app api_name>"} so it appears in the main tab bar at the top. Without pin_tab the admin cannot see it.
+To remove or hide something from Home use home_layout. To put a chart or graph on Home use create_report, create_dashboard, then home_layout {dashboard: <dashboard name>}.
 ${BUILDER_TOOLS_PROMPT}
 
 FieldSpec = {api_name, label?, data_type, required?, unique?, picklist_values?: string[], lookup_object?, help_text?}
@@ -143,6 +148,35 @@ function rulesPlan(inp: Input): PlannerResult {
     const fields = fieldPhrases.length ? fieldPhrases.map(inferField) : recommendFields(api, [], sim).fields;
     return { tool: "create_object", args: { api_name: api, label: label.replace(/\b\w/g, (c) => c.toUpperCase()), fields } };
   };
+
+  // Home dashboard: "remove patients from dashboard", "hide the schedule on home", "show a chart of appointments by doctor on home"
+  {
+    const homeWord = "(?:the\\s+|my\\s+|our\\s+)?(?:home(?:\\s*(?:page|screen|dashboard))?|dashboard|main\\s+dashboard)";
+    const chartAsk = p.match(new RegExp(`(?:show|add|put|display|need|want|see|create|make|give)\\s+(?:me\\s+)?(?:an?\\s+|the\\s+)?(?:graphical\\s+representation|graphs?|charts?|visuals?|report|trend)(?:\\s+(?:of|for|on|showing))?\\s*(.*?)\\s+(?:in|on|to|at|into)\\s+${homeWord}\\s*[.!]?$`, "i"))
+      || p.match(new RegExp(`(?:show|add|put|display)\\s+(?:me\\s+)?(?:an?\\s+|the\\s+)?(.+?)\\s+(?:graph|chart)\\s+(?:in|on|to|at|into)\\s+${homeWord}\\s*[.!]?$`, "i"));
+    if (chartAsk) {
+      const phrase = (chartAsk[1] ?? "").trim();
+      const r = phrase ? parseReportPhrase(phrase, inp.schema) : null;
+      if (!r) return { message: "I can put a chart on Home. Tell me what it should show, for example “show a chart of appointments by doctor on home” or “show unpaid invoices by month on the dashboard”.", plan: null, source: "rules" };
+      const dname = "Home charts";
+      return finish([
+        { tool: "create_report", args: { name: r.name, chart: r.chart, spec: r.spec } },
+        { tool: "create_dashboard", args: { name: dname, reports: [r.name] } },
+        { tool: "home_layout", args: { dashboard: dname } },
+      ] as Step[], `Create the “${r.name}” chart and show it on your Home dashboard.`);
+    }
+    const hideAsk = p.match(new RegExp(`(?:remove|hide|delete|take\\s+off|get\\s+rid\\s+of|don'?t\\s+(?:show|want))\\s+(?:the\\s+)?(.+?)\\s*(?:card|widget|section|box|tile)?\\s+(?:from|off|in|on)\\s+${homeWord}\\s*[.!]?$`, "i"));
+    const showAsk = p.match(new RegExp(`(?:show|add|put|bring\\s+back|unhide|display|restore)\\s+(?:the\\s+)?(.+?)\\s*(?:card|widget|section|box|tile)?\\s+(?:in|on|to|at|into)\\s+${homeWord}\\s*[.!]?$`, "i"));
+    const hm = hideAsk || showAsk;
+    if (hm && !/\btabs?\b/i.test(p)) {
+      const keys = hm[1].split(/\s*(?:,|&|\band\b|\bplus\b)\s*/i).map((x) => resolveHomeCard(x)).filter((x): x is string => !!x);
+      if (keys.length) {
+        const names = keys.map((k) => HOME_CARDS[k].label).join(", ");
+        return finish([{ tool: "home_layout", args: hideAsk ? { hide: keys } : { show: keys } }] as Step[], hideAsk ? `Hide ${names} on the Home dashboard. Nothing is deleted, and you can bring it back any time by saying “show ${names.toLowerCase()} on home”.` : `Show ${names} on the Home dashboard.`);
+      }
+      if (hideAsk && !resolvePin(hm[1], inp.schema.apps.map((a) => ({ api_name: a.api_name, label: a.label })))) return { message: `I couldn't tell which Home card you mean by “${hm[1].trim()}”. The cards are: ${Object.values(HOME_CARDS).map((c) => c.label).join(", ")}.`, plan: null, source: "rules" };
+    }
+  }
 
   // main tabs: "show stock in the main tabs", "stocks should come in main app page", "remove tasks from the main tabs"
   {
@@ -258,6 +292,25 @@ function rulesPlan(inp: Input): PlannerResult {
     const app = inp.schema.apps.find((a) => a.api_name === toApiName(m![2]) || toApiName(a.label) === toApiName(m![2]));
     if (!obj || !app) return { message: `I need an existing object and app. Objects: ${known.map((k) => k.api_name).join(", ") || "none"}; apps: ${inp.schema.apps.map((a) => a.api_name).join(", ") || "none"}.`, plan: null, source: "rules" };
     return finish([{ tool: "add_tab", args: { app: app.api_name, kind: "object", object: obj } }], `Add a ${obj} tab to ${app.label}.`);
+  }
+
+  // "create a new tab for surgeries", "add a tab called Surgeries": a table, an app around it, and a main tab you can see
+  {
+    const tm = p.match(/^(?:please\s+)?(?:can\s+you\s+)?(?:create|add|make|build|need|want|set\s+up)\s+(?:me\s+)?(?:an?\s+|the\s+)?(?:new\s+)?tab\s+(?:called\s+|named\s+|for\s+|to\s+(?:track|manage|record)\s+)(.+?)\s*[.!]?$/i)
+      || p.match(/^(?:please\s+)?(?:can\s+you\s+)?(?:create|add|make|build|need|want)\s+(?:me\s+)?(?:an?\s+|the\s+)?(?:new\s+)?(.+?)\s+tab\s*[.!]?$/i);
+    if (tm && !/\bto\s+(?:the\s+)?.+\s+app\b/i.test(p)) {
+      const label = clean(tm[1]);
+      const existing = findObject(label, known);
+      const pin = resolvePin(label, inp.schema.apps.map((a) => ({ api_name: a.api_name, label: a.label })));
+      if (pin && !existing) return finish([{ tool: "pin_tab", args: { target: pin.key } }], `${pin.label} already exists. Show it as a main tab at the top, with its own New and List view buttons.`);
+      const title = label.replace(/\b\w/g, (c) => c.toUpperCase());
+      const objApi = toApiName(singular(label)), appApi = toApiName(label) === objApi ? toApiName(label + " tab") : toApiName(label);
+      const steps: Step[] = [];
+      if (!existing) steps.push(objectStep(singular(label), [], known.map((k) => k.api_name)));
+      steps.push({ tool: "create_app", args: { api_name: appApi, label: title, objects: [existing ?? objApi] } });
+      steps.push({ tool: "pin_tab", args: { target: "app:" + appApi } });
+      return finish(steps, `Create a “${title}” tab: a table with recommended fields, an app around it, and a main tab at the top with its own New and List view buttons.`);
+    }
   }
 
   // create object

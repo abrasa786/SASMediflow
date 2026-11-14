@@ -64,7 +64,7 @@ export default function BuilderPage() {
   const refresh = useCallback(async (cid: string) => {
     try {
       const d = await api(`/api/builder/schema?clinicId=${cid}`);
-      setSchema(d.schema); setHistory(d.changesets); setLoadErr("");
+      setSchema(d.schema ?? { objects: [], apps: [] }); setHistory(d.changesets ?? []); setLoadErr("");
     } catch (e: any) { setLoadErr(e.message); }
   }, []);
 
@@ -107,7 +107,7 @@ export default function BuilderPage() {
     setBusy(true);
     try {
       const r = await api("/api/builder/apply", { clinicId, prompt: m.prompt, plan: m.plan });
-      setSchema(r.schema);
+      if (r.schema) setSchema(r.schema);
       window.dispatchEvent(new Event("mf:apps-changed"));      // the menu and App Manager pick up the new app straight away
       setMsgs((x) => x.map((y) => (y.id === m.id ? { ...y, state: "applied" } : y)));
       push({ role: "assistant", text: "Done. Everything was applied together and is saved in your change history, so you can undo it. Want to add anything else?" });
@@ -123,7 +123,7 @@ export default function BuilderPage() {
     setBusy(true);
     try {
       const r = await api("/api/builder/rollback", { clinicId, changesetId: id });
-      setSchema(r.schema);
+      if (r.schema) setSchema(r.schema);
       window.dispatchEvent(new Event("mf:apps-changed"));
       const kept = r.result?.kept ?? 0;
       push({ role: "assistant", text: `Change undone.${kept ? ` ${kept} item${kept > 1 ? "s" : ""} already held data, so they were archived or hidden instead of deleted.` : ""}` });

@@ -291,20 +291,20 @@ export default function BillingPage() {
                 <tbody className="divide-y divide-slate-50">
                   {filtered.map((inv) => (
                     <tr key={inv.id} onClick={(e) => { if ((e.target as HTMLElement).closest("button, a, input, select, textarea")) return; router.push(`/billing/${inv.id}`); }} className="hover:bg-slate-50 cursor-pointer">
-                      <td className="px-5 py-3 font-mono text-xs text-slate-600">{inv.invoice_number ?? "—"}</td>
+                      <td className="px-5 py-3 font-mono text-xs text-slate-600 whitespace-nowrap">{inv.invoice_number ?? "—"}</td>
                       <td className="px-5 py-3">
                         <p className="font-medium text-slate-900">{(inv as any).clinic_patients?.name ?? inv.patient?.name ?? "—"}</p>
                         <p className="text-xs text-slate-400">{(inv as any).clinic_patients?.phone ?? inv.patient?.phone ?? ""}</p>
                       </td>
                       <td className="px-5 py-3 text-slate-500 hidden md:table-cell text-xs">{inv.created_at ? new Date(inv.created_at).toLocaleDateString("en-IN") : "—"}</td>
-                      <td className="px-5 py-3 text-right font-semibold text-slate-900">₹{(inv.total ?? 0).toLocaleString("en-IN")}</td>
+                      <td className="px-5 py-3 text-right font-semibold text-slate-900 whitespace-nowrap">₹{(inv.total ?? 0).toLocaleString("en-IN")}</td>
                       <td className="px-5 py-3">
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full capitalize ${STATUS_COLORS[inv.status ?? "draft"]}`}>
                           {(inv.status ?? "draft").replace("_", " ")}
                         </span>
                       </td>
                       <td className="px-5 py-3 text-slate-500 text-xs hidden md:table-cell capitalize">{inv.payment_method ?? "—"}</td>
-                      <td className="px-5 py-3">
+                      <td className="px-5 py-3 whitespace-nowrap">
                         <a href={`/billing/print?id=${inv.id}`} target="_blank" rel="noreferrer" className="text-xs text-sky-700 hover:underline font-medium mr-3">Print</a>
                         <button onClick={() => openPdf(inv.id)} className="text-xs text-sky-700 hover:underline font-medium mr-3">PDF</button>
                         <button onClick={async () => { const r = await sendOnWhatsApp(inv.id); if (r.status === "sent") toast("Invoice sent on WhatsApp."); else setWaFail({ error: r.error ?? "Could not send automatically.", link: r.link }); }} className="text-xs text-emerald-700 hover:underline font-medium mr-3">Send</button>
