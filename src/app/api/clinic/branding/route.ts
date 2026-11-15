@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
         const d = inv ? await loadInvoiceData(db, inv.id, b.clinicId) : null;
         if (d) latest = { number: d.invoice.number, stamp: !!d.clinic.stamp_url, signature: !!d.clinic.signature_url };
       } catch { /* the check still reports the images */ }
-      return { images: { stamp, signature, latest, build: (process.env.VERCEL_GIT_COMMIT_SHA || "local").slice(0, 7) } };
+      return { images: { stamp, signature, latest, build: (process.env.VERCEL_GIT_COMMIT_SHA || "local").slice(0, 7), appUrl: process.env.NEXT_PUBLIC_APP_URL || null, thisHost: req.nextUrl.host } };
     }
 
     if (b.action === "save") {

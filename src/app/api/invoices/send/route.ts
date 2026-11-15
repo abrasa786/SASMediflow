@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     if (typeof b.invoiceId !== "string" || !/^[0-9a-f-]{36}$/i.test(b.invoiceId)) throw new HttpError(400, "invoiceId is required.");
     const { data: inv } = await db.from("invoices").select("id, invoice_number, items, subtotal, discount, gst_amount, total, paid_amount, status, clinic_patients(name, phone, email)").eq("id", b.invoiceId).eq("clinic_id", b.clinicId).maybeSingle();
     if (!inv) throw new HttpError(404, "Invoice not found.");
-    if (b.linkOnly) return { pdfUrl: invoicePdfUrl(process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin, inv.id) };
+    if (b.linkOnly) return { pdfUrl: invoicePdfUrl(req.nextUrl.origin, inv.id) };   // the app the person is using now, never a different copy named in settings
     const { data: clinic } = await db.from("clinics").select("name, brand_name, phone, email").eq("id", b.clinicId).maybeSingle();
     const cname = clinic?.brand_name || clinic?.name || "the clinic";
     const pat: any = (inv as any).clinic_patients ?? {};

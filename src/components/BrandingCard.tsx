@@ -15,7 +15,7 @@ export default function BrandingCard({ clinicId }: { clinicId: string }) {
   const [stamp, setStamp] = useState<string | null>(null);
   const [stampChanged, setStampChanged] = useState(false);
   const [sign, setSign] = useState<string | null>(null);
-  const [imgCheck, setImgCheck] = useState<{ stamp: { state: string; message: string }; signature: { state: string; message: string }; latest?: { number: string; stamp: boolean; signature: boolean } | null; build?: string } | null>(null);
+  const [imgCheck, setImgCheck] = useState<{ stamp: { state: string; message: string }; signature: { state: string; message: string }; latest?: { number: string; stamp: boolean; signature: boolean } | null; build?: string; appUrl?: string | null; thisHost?: string } | null>(null);
   const [signChanged, setSignChanged] = useState(false);
   const [f, setF] = useState({ tagline: "", website: "", primaryColor: "#2563eb", slug: "", aiName: "" });
   const [domain, setDomain] = useState("");
@@ -62,6 +62,7 @@ export default function BrandingCard({ clinicId }: { clinicId: string }) {
                 ))}
                 {imgCheck.latest && <li className={imgCheck.latest.signature ? "text-emerald-700" : "text-red-700"}><b>Newest invoice ({imgCheck.latest.number}):</b> stamp {imgCheck.latest.stamp ? "found" : "missing"}, signature {imgCheck.latest.signature ? "found" : "missing"}.</li>}
                 {imgCheck.build && <li className="text-slate-400">Version running: {imgCheck.build}</li>}
+                {imgCheck.appUrl && imgCheck.thisHost && !imgCheck.appUrl.includes(imgCheck.thisHost) && <li className="text-amber-700">Your settings name another address for invoice links ({imgCheck.appUrl.replace(/^https?:\/\//, "")}). Links sent by WhatsApp or email open there, so make sure that address runs this same version.</li>}
               </ul>
             )}
           </div>
