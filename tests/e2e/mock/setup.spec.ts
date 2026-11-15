@@ -149,6 +149,33 @@ test.describe("Stamp from a phone camera photo", () => {
     expect(px.corner).toBe(0);
     expect(px.ring).toBeGreaterThan(150);
   });
+
+  test("positive: pale pen ink on grey paper stays solid and dark (a signature photo is not washed out)", async ({ page, app }) => {
+    app.api("POST /api/clinic/branding", () => ({ json: { branding: { stamp_url: "https://example.com/s.png" } } }));
+    await page.goto("/setup");
+    await page.getByText("Add your clinic stamp").click();
+    await page.evaluate(async () => {
+      const c = document.createElement("canvas"); c.width = 1600; c.height = 1000; const g = c.getContext("2d")!;
+      g.fillStyle = "#cfcfca"; g.fillRect(0, 0, 1600, 1000); g.strokeStyle = "#a2a29e"; g.lineWidth = 40; g.beginPath(); g.arc(800, 500, 350, 0, 7); g.stroke();
+      const blob: Blob = await new Promise((r) => c.toBlob((b) => r(b!), "image/jpeg", 0.9));
+      const dt = new DataTransfer(); dt.items.add(new File([blob], "IMG_pale.jpg", { type: "image/jpeg" }));
+      const input = document.querySelector('input[type=file][aria-label="Upload logo"]') as HTMLInputElement;
+      input.files = dt.files; input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    await expect(page.getByAltText("Logo preview")).toBeVisible();
+    await page.getByRole("button", { name: "Save stamp" }).click();
+    await expect.poll(() => app.called("/api/clinic/branding").length).toBe(1);
+    const url: string = app.called("/api/clinic/branding")[0].body.stampDataUrl;
+    const px = await page.evaluate(async (u) => {
+      const img = new Image(); img.src = u; await img.decode();
+      const c = document.createElement("canvas"); c.width = img.width; c.height = img.height; const g = c.getContext("2d")!; g.drawImage(img, 0, 0);
+      const r = g.getImageData(Math.round(img.width / 2 + (350 / 1600) * img.width), Math.round(img.height / 2), 1, 1).data;
+      return { corner: g.getImageData(2, 2, 1, 1).data[3], alpha: r[3], red: r[0] };
+    }, url);
+    expect(px.corner).toBe(0);
+    expect(px.alpha).toBeGreaterThan(200);   // solid
+    expect(px.red).toBeLessThan(110);        // and dark
+  });
 });
 
 test.describe("Stamp validation", () => {

@@ -45,11 +45,12 @@ async function toDataUrl(file: File, transparentBg = false, turns = 0): Promise<
     for (let i = 0; i < d.length; i += 4) hist[Math.min(d[i], d[i + 1], d[i + 2])]++;
     let seen = 0, paper = 255; const total = d.length / 4;
     for (let v = 255; v >= 0; v--) { seen += hist[v]; if (seen >= total * 0.2) { paper = v; break; } }   // brightest fifth is paper
-    const cut = Math.max(110, Math.min(245, paper - 38));
+    const cut = Math.max(100, Math.min(245, paper - 18));
     for (let i = 0; i < d.length; i += 4) {
       const lightest = Math.min(d[i], d[i + 1], d[i + 2]);
-      const a = Math.max(0, Math.min(255, (cut - lightest) * 6));     // soft edge: paper goes clear, ink stays
+      const a = Math.max(0, Math.min(255, (cut - lightest) * 10));    // soft edge: paper goes clear, even pale pen ink turns solid
       d[i + 3] = Math.min(d[i + 3], a);
+      if (a > 0) for (let k = 0; k < 3; k++) d[i + k] = Math.round(255 * Math.pow(Math.min(1, d[i + k] / paper), 4));   // darken the ink so it prints crisp, not washed out
     }
     ctx.putImageData(img, 0, 0);
     return c.toDataURL("image/png");
