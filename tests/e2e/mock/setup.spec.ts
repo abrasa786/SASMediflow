@@ -203,6 +203,21 @@ test.describe("Signature in Setup", () => {
     for (let i = 1; i <= 12; i++) await page.mouse.move(box.x + 20 + i * 18, box.y + 90 - Math.sin(i) * 30);
     await page.mouse.up();
   }
+  test("positive: a small signature is saved large enough to print clearly (not 86 pixels wide)", async ({ page, app }) => {
+    app.api("POST /api/clinic/branding", () => ({ json: { branding: { signature_url: "https://example.com/sig.png" } } }));
+    await page.goto("/setup");
+    await page.getByText("Add your signature").click();
+    const box = (await page.getByTestId("signature-canvas").boundingBox())!;
+    await page.mouse.move(box.x + 20, box.y + 60); await page.mouse.down();
+    for (let i = 1; i <= 10; i++) await page.mouse.move(box.x + 20 + i * 8, box.y + 60 - Math.sin(i) * 12);   // about 80 x 25 on screen
+    await page.mouse.up();
+    await page.getByRole("button", { name: "Use this signature" }).click();
+    await page.getByRole("button", { name: "Save signature" }).click();
+    await expect.poll(() => app.called("/api/clinic/branding").length).toBe(1);
+    const url = app.called("/api/clinic/branding")[0].body.signatureDataUrl as string;
+    const w = await page.evaluate((u) => new Promise<number>((r) => { const i = new Image(); i.onload = () => r(i.width); i.src = u; }), url);
+    expect(w).toBeGreaterThanOrEqual(500);
+  });
   test("positive: draw a signature, use it, save; a transparent PNG is sent and a toast shows", async ({ page, app }) => {
     app.api("POST /api/clinic/branding", () => ({ json: { branding: { signature_url: "https://example.com/sig.png" } } }));
     await page.goto("/setup");

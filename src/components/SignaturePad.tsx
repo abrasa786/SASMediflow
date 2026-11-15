@@ -10,6 +10,7 @@ import { Icon } from "@/components/Icon";
 export default function SignaturePad({ onUse }: { onUse: (dataUrl: string) => void }) {
   const cv = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
+  const strokes = useRef<{ x: number; y: number }[][]>([]);   // the signature as points, so it can be redrawn large and sharp
   const [inked, setInked] = useState(false);
   const [msg, setMsg] = useState("");
 
@@ -22,22 +23,28 @@ export default function SignaturePad({ onUse }: { onUse: (dataUrl: string) => vo
   const pt = (e: React.PointerEvent) => { const r = cv.current!.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
   const down = (e: React.PointerEvent) => {
     e.preventDefault(); cv.current!.setPointerCapture(e.pointerId); drawing.current = true; setMsg("");
-    const x = cv.current!.getContext("2d")!, p = pt(e); x.beginPath(); x.moveTo(p.x, p.y); x.lineTo(p.x + 0.01, p.y + 0.01); x.stroke(); setInked(true);
+    const x = cv.current!.getContext("2d")!, p = pt(e); x.beginPath(); x.moveTo(p.x, p.y); x.lineTo(p.x + 0.01, p.y + 0.01); x.stroke(); strokes.current.push([p]); setInked(true);
   };
-  const move = (e: React.PointerEvent) => { if (!drawing.current) return; const x = cv.current!.getContext("2d")!, p = pt(e); x.lineTo(p.x, p.y); x.stroke(); };
+  const move = (e: React.PointerEvent) => { if (!drawing.current) return; const x = cv.current!.getContext("2d")!, p = pt(e); x.lineTo(p.x, p.y); x.stroke(); strokes.current[strokes.current.length - 1]?.push(p); };
   const up = () => { drawing.current = false; };
-  const clear = () => { const c = cv.current!, x = c.getContext("2d")!; x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, c.width, c.height); x.restore(); setInked(false); setMsg(""); };
+  const clear = () => { const c = cv.current!, x = c.getContext("2d")!; x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, c.width, c.height); x.restore(); strokes.current = []; setInked(false); setMsg(""); };
 
   function use() {
-    const c = cv.current!, x = c.getContext("2d")!, img = x.getImageData(0, 0, c.width, c.height), d = img.data;
-    let x0 = c.width, y0 = c.height, x1 = -1, y1 = -1;
-    for (let y = 0; y < c.height; y++) for (let xx = 0; xx < c.width; xx++) if (d[(y * c.width + xx) * 4 + 3] > 20) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (y < y0) y0 = y; if (y > y1) y1 = y; }
-    if (x1 < 0 || x1 - x0 < 12) { setMsg("Please sign inside the box first."); return; }
-    const pad = 6, w = x1 - x0 + 1 + pad * 2, h = y1 - y0 + 1 + pad * 2, o = document.createElement("canvas");
-    o.width = w; o.height = h; o.getContext("2d")!.putImageData(x.getImageData(Math.max(0, x0 - pad), Math.max(0, y0 - pad), w, h), 0, 0);
-    const k = Math.min(1, 600 / Math.max(w, h)), s = document.createElement("canvas"); s.width = Math.max(1, Math.round(w * k)); s.height = Math.max(1, Math.round(h * k));
-    s.getContext("2d")!.drawImage(o, 0, 0, s.width, s.height);
-    onUse(s.toDataURL("image/png")); setMsg("");
+    const pts = strokes.current.flat();
+    if (!pts.length) { setMsg("Please sign inside the box first."); return; }
+    const x0 = Math.min(...pts.map((p) => p.x)), x1 = Math.max(...pts.map((p) => p.x)), y0 = Math.min(...pts.map((p) => p.y)), y1 = Math.max(...pts.map((p) => p.y));
+    if (x1 - x0 < 6) { setMsg("Please sign inside the box first."); return; }
+    // redraw the strokes large (600px on the longest side) with a pen thick enough to show on a printed PDF
+    const LW = 6, pad = LW + 4, k = Math.min(12, 600 / Math.max(x1 - x0, y1 - y0, 1));
+    const w = Math.max(1, Math.round((x1 - x0) * k + pad * 2)), h = Math.max(1, Math.round((y1 - y0) * k + pad * 2));
+    const o = document.createElement("canvas"); o.width = w; o.height = h;
+    const g = o.getContext("2d")!; g.lineWidth = LW; g.lineCap = "round"; g.lineJoin = "round"; g.strokeStyle = "#0f1b4d";
+    for (const st of strokes.current) {
+      g.beginPath();
+      st.forEach((p, i) => { const px = (p.x - x0) * k + pad, py = (p.y - y0) * k + pad; if (i === 0) { g.moveTo(px, py); g.lineTo(px + 0.01, py); } else g.lineTo(px, py); });
+      g.stroke();
+    }
+    onUse(o.toDataURL("image/png")); setMsg("");
   }
 
   return (
