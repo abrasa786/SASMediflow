@@ -45,7 +45,7 @@ export async function checkInvoiceImage(url?: string | null): Promise<{ state: "
 export interface InvoiceData {
   clinic: { name: string; address?: string | null; city?: string | null; phone?: string | null; email?: string | null; gst_number?: string | null; logo_url?: string | null; signature_url?: string | null; stamp_url?: string | null; color?: string | null };
   invoice: { number: string; date: string; status: string; items: { name: string; qty: number; unit_price: number; amount: number }[]; subtotal: number; discount: number; gst_percent: number; gst_amount: number; total: number; paid: number; method?: string | null };
-  patient: { name: string; phone?: string | null };
+  patient: { name: string; phone?: string | null; address?: string | null };
 }
 
 function hex(c?: string | null) {
@@ -91,6 +91,7 @@ export async function buildInvoicePdf(d: InvoiceData): Promise<Uint8Array> {
   text("Billed to", M, y, 8, bold, mute);
   text(d.patient.name, M, y - 14, 12, bold);
   if (d.patient.phone) text(`Phone: ${d.patient.phone}`, M, y - 28, 9, reg, mute);
+  if (d.patient.address) text(clean(d.patient.address).slice(0, 70), M, y - (d.patient.phone ? 40 : 28), 9, reg, mute);
   const paid = d.invoice.status === "paid" || d.invoice.paid >= d.invoice.total;
   const label = paid ? "PAID" : d.invoice.paid > 0 ? "PART PAID" : "UNPAID";
   const lw = bold.widthOfTextAtSize(label, 11) + 20;

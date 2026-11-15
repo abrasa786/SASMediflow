@@ -37,6 +37,6 @@ test.describe("Invoice", () => {
     await page.goto(`/billing/${IID}`);
     const b = page.getByRole("button", { name: /payment received|mark.*paid|received/i }).first();
     await b.click();
-    await page.waitForURL(/\/dashboard/);
+    await page.waitForURL(/\/billing(\?|$)/);
   });
 });

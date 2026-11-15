@@ -17,7 +17,7 @@ const inp = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus
 const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 const STATUS = [["draft", "Draft"], ["sent", "Not paid yet"], ["partially_paid", "Part paid"], ["paid", "Paid"], ["cancelled", "Cancelled"]];
 const METHODS = [["physical", "Physical (at the desk)"], ["qr", "QR"], ["upi", "UPI"], ["online", "Online (payment link)"], ["cash", "Cash"], ["card", "Card"], ["insurance", "Insurance"], ["other", "Other"]];
-const ENABLED = new Set(["physical", "cash", "card", "insurance", "other"]);   // QR, UPI and online links come later
+const ENABLED = new Set(["physical", "cash", "card", "insurance", "other"]);   // only the payment methods that work are listed
 
 /** One invoice: every part of it editable, with PDF, WhatsApp and payment received. */
 export default function InvoiceRecord({ params }: { params: { id: string } }) {
@@ -88,7 +88,7 @@ export default function InvoiceRecord({ params }: { params: { id: string } }) {
     if (error && /payment_method/.test(error.message)) { setBusy(""); return setErr("Run the payment-method SQL in Supabase first (see the setup notes), then save again."); }
     if (error) { setBusy(""); return setErr(error.message); }
     if (becomingPaid) {
-      try { const r = await authFetch<{ appointmentId: string | null }>("/api/payments/complete", { body: { clinicId, invoiceId: inv.id, method: "physical" } }); toast(r.appointmentId ? "Paid in full. The visit is closed." : "Paid in full."); router.push("/dashboard"); return; }
+      try { const r = await authFetch<{ appointmentId: string | null }>("/api/payments/complete", { body: { clinicId, invoiceId: inv.id, method: "physical" } }); toast(r.appointmentId ? "Paid in full. The visit is closed." : "Paid in full."); router.push("/billing"); return; }
       catch (e2: any) { setBusy(""); return setErr(e2.message); }
     } else setMsg("Saved.");
     setBusy(""); await load(clinicId);
@@ -114,7 +114,7 @@ export default function InvoiceRecord({ params }: { params: { id: string } }) {
     try {
       const r = await authFetch<{ appointmentId: string | null; appointmentDate: string | null }>("/api/payments/complete", { body: { clinicId, invoiceId: inv.id, method: "physical" } });
       toast(r.appointmentId ? "Paid in full. The visit is closed." : "Paid in full.");
-      router.push("/dashboard"); return;          // the bill is done: back to the home page
+      router.push("/billing"); return;          // the bill is done: back to the invoice list
     } catch (e: any) { setErr(e.message); }
     setBusy("");
   }
@@ -169,7 +169,7 @@ export default function InvoiceRecord({ params }: { params: { id: string } }) {
               <select id="inv-status" value={status} onChange={(e) => setStatus(e.target.value)} className={inp}>{STATUS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>
             <div><label className="text-xs font-medium text-slate-600 block mb-1">Amount paid (₹)</label><input type="number" min={0} disabled={status !== "partially_paid"} value={status === "paid" ? total : status === "partially_paid" ? paidAmt : 0} onChange={(e) => setPaidAmt(Number(e.target.value))} className={inp} /></div>
             <div><label htmlFor="inv-method" className="text-xs font-medium text-slate-600 block mb-1">Method of payment</label>
-              <select id="inv-method" value={method} onChange={(e) => setMethod(e.target.value)} className={inp}>{METHODS.map(([v, l]) => <option key={v} value={v} disabled={!ENABLED.has(v)}>{l}{ENABLED.has(v) ? "" : " (coming soon)"}</option>)}</select></div>
+              <select id="inv-method" value={method} onChange={(e) => setMethod(e.target.value)} className={inp}>{METHODS.filter(([v]) => ENABLED.has(v)).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>
           </div>
           {due > 0 && status !== "cancelled" && <p className="text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2">Balance due: <strong>{inr(due)}</strong></p>}
           <div><label className="text-xs font-medium text-slate-600 block mb-1">Notes</label><textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} className={inp} /></div>

@@ -40,4 +40,16 @@ test.describe("Records", () => {
     await dlg.getByRole("button", { name: /^delete/i }).click();
     await expect(dlg.getByRole("alert")).toContainText("Only an admin");
   });
+
+  test("positive: a paid bill asks a second time, naming the amount, then deletes", async ({ page, app }) => {
+    let n = 0;
+    app.api("POST /api/records/delete", (r: any) => { n++; return r.body?.confirmPaid ? { json: { deleted: true } } : { status: 409, json: { error: "PAID_BILL:This bill has Rs. 3,500 recorded as paid. Deleting it removes it from your records and reports." } }; });
+    await page.goto(`/billing/${app.db.invoices[0].id}`);
+    await page.getByRole("button", { name: "Delete this bill" }).click();
+    const dlg = page.getByRole("dialog", { name: "Confirm delete" });
+    await dlg.getByRole("button", { name: /^delete/i }).click();
+    await expect(dlg).toContainText("Rs. 3,500");
+    await dlg.getByRole("button", { name: "Delete anyway" }).click();
+    await expect.poll(() => n).toBe(2);
+  });
 });

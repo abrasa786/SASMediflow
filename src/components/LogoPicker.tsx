@@ -29,6 +29,9 @@ async function toDataUrl(file: File, transparentBg = false, turns = 0): Promise<
   let bmp: { src: CanvasImageSource; width: number; height: number };
   try { bmp = await openUpright(file); }
   catch { throw new Error("This phone's photo format cannot be opened here. Take the photo again as JPG (in the camera settings choose 'Most compatible'), or choose a PNG or JPG."); }
+  const small = transparentBg ? 150 : 48;   // a stamp or signature needs enough pixels to stay sharp on a printed invoice
+  if (Math.max(bmp.width, bmp.height) < small) throw new Error(`This image is too small (${bmp.width}×${bmp.height}). Use one at least ${small} pixels wide so it prints clearly.`);
+  if (Math.min(bmp.width, bmp.height) < 8) throw new Error("This image is too thin to use. Choose a different one.");
   const scale = Math.min(1, 512 / Math.max(bmp.width, bmp.height));
   const c = document.createElement("canvas");
   const w = Math.max(1, Math.round(bmp.width * scale)), h = Math.max(1, Math.round(bmp.height * scale)), side = turns % 2 === 1;

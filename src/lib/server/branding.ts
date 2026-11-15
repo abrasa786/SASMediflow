@@ -72,6 +72,10 @@ export async function saveLogo(db: any, clinicId: string, dataUrl: string, kind:
   if (buf.length > MAX_LOGO_BYTES) throw new HttpError(400, `The ${kind} is too large. Use an image under 1 MB.`);
   const t = TYPES[m[1]];
   if (!t.magic(buf)) throw new HttpError(400, "That file is not a valid image.");
+  if (kind !== "logo" && m[1] === "image/png" && buf.length > 24) {   // PNG header: width and height; a tiny stamp or signature prints as a faint smudge
+    const w = buf.readUInt32BE(16), h = buf.readUInt32BE(20);
+    if (Math.max(w, h) < 120) throw new HttpError(400, `The ${kind} image is too small (${w}×${h}). Use one at least 120 pixels wide so it prints clearly.`);
+  }
   await db.storage.createBucket("clinic-logos", { public: true, fileSizeLimit: MAX_LOGO_BYTES, allowedMimeTypes: Object.keys(TYPES) }).catch(() => null);
   const path = `${clinicId}/${kind}-${Date.now()}.${t.ext}`;
   const { error } = await db.storage.from("clinic-logos").upload(path, buf, { contentType: m[1], upsert: false, cacheControl: "31536000" });

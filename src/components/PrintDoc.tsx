@@ -14,7 +14,7 @@ export default function PrintDoc({ clinic, title, number, meta, children, showSt
         <div className="flex justify-between gap-6 border-b border-slate-200 pb-4">
           <div>
             <p className="text-xl font-bold text-slate-900">{clinic?.brand_name || clinic?.name}</p>
-            {clinic?.address && <p className="text-slate-500 max-w-xs">{clinic.address}</p>}
+            {clinic?.address && <p className="text-slate-500 max-w-xs">{[clinic.address, clinic.city].filter(Boolean).join(", ")}</p>}
             <p className="text-slate-500">{[clinic?.phone, clinic?.email].filter(Boolean).join(" · ")}</p>
             {clinic?.settings?.gstin && <p className="text-slate-500">GSTIN {clinic.settings.gstin}</p>}
           </div>

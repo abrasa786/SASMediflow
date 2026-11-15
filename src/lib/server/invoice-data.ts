@@ -2,12 +2,13 @@ import type { InvoiceData } from "./invoice-pdf";
 
 /** Everything the invoice PDF shows, read for one invoice. */
 export async function loadInvoiceData(db: any, invoiceId: string, clinicId?: string): Promise<InvoiceData | null> {
-  let q = db.from("invoices").select("id, clinic_id, invoice_number, created_at, items, subtotal, discount, gst_percent, gst_amount, total, paid_amount, status, payment_method, clinic_patients(name, phone)").eq("id", invoiceId);
+  let q = db.from("invoices").select("id, clinic_id, clinic_patient_id, invoice_number, created_at, items, subtotal, discount, gst_percent, gst_amount, total, paid_amount, status, payment_method, clinic_patients(name, phone)").eq("id", invoiceId);
   if (clinicId) q = q.eq("clinic_id", clinicId);
   const { data: inv } = await q.maybeSingle();
   if (!inv) return null;
   const { data: c } = await db.from("clinics").select("name, brand_name, address, city, phone, email, gst_number, logo_url, primary_color").eq("id", inv.clinic_id).maybeSingle();
   const st = await db.from("clinics").select("stamp_url").eq("id", inv.clinic_id).maybeSingle();   // separate: invoices still work before the stamp column exists
+  const pa = inv.clinic_patient_id ? await db.from("clinic_patients").select("address").eq("id", inv.clinic_patient_id).maybeSingle() : { data: null as any };   // separate: the address column may not exist yet
   const sg = await db.from("clinics").select("signature_url").eq("id", inv.clinic_id).maybeSingle();   // separate: invoices still work before the signature column exists
   const pat: any = inv.clinic_patients ?? {};
   const method: Record<string, string> = { physical: "Paid at the desk", cash: "Cash", upi: "UPI", qr: "QR", card: "Card", online: "Online", insurance: "Insurance", other: "Other" };
@@ -19,6 +20,6 @@ export async function loadInvoiceData(db: any, invoiceId: string, clinicId?: str
       subtotal: Number(inv.subtotal || 0), discount: Number(inv.discount || 0), gst_percent: Number(inv.gst_percent || 0), gst_amount: Number(inv.gst_amount || 0), total: Number(inv.total || 0),
       paid: Number(inv.paid_amount || 0), method: inv.payment_method && inv.status === "paid" ? method[inv.payment_method] ?? null : null,
     },
-    patient: { name: pat.name ?? "", phone: pat.phone },
+    patient: { name: pat.name ?? "", phone: pat.phone, address: pa.data?.address ?? null },
   };
 }

@@ -77,7 +77,7 @@ test.describe("Clinic stamp in Setup", () => {
     app.api("POST /api/clinic/branding", () => ({ json: { branding: { stamp_url: "https://example.com/stamp.png" } } }));
     await page.goto("/setup");
     await page.getByText("Add your clinic stamp").click();
-    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAMgAAAB4CAIAAAA48Cq8AAABS0lEQVR4Xu3SMQ0AIADAMEAX/oMsggf2tQJ2bZ69B/y2fgfhMRYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkbhobwIwgbDpZQAAAABJRU5ErkJggg==", "base64");
     await page.getByLabel("Upload logo").setInputFiles({ name: "stamp.png", mimeType: "image/png", buffer: png });
     await page.getByRole("button", { name: "Save stamp" }).click();
     await expect.poll(() => app.called("/api/clinic/branding").length).toBe(1);
@@ -85,11 +85,20 @@ test.describe("Clinic stamp in Setup", () => {
     await expect(page.getByRole("status").filter({ hasText: "Stamp saved" })).toBeVisible();
   });
 
+  test("negative: a tiny image is refused with a clear message and nothing is saved", async ({ page, app }) => {
+    await page.goto("/setup");
+    await page.getByText("Add your clinic stamp").click();
+    const tiny = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+    await page.getByLabel("Upload logo").setInputFiles({ name: "tiny.png", mimeType: "image/png", buffer: tiny });
+    await expect(page.getByText(/too small/i)).toBeVisible();
+    expect(app.called("/api/clinic/branding").length).toBe(0);
+  });
+
   test("negative: a server refusal is shown to the user", async ({ page, app }) => {
     app.api("POST /api/clinic/branding", () => ({ status: 500, json: { error: "The stamp needs a database update. Run supabase/RUN_ME_ALL_MIGRATIONS.sql in Supabase, then try again." } }));
     await page.goto("/setup");
     await page.getByText("Add your clinic stamp").click();
-    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAMgAAAB4CAIAAAA48Cq8AAABS0lEQVR4Xu3SMQ0AIADAMEAX/oMsggf2tQJ2bZ69B/y2fgfhMRYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkTAWCWORMBYJY5EwFgljkbhobwIwgbDpZQAAAABJRU5ErkJggg==", "base64");
     await page.getByLabel("Upload logo").setInputFiles({ name: "stamp.png", mimeType: "image/png", buffer: png });
     await page.getByRole("button", { name: "Save stamp" }).click();
     await expect(page.locator("[role=alert]:not(#__next-route-announcer__)")).toContainText("database update");

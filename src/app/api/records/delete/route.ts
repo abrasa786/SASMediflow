@@ -14,8 +14,9 @@ export async function POST(req: NextRequest) {
 
     const { data: row } = await db.from(b.entity).select("*").eq("id", b.id).eq("clinic_id", b.clinicId).maybeSingle();
     if (!row) throw new HttpError(404, `That ${rule.label} was not found in this clinic.`);
-    if (b.entity === "invoices" && (Number(row.paid_amount) > 0 || ["paid", "partially_paid"].includes(row.status)))
-      throw new HttpError(409, "A bill with payments on it cannot be deleted. Cancel it instead, so the money trail stays.");
+    // a bill with money on it is deleted only when the admin confirms it a second time (the dialog asks, naming the amount)
+    if (b.entity === "invoices" && b.confirmPaid !== true && (Number(row.paid_amount) > 0 || ["paid", "partially_paid"].includes(row.status)))
+      throw new HttpError(409, `PAID_BILL:This bill has Rs. ${Number(row.paid_amount || row.total || 0).toLocaleString("en-IN")} recorded as paid. Deleting it removes it from your records and reports.`);
 
     const { error } = await db.from(b.entity).delete().eq("id", b.id).eq("clinic_id", b.clinicId);
     if (error) {

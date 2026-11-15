@@ -194,7 +194,7 @@ export default function BillingPage() {
     if (error && /payment_method/.test(error.message)) ({ data: made, error } = await createInvoice({ ...base, payment_method: "cash" } as any));
     if (error || !made) { setSaving(false); setErr(error?.message ?? "Could not create the invoice."); return; }
     if (credits.length && items.some((i) => i.name.startsWith("Less: online booking fee"))) {
-      await supabase.from("appointments").update({ advance_invoice: made.id }).in("id", credits.map((c) => c.id));
+      supabase.from("appointments").update({ advance_invoice: made.id }).in("id", credits.map((c) => c.id)).then(() => null);   // runs in the background
     }
     const links = Object.entries(picked).map(([sittingId, amount]) => ({ sittingId, amount }));
     if (links.length) { try { await authFetch("/api/invoices/sittings", { body: { clinicId, invoiceId: made.id, links } }); } catch (x: any) { setErr(`Invoice made, but the sittings could not be linked: ${x.message}`); } }
@@ -206,8 +206,8 @@ export default function BillingPage() {
     setSaving(false);
     toast(`Invoice ${made.invoice_number ?? ""} created successfully`);
     // created and already on the patient's WhatsApp: nothing left to do here, so back to the home page
-    if (alsoSend && whatsapp?.status === "sent") { router.push("/dashboard"); return; }
-    await load(clinicId);
+    if (alsoSend && whatsapp?.status === "sent") { setShowNew(false); resetForm(); await load(clinicId); return; }
+    load(clinicId);   // refresh the list in the background; the person does not wait for it
     setCreated({ id: made.id, number: made.invoice_number ?? "", total, whatsapp });
   }
 
@@ -217,7 +217,7 @@ export default function BillingPage() {
     try {
       await authFetch<{ appointmentId: string | null; appointmentDate: string | null }>("/api/payments/complete", { body: { clinicId, invoiceId, method: "physical" } });
       toast("Paid in full. The visit is closed.");
-      router.push("/dashboard"); return;          // the bill is done: back to the home page
+      setShowNew(false); resetForm(); await load(clinicId); return;          // the bill is done: back to the invoice list
     } catch (e: any) { setErr(e.message); }
     finally { setBusyAct(""); setSaving(false); }
   }
@@ -344,7 +344,7 @@ export default function BillingPage() {
                   <button type="button" disabled={busyAct !== ""} onClick={async () => { setBusyAct("send"); const w = await sendOnWhatsApp(created.id); setCreated({ ...created, whatsapp: w }); setBusyAct(""); }} className="py-3 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white rounded-xl text-sm font-semibold">{busyAct === "send" ? "Sending…" : created.whatsapp?.status === "sent" ? "Send again on WhatsApp" : "Send invoice on WhatsApp"}</button>
                   <button type="button" disabled={busyAct !== ""} onClick={() => finishPayment(created.id)} className="py-3 bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white rounded-xl text-sm font-semibold">{busyAct === "pay" ? "Saving…" : "Payment received (physical)"}</button>
                   <a href={`/billing/print?id=${created.id}`} target="_blank" rel="noreferrer" className="text-center py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 hover:bg-slate-50">Print invoice</a>
-                  <button type="button" onClick={() => { setShowNew(false); resetForm(); router.push("/dashboard"); }} className="text-xs text-slate-500 hover:underline">Pay later: go to home</button>
+                  <button type="button" onClick={() => { setShowNew(false); resetForm(); }} className="text-xs text-slate-500 hover:underline">Pay later: go to the invoice list</button>
                 </div>
               </div>
             ) : (
@@ -447,9 +447,6 @@ export default function BillingPage() {
                   <label className="text-xs font-medium text-slate-600 block mb-1">Method of payment</label>
                   <select value={payMethod} onChange={e => setPayMethod(e.target.value as PaymentMethod)} className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
                     <option value="physical">Physical (at the desk)</option>
-                    <option value="qr" disabled>QR code (coming soon)</option>
-                    <option value="upi" disabled>UPI (coming soon)</option>
-                    <option value="online" disabled>Online payment link (coming soon)</option>
                   </select>
                 </div>
               </div>
