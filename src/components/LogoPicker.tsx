@@ -39,9 +39,16 @@ async function toDataUrl(file: File, transparentBg = false, turns = 0): Promise<
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   if (transparentBg) {
     const img = ctx.getImageData(0, 0, c.width, c.height), d = img.data;
+    // A phone photo of paper is rarely pure white: it is grey in dim light. Find how bright the paper really is
+    // (most pixels are paper) and clear everything close to that, so no grey box prints around the stamp.
+    const hist = new Uint32Array(256);
+    for (let i = 0; i < d.length; i += 4) hist[Math.min(d[i], d[i + 1], d[i + 2])]++;
+    let seen = 0, paper = 255; const total = d.length / 4;
+    for (let v = 255; v >= 0; v--) { seen += hist[v]; if (seen >= total * 0.2) { paper = v; break; } }   // brightest fifth is paper
+    const cut = Math.max(110, Math.min(245, paper - 38));
     for (let i = 0; i < d.length; i += 4) {
-      const lightest = Math.min(d[i], d[i + 1], d[i + 2]);            // near white = paper
-      const a = Math.max(0, Math.min(255, (245 - lightest) * 5));      // soft edge: white goes clear, ink stays
+      const lightest = Math.min(d[i], d[i + 1], d[i + 2]);
+      const a = Math.max(0, Math.min(255, (cut - lightest) * 6));     // soft edge: paper goes clear, ink stays
       d[i + 3] = Math.min(d[i + 3], a);
     }
     ctx.putImageData(img, 0, 0);

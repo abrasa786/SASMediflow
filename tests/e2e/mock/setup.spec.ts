@@ -124,6 +124,31 @@ test.describe("Stamp from a phone camera photo", () => {
     expect(px.corner).toBe(0);            // the white paper is see-through
     expect(px.ring).toBeGreaterThan(150); // the ink stays
   });
+
+  test("positive: a photo taken in dim light (grey paper) also loses its grey box, and the ink stays", async ({ page, app }) => {
+    app.api("POST /api/clinic/branding", () => ({ json: { branding: { stamp_url: "https://example.com/s.png" } } }));
+    await page.goto("/setup");
+    await page.getByText("Add your clinic stamp").click();
+    await page.evaluate(async () => {
+      const c = document.createElement("canvas"); c.width = 1600; c.height = 1000; const g = c.getContext("2d")!;
+      g.fillStyle = "#b9b9b4"; g.fillRect(0, 0, 1600, 1000); g.strokeStyle = "#2b3f9e"; g.lineWidth = 50; g.beginPath(); g.arc(800, 500, 350, 0, 7); g.stroke();
+      const blob: Blob = await new Promise((r) => c.toBlob((b) => r(b!), "image/jpeg", 0.9));
+      const dt = new DataTransfer(); dt.items.add(new File([blob], "IMG_dim.jpg", { type: "image/jpeg" }));
+      const input = document.querySelector('input[type=file][aria-label="Upload logo"]') as HTMLInputElement;
+      input.files = dt.files; input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    await expect(page.getByAltText("Logo preview")).toBeVisible();
+    await page.getByRole("button", { name: "Save stamp" }).click();
+    await expect.poll(() => app.called("/api/clinic/branding").length).toBe(1);
+    const url: string = app.called("/api/clinic/branding")[0].body.stampDataUrl;
+    const px = await page.evaluate(async (u) => {
+      const img = new Image(); img.src = u; await img.decode();
+      const c = document.createElement("canvas"); c.width = img.width; c.height = img.height; const g = c.getContext("2d")!; g.drawImage(img, 0, 0);
+      return { corner: g.getImageData(2, 2, 1, 1).data[3], ring: g.getImageData(Math.round(img.width / 2 + (350 / 1600) * img.width), Math.round(img.height / 2), 1, 1).data[3] };
+    }, url);
+    expect(px.corner).toBe(0);
+    expect(px.ring).toBeGreaterThan(150);
+  });
 });
 
 test.describe("Stamp validation", () => {
