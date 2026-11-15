@@ -15,7 +15,7 @@ export default function BrandingCard({ clinicId }: { clinicId: string }) {
   const [stamp, setStamp] = useState<string | null>(null);
   const [stampChanged, setStampChanged] = useState(false);
   const [sign, setSign] = useState<string | null>(null);
-  const [imgCheck, setImgCheck] = useState<{ stamp: { state: string; message: string }; signature: { state: string; message: string } } | null>(null);
+  const [imgCheck, setImgCheck] = useState<{ stamp: { state: string; message: string }; signature: { state: string; message: string }; latest?: { number: string; stamp: boolean; signature: boolean } | null; build?: string } | null>(null);
   const [signChanged, setSignChanged] = useState(false);
   const [f, setF] = useState({ tagline: "", website: "", primaryColor: "#2563eb", slug: "", aiName: "" });
   const [domain, setDomain] = useState("");
@@ -60,6 +60,8 @@ export default function BrandingCard({ clinicId }: { clinicId: string }) {
                 {([["Stamp", imgCheck.stamp], ["Signature", imgCheck.signature]] as const).map(([n, r]) => (
                   <li key={n} className={r.state === "ok" ? "text-emerald-700" : r.state === "fail" ? "text-red-700" : "text-slate-500"}><b>{n}:</b> {r.message}</li>
                 ))}
+                {imgCheck.latest && <li className={imgCheck.latest.signature ? "text-emerald-700" : "text-red-700"}><b>Newest invoice ({imgCheck.latest.number}):</b> stamp {imgCheck.latest.stamp ? "found" : "missing"}, signature {imgCheck.latest.signature ? "found" : "missing"}.</li>}
+                {imgCheck.build && <li className="text-slate-400">Version running: {imgCheck.build}</li>}
               </ul>
             )}
           </div>

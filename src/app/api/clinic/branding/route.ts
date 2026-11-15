@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { handle, HttpError } from "@/lib/server/http";
 import { requireClinicMember } from "@/lib/server/auth";
 import { checkInvoiceImage } from "@/lib/server/invoice-pdf";
+import { loadInvoiceData } from "@/lib/server/invoice-data";
 import { addDomainToVercel, checkAiName, checkColor, checkDomain, checkSlug, newDomainToken, saveLogo, verifyDomainDns } from "@/lib/server/branding";
 
 export const dynamic = "force-dynamic";
@@ -41,7 +42,14 @@ export async function POST(req: NextRequest) {
       const st = await db.from("clinics").select("stamp_url").eq("id", b.clinicId).maybeSingle();
       const sg = await db.from("clinics").select("signature_url").eq("id", b.clinicId).maybeSingle();
       const [stamp, signature] = await Promise.all([checkInvoiceImage(st.data?.stamp_url), checkInvoiceImage(sg.data?.signature_url)]);
-      return { images: { stamp, signature } };
+      // what the invoice itself would read: the newest invoice of this clinic, loaded the way the PDF loads it
+      let latest: { number: string; stamp: boolean; signature: boolean } | null = null;
+      try {
+        const { data: inv } = await db.from("invoices").select("id").eq("clinic_id", b.clinicId).order("created_at", { ascending: false }).limit(1).maybeSingle();
+        const d = inv ? await loadInvoiceData(db, inv.id, b.clinicId) : null;
+        if (d) latest = { number: d.invoice.number, stamp: !!d.clinic.stamp_url, signature: !!d.clinic.signature_url };
+      } catch { /* the check still reports the images */ }
+      return { images: { stamp, signature, latest, build: (process.env.VERCEL_GIT_COMMIT_SHA || "local").slice(0, 7) } };
     }
 
     if (b.action === "save") {
