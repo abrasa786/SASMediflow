@@ -26,6 +26,22 @@ async function loadLogo(pdf: PDFDocument, url?: string | null): Promise<PDFImage
   return null;
 }
 
+/** Fetches a saved stamp/signature exactly as the invoice does and says in plain words whether it will print. */
+export async function checkInvoiceImage(url?: string | null): Promise<{ state: "none" | "ok" | "fail"; message: string }> {
+  if (!url) return { state: "none", message: "Nothing saved." };
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    if (!res.ok) return { state: "fail", message: `The saved file cannot be opened (the file store answered ${res.status}). Upload it again.` };
+    const buf = new Uint8Array(await res.arrayBuffer());
+    const pdf = await PDFDocument.create();
+    let im: PDFImage;
+    if (buf[0] === 0x89 && buf[1] === 0x50) im = await pdf.embedPng(buf);
+    else if (buf[0] === 0xff && buf[1] === 0xd8) im = await pdf.embedJpg(buf);
+    else return { state: "fail", message: "The saved file is not a PNG or JPG, so the invoice cannot print it. Upload it again." };
+    return { state: "ok", message: `Will print on invoices (${im.width}×${im.height}, ${Math.round(buf.length / 1024)} KB).` };
+  } catch (e: any) { return { state: "fail", message: "The invoice could not read this image: " + (e?.message ?? "unknown error") + ". Upload it again." }; }
+}
+
 export interface InvoiceData {
   clinic: { name: string; address?: string | null; city?: string | null; phone?: string | null; email?: string | null; gst_number?: string | null; logo_url?: string | null; signature_url?: string | null; stamp_url?: string | null; color?: string | null };
   invoice: { number: string; date: string; status: string; items: { name: string; qty: number; unit_price: number; amount: number }[]; subtotal: number; discount: number; gst_percent: number; gst_amount: number; total: number; paid: number; method?: string | null };

@@ -36,3 +36,15 @@ test.describe("Stamp status in Settings", () => {
     await expect(page.getByText("Not saved yet. Press Save branding")).toBeVisible();
   });
 });
+
+test.describe("Check invoice images", () => {
+  test("positive: shows whether the saved stamp and signature will print, and why not", async ({ page, app }) => {
+    app.api("GET /api/clinic/branding", () => ({ json: { branding: { slug: "demo", logo_url: null, stamp_url: null, signature_url: null } } }));
+    app.api("POST /api/clinic/branding", () => ({ json: { images: { stamp: { state: "ok", message: "Will print on invoices (300×300, 12 KB)." }, signature: { state: "fail", message: "The saved file cannot be opened (the file store answered 404). Upload it again." } } } }));
+    await page.goto("/settings");
+    await page.getByRole("button", { name: "Check invoice images" }).click();
+    const box = page.getByTestId("image-check");
+    await expect(box).toContainText("Stamp: Will print on invoices");
+    await expect(box).toContainText("Signature: The saved file cannot be opened");
+  });
+});

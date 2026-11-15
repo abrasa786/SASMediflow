@@ -15,6 +15,7 @@ export default function BrandingCard({ clinicId }: { clinicId: string }) {
   const [stamp, setStamp] = useState<string | null>(null);
   const [stampChanged, setStampChanged] = useState(false);
   const [sign, setSign] = useState<string | null>(null);
+  const [imgCheck, setImgCheck] = useState<{ stamp: { state: string; message: string }; signature: { state: string; message: string } } | null>(null);
   const [signChanged, setSignChanged] = useState(false);
   const [f, setF] = useState({ tagline: "", website: "", primaryColor: "#2563eb", slug: "", aiName: "" });
   const [domain, setDomain] = useState("");
@@ -50,6 +51,18 @@ export default function BrandingCard({ clinicId }: { clinicId: string }) {
           <LogoPicker transparentBg label="Authorised signature (printed on invoices)" icon="✍" uploadText="Upload signature" hint="Draw it above, or upload a photo of your signature on white paper." value={sign} onChange={(v) => { setSign(v); setSignChanged(true); }} />
           <p className={`text-xs -mt-2 ${signChanged ? "text-amber-700" : b.signature_url ? "text-emerald-700" : "text-slate-400"}`} role="status">
             {signChanged ? "Not saved yet. Press Save branding below to put this signature on your invoices." : b.signature_url ? "Saved. This signature prints beside the stamp on every new invoice." : "No signature saved yet."}</p>
+          <div>
+            <button type="button" disabled={busy} onClick={async () => { setBusy(true); setErr(""); try { const r = await authFetch("/api/clinic/branding", { body: { clinicId, action: "check_images" } }); setImgCheck(r.images); } catch (e: any) { setErr(e.message); } finally { setBusy(false); } }}
+              className="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold hover:bg-slate-50">Check invoice images</button>
+            <span className="ml-2 text-xs text-slate-400">Tests the saved stamp and signature the same way an invoice reads them.</span>
+            {imgCheck && (
+              <ul className="mt-2 space-y-1 text-xs" data-testid="image-check">
+                {([["Stamp", imgCheck.stamp], ["Signature", imgCheck.signature]] as const).map(([n, r]) => (
+                  <li key={n} className={r.state === "ok" ? "text-emerald-700" : r.state === "fail" ? "text-red-700" : "text-slate-500"}><b>{n}:</b> {r.message}</li>
+                ))}
+              </ul>
+            )}
+          </div>
           <div><label className={lbl}>AI assistant name</label><input className={inp} maxLength={24} placeholder="e.g. Mira" value={f.aiName} onChange={(e) => setF({ ...f, aiName: e.target.value })} /><p className="text-xs text-slate-400 mt-1">Shown on the assistant, the builder and your public page.</p></div>
           <div><label className={lbl}>Tagline</label><input className={inp} maxLength={120} value={f.tagline} onChange={(e) => setF({ ...f, tagline: e.target.value })} /></div>
           <div className="grid grid-cols-[1fr_auto] gap-3 items-end">

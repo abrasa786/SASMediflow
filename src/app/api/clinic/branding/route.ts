@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { handle, HttpError } from "@/lib/server/http";
 import { requireClinicMember } from "@/lib/server/auth";
+import { checkInvoiceImage } from "@/lib/server/invoice-pdf";
 import { addDomainToVercel, checkAiName, checkColor, checkDomain, checkSlug, newDomainToken, saveLogo, verifyDomainDns } from "@/lib/server/branding";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +36,13 @@ export async function POST(req: NextRequest) {
     const { db } = await requireClinicMember(req, b.clinicId, ["admin"]);
     const { data: cur, error: ce } = await db.from("clinics").select(COLS).eq("id", b.clinicId).maybeSingle();
     if (ce || !cur) throw new HttpError(500, ce?.message ?? "Clinic not found.");
+
+    if (b.action === "check_images") {
+      const st = await db.from("clinics").select("stamp_url").eq("id", b.clinicId).maybeSingle();
+      const sg = await db.from("clinics").select("signature_url").eq("id", b.clinicId).maybeSingle();
+      const [stamp, signature] = await Promise.all([checkInvoiceImage(st.data?.stamp_url), checkInvoiceImage(sg.data?.signature_url)]);
+      return { images: { stamp, signature } };
+    }
 
     if (b.action === "save") {
       const patch: Record<string, unknown> = {};
